@@ -446,6 +446,55 @@ export function createTestCaseTools(
         required: ["testCaseId", "payload"],
       },
     },
+    {
+      name: "list_test_case_attachments",
+      description: "List attachments for a test case.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          testCaseId: { type: "number" },
+        },
+        required: ["testCaseId"],
+      },
+    },
+    {
+      name: "upload_test_case_attachment",
+      description:
+        "Upload a file attachment to a test case. Provide file content as a base64-encoded string.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          testCaseId: { type: "number" },
+          filename: { type: "string", description: "File name including extension, e.g. screenshot.png." },
+          contentType: { type: "string", description: "MIME type, e.g. image/png or application/pdf." },
+          contentBase64: { type: "string", description: "File content encoded as a base64 string." },
+        },
+        required: ["testCaseId", "filename", "contentType", "contentBase64"],
+      },
+    },
+    {
+      name: "delete_test_case_attachment",
+      description: "Delete an attachment from a test case by attachment ID.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          attachmentId: { type: "number" },
+        },
+        required: ["attachmentId"],
+      },
+    },
+    {
+      name: "get_test_case_attachment_content",
+      description:
+        "Download the binary content of a test case attachment. Returns base64-encoded content with its MIME type.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          attachmentId: { type: "number" },
+        },
+        required: ["attachmentId"],
+      },
+    },
   ];
 
   const handlers = {
@@ -572,6 +621,28 @@ export function createTestCaseTools(
       const projectId = await resolveProjectId(args, client);
       const testCaseId = getRequiredId(args, "testCaseId");
       return api.setTestCaseCustomFields(client, projectId, testCaseId, args.payload);
+    },
+    list_test_case_attachments: async (rawArgs: unknown) => {
+      const args = asObject(rawArgs);
+      return api.listTestCaseAttachments(client, getRequiredId(args, "testCaseId"));
+    },
+    upload_test_case_attachment: async (rawArgs: unknown) => {
+      const args = asObject(rawArgs);
+      return api.uploadTestCaseAttachment(
+        client,
+        getRequiredId(args, "testCaseId"),
+        getRequiredString(args, "filename"),
+        getRequiredString(args, "contentType"),
+        getRequiredString(args, "contentBase64"),
+      );
+    },
+    delete_test_case_attachment: async (rawArgs: unknown) => {
+      const args = asObject(rawArgs);
+      return api.deleteTestCaseAttachment(client, getRequiredId(args, "attachmentId"));
+    },
+    get_test_case_attachment_content: async (rawArgs: unknown) => {
+      const args = asObject(rawArgs);
+      return api.getTestCaseAttachmentContent(client, getRequiredId(args, "attachmentId"));
     },
   };
 

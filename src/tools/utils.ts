@@ -71,6 +71,7 @@ export function getOptionalStringArray(
   return value;
 }
 
+
 export function getRequiredId(args: ToolArgs, key = "id"): number {
   return getRequiredNumber(args, key);
 }
