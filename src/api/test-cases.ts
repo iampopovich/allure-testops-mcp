@@ -263,6 +263,41 @@ export function removeTagsFromTestCases(
   });
 }
 
+export function listTestCaseAttachments(
+  client: AllureApiClient,
+  testCaseId: number,
+): Promise<unknown> {
+  return client.get("/api/testcase/attachment", { testCaseId });
+}
+
+export async function uploadTestCaseAttachment(
+  client: AllureApiClient,
+  testCaseId: number,
+  filename: string,
+  contentType: string,
+  contentBase64: string,
+): Promise<unknown> {
+  const buffer = Buffer.from(contentBase64, "base64");
+  const blob = new Blob([buffer], { type: contentType });
+  const formData = new FormData();
+  formData.append("file", blob, filename);
+  return client.postMultipart("/api/testcase/attachment", formData, { testCaseId });
+}
+
+export function deleteTestCaseAttachment(
+  client: AllureApiClient,
+  attachmentId: number,
+): Promise<unknown> {
+  return client.delete(`/api/testcase/attachment/${attachmentId}`);
+}
+
+export function getTestCaseAttachmentContent(
+  client: AllureApiClient,
+  attachmentId: number,
+): Promise<unknown> {
+  return client.getRaw(`/api/testcase/attachment/${attachmentId}/content`);
+}
+
 export function addExternalLinksToTestCases(
   client: AllureApiClient,
   projectId: number,
