@@ -1,5 +1,6 @@
 import { AllureApiClient } from "./client.js";
 import { createAnalyticTools } from "./tools/analytic.js";
+import { createDashboardTools } from "./tools/dashboards.js";
 import { createLaunchTools } from "./tools/launches.js";
 import { createTestCaseTools } from "./tools/test-cases.js";
 import { createTestPlanTools } from "./tools/test-plans.js";
@@ -23,6 +24,7 @@ export function buildToolRegistry(
     createTestResultTools(client),
     createTestPlanTools(client),
     createAnalyticTools(client),
+    createDashboardTools(client),
   ];
 
   const tools: McpToolDefinition[] = [];
