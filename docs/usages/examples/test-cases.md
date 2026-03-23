@@ -37,7 +37,7 @@ Search by AQL:
   "name": "search_test_cases",
   "arguments": {
     "projectId": 37,
-    "rql": "name ~ \"checkout\"",
+    "rql": "name ~= \"checkout\"",
     "page": 0,
     "size": 10
   }

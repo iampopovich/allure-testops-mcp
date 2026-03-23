@@ -172,7 +172,21 @@ export function createTestCaseTools(
             type: "string",
             description: "Project name (alternative to projectId).",
           },
-          rql: { type: "string" },
+          rql: {
+            type: "string",
+            description:
+              "AQL (Allure Query Language) filter expression. " +
+              "Operators: = != ~= (contains) > < >= <= in [...] and or not. " +
+              "IMPORTANT: 'not in' is written as 'not field in [...]', NOT 'field not in [...]'. " +
+              "Test case fields: id, name, tag, issue, role[\"R\"], member, cf[\"F\"], cfv, layer, " +
+              "status, workflow, testPlan, automation (boolean), muted, mutedDate, " +
+              "createdDate, createdBy, lastModifiedDate, lastModifiedBy. " +
+              "Dates use 13-digit Unix ms timestamps. " +
+              'Examples: name ~= "login" | automation = true | automation = false | ' +
+              'status = "Active" | tag in ["smoke", "regression"] | ' +
+              'not tag in ["nightly"] | cf["Epic"] = "Auth" | ' +
+              'name ~= "checkout" and muted = false | (createdBy = "a" or createdBy = "b") and automation = true',
+          },
           page: { type: "number" },
           size: { type: "number" },
           sort: { type: "array", items: { type: "string" } },
@@ -295,7 +309,7 @@ export function createTestCaseTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          id: { type: "number" },
+          id: { type: "number", description: "Test case ID." },
           page: { type: "number" },
           size: { type: "number" },
           sort: { type: "array", items: { type: "string" } },
@@ -308,7 +322,7 @@ export function createTestCaseTools(
       description: "Get scenario for a test case.",
       inputSchema: {
         type: "object" as const,
-        properties: { id: { type: "number" } },
+        properties: { id: { type: "number", description: "Test case ID." } },
         required: ["id"],
       },
     },
@@ -317,7 +331,7 @@ export function createTestCaseTools(
       description: "Get manual scenario steps for a test case. Returns a normalized scenario with root step and a flat map of all steps (scenarioSteps), where each step contains body, expectedResult, children IDs, and optional sharedStepId.",
       inputSchema: {
         type: "object" as const,
-        properties: { id: { type: "number" } },
+        properties: { id: { type: "number", description: "Test case ID." } },
         required: ["id"],
       },
     },
