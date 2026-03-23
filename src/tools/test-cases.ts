@@ -309,7 +309,7 @@ export function createTestCaseTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          id: { type: "number" },
+          id: { type: "number", description: "Test case ID." },
           page: { type: "number" },
           size: { type: "number" },
           sort: { type: "array", items: { type: "string" } },
@@ -322,7 +322,7 @@ export function createTestCaseTools(
       description: "Get scenario for a test case.",
       inputSchema: {
         type: "object" as const,
-        properties: { id: { type: "number" } },
+        properties: { id: { type: "number", description: "Test case ID." } },
         required: ["id"],
       },
     },
@@ -331,7 +331,7 @@ export function createTestCaseTools(
       description: "Get manual scenario steps for a test case. Returns a normalized scenario with root step and a flat map of all steps (scenarioSteps), where each step contains body, expectedResult, children IDs, and optional sharedStepId.",
       inputSchema: {
         type: "object" as const,
-        properties: { id: { type: "number" } },
+        properties: { id: { type: "number", description: "Test case ID." } },
         required: ["id"],
       },
     },
