@@ -43,7 +43,22 @@ export function createTestResultTools(
             type: "string",
             description: "Project name (alternative to projectId).",
           },
-          rql: { type: "string" },
+          rql: {
+            type: "string",
+            description:
+              "AQL (Allure Query Language) filter expression. " +
+              "Operators: = != ~= (contains) > < >= <= in [...] and or not. " +
+              "IMPORTANT: 'not in' is written as 'not field in [...]', NOT 'field not in [...]'. " +
+              "Test result fields: id, name, fullName, testCase, status, category, tag, issue, " +
+              "role[\"R\"], member, testedBy, cf[\"F\"], cfv, ev[\"VAR\"], evv, layer, " +
+              "muted (boolean), hidden (boolean), launch, " +
+              "createdDate, createdBy, lastModifiedDate, lastModifiedBy. " +
+              "Dates use 13-digit Unix ms timestamps. " +
+              'Examples: status = "failed" | status in ["failed", "broken"] | ' +
+              'name ~= "login" | muted = false | hidden = false | ' +
+              'launch = "release-1.0" | ev["OS"] = "Linux" | ' +
+              'not tag in ["nightly"] | status = "failed" and muted = false',
+          },
           page: { type: "number" },
           size: { type: "number" },
           sort: { type: "array", items: { type: "string" } },

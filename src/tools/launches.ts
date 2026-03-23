@@ -47,7 +47,20 @@ export function createLaunchTools(
             type: "string",
             description: "Project name (alternative to projectId).",
           },
-          rql: { type: "string" },
+          rql: {
+            type: "string",
+            description:
+              "AQL (Allure Query Language) filter expression. " +
+              "Operators: = != ~= (contains) > < >= <= in [...] and or not. " +
+              "IMPORTANT: 'not in' is written as 'not field in [...]', NOT 'field not in [...]'. " +
+              "Launch fields: id, name, tag, issue, job, ev[\"VAR\"], evv, closed (boolean), " +
+              "createdDate, createdBy, lastModifiedDate, lastModifiedBy. " +
+              "Dates use 13-digit Unix ms timestamps. " +
+              'Examples: name ~= "nightly" | closed = false | closed = true | ' +
+              'tag in ["release", "pre-release"] | job = "jenkins_master" | ' +
+              'ev["OS"] = "Linux" | not tag in ["devbuild"] | ' +
+              'name ~= "regression" and closed = true',
+          },
           page: { type: "number" },
           size: { type: "number" },
           sort: { type: "array", items: { type: "string" } },
