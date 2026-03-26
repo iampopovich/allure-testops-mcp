@@ -207,13 +207,28 @@ export function createTestCaseTools(
       name: "create_test_case",
       description:
         "Create a new test case. payload.projectId defaults to ALLURE_PROJECT_ID env when omitted. payload.customFields supports values like { customField: { id }, id, name }. " +
-        "payload.steps is an optional array of step objects with { name (step text) } — steps are created after the test case.",
+        "payload.steps is an optional array of step objects with { name (step text), expectedResult (optional expected result text) } — steps are created after the test case.",
       inputSchema: {
         type: "object" as const,
         properties: {
           payload: { type: "object", additionalProperties: true },
         },
         required: ["payload"],
+      },
+    },
+    {
+      name: "update_test_case_step",
+      description:
+        "Update a test case step by ID. Supports updating body text and/or expectedResult. " +
+        "If expectedResult is provided, the expected result node is created automatically if it does not exist yet.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          stepId: { type: "number", description: "Step ID to update." },
+          body: { type: "string", description: "New step body text." },
+          expectedResult: { type: "string", description: "Expected result text for this step." },
+        },
+        required: ["stepId"],
       },
     },
     {
@@ -548,11 +563,31 @@ export function createTestCaseTools(
           const body = typeof s.name === "string" ? s.name
             : typeof s.body === "string" ? s.body
             : undefined;
+          const expectedResult = typeof s.expectedResult === "string" ? s.expectedResult : undefined;
+          const hasExpectedResult = expectedResult !== undefined;
 
-          await api.createTestCaseStep(client, {
-            testCaseId,
-            ...(body !== undefined ? { body } : {}),
-          });
+          // POST step; request an expectedResult header node when needed
+          const created = await api.createTestCaseStep(
+            client,
+            { testCaseId, ...(body !== undefined ? { body } : {}) },
+            hasExpectedResult,
+          ) as { createdStepId?: number; scenario?: { scenarioSteps?: Record<string, { expectedResultId?: number }> } };
+
+          if (hasExpectedResult && typeof created.createdStepId === "number") {
+            // The POST response (ScenarioStepCreatedResponseDto) includes the full scenario.
+            // Extract the expectedResult header node ID from it.
+            const expectedResultId =
+              created.scenario?.scenarioSteps?.[String(created.createdStepId)]?.expectedResultId;
+
+            if (typeof expectedResultId === "number") {
+              // Create the actual text as a child of the header node.
+              await api.createTestCaseStep(client, {
+                testCaseId,
+                parentId: expectedResultId,
+                body: expectedResult,
+              });
+            }
+          }
         }
       }
 
@@ -622,6 +657,61 @@ export function createTestCaseTools(
     restore_test_case: async (rawArgs: unknown) => {
       const args = asObject(rawArgs);
       return api.restoreTestCase(client, getRequiredId(args));
+    },
+    update_test_case_step: async (rawArgs: unknown) => {
+      const args = asObject(rawArgs);
+      const stepId = getRequiredId(args, "stepId");
+      const body = getOptionalString(args, "body");
+      const expectedResult = getOptionalString(args, "expectedResult");
+
+      // Fetch current step metadata to get testCaseId and expectedResultId.
+      const currentStep = await api.getTestCaseStep(client, stepId) as {
+        expectedResultId?: number;
+        testCaseId?: number;
+      };
+
+      // Update the step body if requested.
+      if (body !== undefined) {
+        await api.updateTestCaseStep(client, stepId, { body });
+      }
+
+      if (expectedResult === undefined) return currentStep;
+
+      const testCaseId = currentStep.testCaseId;
+      if (typeof testCaseId !== "number") {
+        throw new Error("Could not determine testCaseId for this step.");
+      }
+
+      let expectedResultId = currentStep.expectedResultId;
+
+      // If no expected result header exists yet, create it via PATCH withExpectedResult=true.
+      if (typeof expectedResultId !== "number") {
+        const patchScenario = await api.updateTestCaseStep(client, stepId, {}, true) as {
+          scenarioSteps?: Record<string, { expectedResultId?: number }>;
+        };
+        expectedResultId = patchScenario?.scenarioSteps?.[String(stepId)]?.expectedResultId;
+      }
+
+      if (typeof expectedResultId !== "number") {
+        throw new Error("Could not create or find expected result node for this step.");
+      }
+
+      // Get the full scenario to read the header node's children.
+      const fullScenario = await api.getTestCaseSteps(client, testCaseId) as {
+        scenarioSteps?: Record<string, { children?: number[] }>;
+      };
+      const children = fullScenario?.scenarioSteps?.[String(expectedResultId)]?.children ?? [];
+
+      for (const childId of children) {
+        return api.updateTestCaseStep(client, childId, { body: expectedResult });
+      }
+
+      // Children was empty — create a new text child node under the expected result header.
+      return api.createTestCaseStep(client, {
+        testCaseId,
+        parentId: expectedResultId,
+        body: expectedResult,
+      });
     },
     list_project_custom_fields: async (rawArgs: unknown) => {
       const args = asObject(rawArgs);

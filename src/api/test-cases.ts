@@ -156,6 +156,10 @@ export function getTestCaseSteps(client: AllureApiClient, id: number): Promise<u
   return client.get(`/api/testcase/${id}/step`);
 }
 
+export function getTestCaseStep(client: AllureApiClient, stepId: number): Promise<unknown> {
+  return client.get(`/api/testcase/step/${stepId}`);
+}
+
 export function getTestCaseTags(client: AllureApiClient, testCaseId: number): Promise<unknown> {
   return client.get(`/api/testcase/${testCaseId}/tag`);
 }
@@ -187,8 +191,22 @@ export function restoreTestCase(client: AllureApiClient, id: number): Promise<un
 export function createTestCaseStep(
   client: AllureApiClient,
   payload: Record<string, unknown>,
+  withExpectedResult?: boolean,
 ): Promise<unknown> {
-  return client.post("/api/testcase/step", payload);
+  return client.post("/api/testcase/step", payload, withExpectedResult ? { withExpectedResult: true } : undefined);
+}
+
+export function updateTestCaseStep(
+  client: AllureApiClient,
+  stepId: number,
+  payload: Record<string, unknown>,
+  withExpectedResult?: boolean,
+): Promise<unknown> {
+  return client.patch(
+    `/api/testcase/step/${stepId}`,
+    payload,
+    withExpectedResult ? { withExpectedResult: true } : undefined,
+  );
 }
 
 
