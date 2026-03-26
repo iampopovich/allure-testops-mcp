@@ -184,6 +184,14 @@ export function restoreTestCase(client: AllureApiClient, id: number): Promise<un
   return client.post(`/api/testcase/${id}/restore`);
 }
 
+export function createTestCaseStep(
+  client: AllureApiClient,
+  payload: Record<string, unknown>,
+): Promise<unknown> {
+  return client.post("/api/testcase/step", payload);
+}
+
+
 export function listProjectCustomFields(
   client: AllureApiClient,
   projectId: number,
