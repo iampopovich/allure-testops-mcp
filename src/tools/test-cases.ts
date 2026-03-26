@@ -206,7 +206,8 @@ export function createTestCaseTools(
     {
       name: "create_test_case",
       description:
-        "Create a new test case. payload.projectId defaults to ALLURE_PROJECT_ID env when omitted. payload.customFields supports values like { customField: { id }, id, name }.",
+        "Create a new test case. payload.projectId defaults to ALLURE_PROJECT_ID env when omitted. payload.customFields supports values like { customField: { id }, id, name }. " +
+        "payload.steps is an optional array of step objects with { name (step text) } — steps are created after the test case.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -535,7 +536,27 @@ export function createTestCaseTools(
     create_test_case: async (rawArgs: unknown) => {
       const args = asObject(rawArgs);
       const payload = ensureProjectIdInPayload(getObjectPayload(args), client);
-      return api.createTestCase(client, payload);
+
+      // Steps are not accepted by POST /api/testcase — extract and create them separately.
+      const { steps, ...testCasePayload } = payload;
+      const result = await api.createTestCase(client, testCasePayload) as { id?: number };
+
+      if (Array.isArray(steps) && steps.length > 0 && typeof result.id === "number") {
+        const testCaseId = result.id;
+        for (const step of steps) {
+          const s = step as Record<string, unknown>;
+          const body = typeof s.name === "string" ? s.name
+            : typeof s.body === "string" ? s.body
+            : undefined;
+
+          await api.createTestCaseStep(client, {
+            testCaseId,
+            ...(body !== undefined ? { body } : {}),
+          });
+        }
+      }
+
+      return result;
     },
     update_test_case: async (rawArgs: unknown) => {
       const args = asObject(rawArgs);
