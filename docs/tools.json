@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-03-02T23:51:53.187Z",
-  "totalTools": 47,
+  "generatedAt": "2026-03-30T17:43:56.281Z",
+  "totalTools": 68,
   "categories": [
     {
       "name": "Test Cases",
@@ -53,7 +53,8 @@
                 "description": "Project name (alternative to projectId)."
               },
               "rql": {
-                "type": "string"
+                "type": "string",
+                "description": "AQL (Allure Query Language) filter expression. Operators: = != ~= (contains) > < >= <= in [...] and or not. IMPORTANT: 'not in' is written as 'not field in [...]', NOT 'field not in [...]'. Test case fields: id, name, tag, issue, role[\"R\"], member, cf[\"F\"], cfv, layer, status, workflow, testPlan, automation (boolean), muted, mutedDate, createdDate, createdBy, lastModifiedDate, lastModifiedBy. Dates use 13-digit Unix ms timestamps. Examples: name ~= \"login\" | automation = true | automation = false | status = \"Active\" | tag in [\"smoke\", \"regression\"] | not tag in [\"nightly\"] | cf[\"Epic\"] = \"Auth\" | name ~= \"checkout\" and muted = false | (createdBy = \"a\" or createdBy = \"b\") and automation = true"
               },
               "page": {
                 "type": "number"
@@ -90,7 +91,7 @@
         },
         {
           "name": "create_test_case",
-          "description": "Create a new test case. payload.projectId defaults to ALLURE_PROJECT_ID env when omitted. payload.customFields supports values like { customField: { id }, id, name }.",
+          "description": "Create a new test case. payload.projectId defaults to ALLURE_PROJECT_ID env when omitted. payload.customFields supports values like { customField: { id }, id, name }. payload.steps is an optional array of step objects with { name (step text), expectedResult (optional expected result text) } — steps are created after the test case.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -101,6 +102,30 @@
             },
             "required": [
               "payload"
+            ]
+          }
+        },
+        {
+          "name": "update_test_case_step",
+          "description": "Update a test case step by ID. Supports updating body text and/or expectedResult. If expectedResult is provided, the expected result node is created automatically if it does not exist yet.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "stepId": {
+                "type": "number",
+                "description": "Step ID to update."
+              },
+              "body": {
+                "type": "string",
+                "description": "New step body text."
+              },
+              "expectedResult": {
+                "type": "string",
+                "description": "Expected result text for this step."
+              }
+            },
+            "required": [
+              "stepId"
             ]
           }
         },
@@ -265,7 +290,8 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number"
+                "type": "number",
+                "description": "Test case ID."
               },
               "page": {
                 "type": "number"
@@ -292,7 +318,24 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number"
+                "type": "number",
+                "description": "Test case ID."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "get_test_case_steps",
+          "description": "Get manual scenario steps for a test case. Returns a normalized scenario with root step and a flat map of all steps (scenarioSteps), where each step contains body, expectedResult, children IDs, and optional sharedStepId.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Test case ID."
               }
             },
             "required": [
@@ -513,6 +556,81 @@
               "payload"
             ]
           }
+        },
+        {
+          "name": "list_test_case_attachments",
+          "description": "List attachments for a test case.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "testCaseId": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "testCaseId"
+            ]
+          }
+        },
+        {
+          "name": "upload_test_case_attachment",
+          "description": "Upload a file attachment to a test case. Provide file content as a base64-encoded string.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "testCaseId": {
+                "type": "number"
+              },
+              "filename": {
+                "type": "string",
+                "description": "File name including extension, e.g. screenshot.png."
+              },
+              "contentType": {
+                "type": "string",
+                "description": "MIME type, e.g. image/png or application/pdf."
+              },
+              "contentBase64": {
+                "type": "string",
+                "description": "File content encoded as a base64 string."
+              }
+            },
+            "required": [
+              "testCaseId",
+              "filename",
+              "contentType",
+              "contentBase64"
+            ]
+          }
+        },
+        {
+          "name": "delete_test_case_attachment",
+          "description": "Delete an attachment from a test case by attachment ID.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "attachmentId": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "attachmentId"
+            ]
+          }
+        },
+        {
+          "name": "get_test_case_attachment_content",
+          "description": "Download the binary content of a test case attachment. Returns base64-encoded content with its MIME type.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "attachmentId": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "attachmentId"
+            ]
+          }
         }
       ]
     },
@@ -567,7 +685,8 @@
                 "description": "Project name (alternative to projectId)."
               },
               "rql": {
-                "type": "string"
+                "type": "string",
+                "description": "AQL (Allure Query Language) filter expression. Operators: = != ~= (contains) > < >= <= in [...] and or not. IMPORTANT: 'not in' is written as 'not field in [...]', NOT 'field not in [...]'. Launch fields: id, name, tag, issue, job, ev[\"VAR\"], evv, closed (boolean), createdDate, createdBy, lastModifiedDate, lastModifiedBy. Dates use 13-digit Unix ms timestamps. Examples: name ~= \"nightly\" | closed = false | closed = true | tag in [\"release\", \"pre-release\"] | job = \"jenkins_master\" | ev[\"OS\"] = \"Linux\" | not tag in [\"devbuild\"] | name ~= \"regression\" and closed = true"
               },
               "page": {
                 "type": "number"
@@ -805,7 +924,8 @@
                 "description": "Project name (alternative to projectId)."
               },
               "rql": {
-                "type": "string"
+                "type": "string",
+                "description": "AQL (Allure Query Language) filter expression. Operators: = != ~= (contains) > < >= <= in [...] and or not. IMPORTANT: 'not in' is written as 'not field in [...]', NOT 'field not in [...]'. Test result fields: id, name, fullName, testCase, status, category, tag, issue, role[\"R\"], member, testedBy, cf[\"F\"], cfv, ev[\"VAR\"], evv, layer, muted (boolean), hidden (boolean), launch, createdDate, createdBy, lastModifiedDate, lastModifiedBy. Dates use 13-digit Unix ms timestamps. Examples: status = \"failed\" | status in [\"failed\", \"broken\"] | name ~= \"login\" | muted = false | hidden = false | launch = \"release-1.0\" | ev[\"OS\"] = \"Linux\" | not tag in [\"nightly\"] | status = \"failed\" and muted = false"
               },
               "page": {
                 "type": "number"
@@ -1057,6 +1177,430 @@
               "payload": {
                 "type": "object",
                 "additionalProperties": true
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "tools": [
+        {
+          "name": "get_automation_chart",
+          "description": "Get automation trend chart data for a project (test automation coverage over time).",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "number"
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "tcRql": {
+                "type": "string",
+                "description": "RQL filter for test cases."
+              },
+              "launchRql": {
+                "type": "string",
+                "description": "RQL filter for launches."
+              },
+              "from": {
+                "type": "number",
+                "description": "Start of time range (Unix timestamp ms)."
+              },
+              "to": {
+                "type": "number",
+                "description": "End of time range (Unix timestamp ms)."
+              },
+              "offset": {
+                "type": "number",
+                "description": "Timezone offset in bytes."
+              },
+              "interval": {
+                "type": "string",
+                "description": "Time interval for grouping. One of: \"hour\", \"day\", \"week\", \"month\"."
+              }
+            }
+          }
+        },
+        {
+          "name": "get_group_by_automation",
+          "description": "Get test case counts grouped by automation status for a project.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "number"
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "tcRql": {
+                "type": "string",
+                "description": "RQL filter for test cases."
+              }
+            }
+          }
+        },
+        {
+          "name": "get_group_by_status",
+          "description": "Get test case counts grouped by status for a project.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "number"
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "tcRql": {
+                "type": "string",
+                "description": "RQL filter for test cases."
+              }
+            }
+          }
+        },
+        {
+          "name": "get_launch_duration_histogram",
+          "description": "Get histogram of launch durations for a project.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "number"
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "tcRql": {
+                "type": "string",
+                "description": "RQL filter for test cases."
+              },
+              "launchRql": {
+                "type": "string",
+                "description": "RQL filter for launches."
+              },
+              "from": {
+                "type": "number",
+                "description": "Start of time range (Unix timestamp ms)."
+              },
+              "to": {
+                "type": "number",
+                "description": "End of time range (Unix timestamp ms)."
+              },
+              "buckets": {
+                "type": "number",
+                "description": "Number of histogram buckets (default: 10)."
+              }
+            }
+          }
+        },
+        {
+          "name": "get_mute_trend",
+          "description": "Get trend of muted test cases over time for a project.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "number"
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "from": {
+                "type": "number",
+                "description": "Start of time range (Unix timestamp ms)."
+              },
+              "to": {
+                "type": "number",
+                "description": "End of time range (Unix timestamp ms)."
+              },
+              "interval": {
+                "type": "string",
+                "description": "Time interval for grouping. One of: \"hour\", \"day\", \"week\", \"month\"."
+              }
+            }
+          }
+        },
+        {
+          "name": "get_statistic_trend",
+          "description": "Get test result statistic trend over time for a project.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "number"
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "tcRql": {
+                "type": "string",
+                "description": "RQL filter for test cases."
+              },
+              "launchRql": {
+                "type": "string",
+                "description": "RQL filter for launches."
+              },
+              "from": {
+                "type": "number",
+                "description": "Start of time range (Unix timestamp ms)."
+              },
+              "to": {
+                "type": "number",
+                "description": "End of time range (Unix timestamp ms)."
+              },
+              "offset": {
+                "type": "number",
+                "description": "Timezone offset in bytes."
+              },
+              "interval": {
+                "type": "string",
+                "description": "Time interval for grouping. One of: \"hour\", \"day\", \"week\", \"month\"."
+              }
+            }
+          }
+        },
+        {
+          "name": "get_tc_last_result",
+          "description": "Get last test result for each test case in a project.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "number"
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              }
+            }
+          }
+        },
+        {
+          "name": "get_tc_success_rate",
+          "description": "Get test case success rate analytics over time for a project.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "number"
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "tcRql": {
+                "type": "string",
+                "description": "RQL filter for test cases."
+              },
+              "launchRql": {
+                "type": "string",
+                "description": "RQL filter for launches."
+              },
+              "from": {
+                "type": "number",
+                "description": "Start of time range (Unix timestamp ms)."
+              },
+              "to": {
+                "type": "number",
+                "description": "End of time range (Unix timestamp ms)."
+              },
+              "offset": {
+                "type": "number",
+                "description": "Timezone offset in bytes."
+              },
+              "interval": {
+                "type": "string",
+                "description": "Time interval for grouping. One of: \"hour\", \"day\", \"week\", \"month\"."
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboards",
+      "tools": [
+        {
+          "name": "list_dashboards",
+          "description": "List all dashboards for a project.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "number",
+                "description": "Project ID."
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "page": {
+                "type": "number",
+                "description": "Page number (0-based)."
+              },
+              "size": {
+                "type": "number",
+                "description": "Page size."
+              }
+            }
+          }
+        },
+        {
+          "name": "create_dashboard",
+          "description": "Create a new dashboard in a project.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "number",
+                "description": "Project ID."
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "name": {
+                "type": "string",
+                "description": "Dashboard name."
+              },
+              "shared": {
+                "type": "boolean",
+                "description": "Whether the dashboard is shared with the project."
+              },
+              "payload": {
+                "type": "object",
+                "description": "Additional dashboard fields (e.g. description, widgets)."
+              }
+            },
+            "required": [
+              "name"
+            ]
+          }
+        },
+        {
+          "name": "get_dashboard",
+          "description": "Get a dashboard by ID.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Dashboard ID."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "update_dashboard",
+          "description": "Update dashboard fields (name, shared status, etc.).",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Dashboard ID."
+              },
+              "payload": {
+                "type": "object",
+                "description": "Fields to update (e.g. name, shared)."
+              }
+            },
+            "required": [
+              "id",
+              "payload"
+            ]
+          }
+        },
+        {
+          "name": "delete_dashboard",
+          "description": "Delete a dashboard by ID.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Dashboard ID."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "copy_dashboard",
+          "description": "Copy an existing dashboard to the same or another project.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Source dashboard ID."
+              },
+              "name": {
+                "type": "string",
+                "description": "Name for the copied dashboard."
+              },
+              "projectId": {
+                "type": "number",
+                "description": "Target project ID (defaults to source project)."
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Target project name (alternative to projectId)."
+              },
+              "payload": {
+                "type": "object",
+                "description": "Additional copy options."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "get_widget_data",
+          "description": "Get data for a specific dashboard widget.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Widget ID."
+              },
+              "projectId": {
+                "type": "number",
+                "description": "Project ID for widget context."
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "from": {
+                "type": "number",
+                "description": "Start of time range (Unix timestamp ms)."
+              },
+              "to": {
+                "type": "number",
+                "description": "End of time range (Unix timestamp ms)."
               }
             },
             "required": [

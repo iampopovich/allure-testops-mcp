@@ -2,6 +2,8 @@ import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { createAnalyticTools } from "../src/tools/analytic.js";
+import { createDashboardTools } from "../src/tools/dashboards.js";
 import { createLaunchTools } from "../src/tools/launches.js";
 import { createTestCaseTools } from "../src/tools/test-cases.js";
 import { createTestPlanTools } from "../src/tools/test-plans.js";
@@ -34,6 +36,8 @@ function buildCatalog(): ToolCatalog {
     { name: "Launches", tools: createLaunchTools(noopClient as never).tools },
     { name: "Test Results", tools: createTestResultTools(noopClient as never).tools },
     { name: "Test Plans", tools: createTestPlanTools(noopClient as never).tools },
+    { name: "Analytics", tools: createAnalyticTools(noopClient as never).tools },
+    { name: "Dashboards", tools: createDashboardTools(noopClient as never).tools },
   ];
 
   const totalTools = categories.reduce((acc, category) => acc + category.tools.length, 0);
