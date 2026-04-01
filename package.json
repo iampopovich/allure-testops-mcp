@@ -23,8 +23,21 @@
     "mcp",
     "model-context-protocol",
     "allure",
-    "allure-testops"
+    "allure-testops",
+    "quality-assurance",
+    "test-automation",
+    "test-management",
+    "typescript",
+    "test-automation-tools",
+    "test-case-management",
+    "test-execution",
+    "test-reporting",
+    "llm-integration",
+    "agent-based-testing",
+    "test-analytics",
+    "agent-tool-integration"
   ],
+  
   "author": "iampopovich",
   "license": "MIT",
   "dependencies": {
