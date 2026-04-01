@@ -12,8 +12,8 @@ const ANALYTIC_INTERVAL_DESCRIPTION =
   'Time interval for grouping. One of: "hour", "day", "week", "month".';
 
 const RANGE_PROPERTIES = {
-  from: { type: "number", description: "Start of time range (Unix timestamp ms)." },
-  to: { type: "number", description: "End of time range (Unix timestamp ms)." },
+  from: { type: "number", description: "Start of time range (Unix timestamp ms). Must be a number, not a string." },
+  to: { type: "number", description: "End of time range (Unix timestamp ms). Must be a number, not a string." },
 };
 
 const RQL_PROPERTIES = {
@@ -30,11 +30,11 @@ export function createAnalyticTools(client: AllureApiClient): ToolBundle {
       inputSchema: {
         type: "object" as const,
         properties: {
-          projectId: { type: "number" },
+          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
           projectName: { type: "string", description: "Project name (alternative to projectId)." },
           ...RQL_PROPERTIES,
           ...RANGE_PROPERTIES,
-          offset: { type: "number", description: "Timezone offset in bytes." },
+          offset: { type: "number", description: "Timezone offset in minutes. Must be a number, not a string." },
           interval: { type: "string", description: ANALYTIC_INTERVAL_DESCRIPTION },
         },
       },
@@ -45,7 +45,7 @@ export function createAnalyticTools(client: AllureApiClient): ToolBundle {
       inputSchema: {
         type: "object" as const,
         properties: {
-          projectId: { type: "number" },
+          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
           projectName: { type: "string", description: "Project name (alternative to projectId)." },
           tcRql: RQL_PROPERTIES.tcRql,
         },
@@ -57,7 +57,7 @@ export function createAnalyticTools(client: AllureApiClient): ToolBundle {
       inputSchema: {
         type: "object" as const,
         properties: {
-          projectId: { type: "number" },
+          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
           projectName: { type: "string", description: "Project name (alternative to projectId)." },
           tcRql: RQL_PROPERTIES.tcRql,
         },
@@ -69,11 +69,11 @@ export function createAnalyticTools(client: AllureApiClient): ToolBundle {
       inputSchema: {
         type: "object" as const,
         properties: {
-          projectId: { type: "number" },
+          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
           projectName: { type: "string", description: "Project name (alternative to projectId)." },
           ...RQL_PROPERTIES,
           ...RANGE_PROPERTIES,
-          buckets: { type: "number", description: "Number of histogram buckets (default: 10)." },
+          buckets: { type: "number", description: "Number of histogram buckets (default: 10). Must be a number, not a string." },
         },
       },
     },
@@ -83,7 +83,7 @@ export function createAnalyticTools(client: AllureApiClient): ToolBundle {
       inputSchema: {
         type: "object" as const,
         properties: {
-          projectId: { type: "number" },
+          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
           projectName: { type: "string", description: "Project name (alternative to projectId)." },
           ...RANGE_PROPERTIES,
           interval: { type: "string", description: ANALYTIC_INTERVAL_DESCRIPTION },
@@ -96,11 +96,11 @@ export function createAnalyticTools(client: AllureApiClient): ToolBundle {
       inputSchema: {
         type: "object" as const,
         properties: {
-          projectId: { type: "number" },
+          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
           projectName: { type: "string", description: "Project name (alternative to projectId)." },
           ...RQL_PROPERTIES,
           ...RANGE_PROPERTIES,
-          offset: { type: "number", description: "Timezone offset in bytes." },
+          offset: { type: "number", description: "Timezone offset in minutes. Must be a number, not a string." },
           interval: { type: "string", description: ANALYTIC_INTERVAL_DESCRIPTION },
         },
       },
@@ -111,7 +111,7 @@ export function createAnalyticTools(client: AllureApiClient): ToolBundle {
       inputSchema: {
         type: "object" as const,
         properties: {
-          projectId: { type: "number" },
+          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
           projectName: { type: "string", description: "Project name (alternative to projectId)." },
         },
       },
@@ -122,11 +122,11 @@ export function createAnalyticTools(client: AllureApiClient): ToolBundle {
       inputSchema: {
         type: "object" as const,
         properties: {
-          projectId: { type: "number" },
+          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
           projectName: { type: "string", description: "Project name (alternative to projectId)." },
           ...RQL_PROPERTIES,
           ...RANGE_PROPERTIES,
-          offset: { type: "number", description: "Timezone offset in bytes." },
+          offset: { type: "number", description: "Timezone offset in minutes. Must be a number, not a string." },
           interval: { type: "string", description: ANALYTIC_INTERVAL_DESCRIPTION },
         },
       },

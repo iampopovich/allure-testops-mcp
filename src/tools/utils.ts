@@ -8,25 +8,13 @@ export function asObject(args: unknown): ToolArgs {
   return args as ToolArgs;
 }
 
-export function coerceNumber(value: unknown, key: string): number {
-  if (typeof value === "number" && !Number.isNaN(value)) {
-    return value;
-  }
-  if (typeof value === "string" && value.trim().length > 0) {
-    const parsed = Number(value);
-    if (!Number.isNaN(parsed)) {
-      return parsed;
-    }
-  }
-  throw new Error(`"${key}" must be a number.`);
-}
 
 export function getRequiredNumber(args: ToolArgs, key: string): number {
   const value = args[key];
-  if (value === undefined || value === null) {
+  if (typeof value !== "number" || Number.isNaN(value)) {
     throw new Error(`"${key}" must be a number.`);
   }
-  return coerceNumber(value, key);
+  return value;
 }
 
 export function getOptionalNumber(args: ToolArgs, key: string): number | undefined {
@@ -34,7 +22,10 @@ export function getOptionalNumber(args: ToolArgs, key: string): number | undefin
   if (value === undefined || value === null) {
     return undefined;
   }
-  return coerceNumber(value, key);
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    throw new Error(`"${key}" must be a number when provided.`);
+  }
+  return value;
 }
 
 export function getRequiredString(args: ToolArgs, key: string): string {

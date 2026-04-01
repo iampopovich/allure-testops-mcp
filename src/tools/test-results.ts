@@ -24,9 +24,9 @@ export function createTestResultTools(
         properties: {
           launchId: { type: "number" },
           search: { type: "string" },
-          filterId: { type: "number" },
-          page: { type: "number" },
-          size: { type: "number" },
+          filterId: { type: "number", description: "Saved filter ID. Must be a number (integer), not a string." },
+          page: { type: "number", description: "Page number, 0-based. Must be a number (integer), not a string." },
+          size: { type: "number", description: "Page size. Must be a number (integer), not a string." },
           sort: { type: "array", items: { type: "string" } },
         },
         required: ["launchId"],
@@ -38,7 +38,7 @@ export function createTestResultTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          projectId: { type: "number" },
+          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
           projectName: {
             type: "string",
             description: "Project name (alternative to projectId).",
@@ -59,8 +59,8 @@ export function createTestResultTools(
               'launch = "release-1.0" | ev["OS"] = "Linux" | ' +
               'not tag in ["nightly"] | status = "failed" and muted = false',
           },
-          page: { type: "number" },
-          size: { type: "number" },
+          page: { type: "number", description: "Page number, 0-based. Must be a number (integer), not a string." },
+          size: { type: "number", description: "Page size. Must be a number (integer), not a string." },
           sort: { type: "array", items: { type: "string" } },
         },
         required: ["rql"],
@@ -90,7 +90,7 @@ export function createTestResultTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          id: { type: "number" },
+          id: { type: "number", description: "Test result ID. Must be a number (integer), not a string." },
           payload: { type: "object", additionalProperties: true },
         },
         required: ["id", "payload"],
@@ -102,9 +102,9 @@ export function createTestResultTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          id: { type: "number" },
-          page: { type: "number" },
-          size: { type: "number" },
+          id: { type: "number", description: "Test result ID. Must be a number (integer), not a string." },
+          page: { type: "number", description: "Page number, 0-based. Must be a number (integer), not a string." },
+          size: { type: "number", description: "Page size. Must be a number (integer), not a string." },
           sort: { type: "array", items: { type: "string" } },
         },
         required: ["id"],
@@ -116,7 +116,7 @@ export function createTestResultTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          id: { type: "number" },
+          id: { type: "number", description: "Test result ID. Must be a number (integer), not a string." },
           payload: { type: "object", additionalProperties: true },
         },
         required: ["id", "payload"],
@@ -128,7 +128,7 @@ export function createTestResultTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          id: { type: "number" },
+          id: { type: "number", description: "Test result ID. Must be a number (integer), not a string." },
           payload: { type: "object", additionalProperties: true },
         },
         required: ["id", "payload"],

@@ -21,14 +21,14 @@ export function createTestPlanTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          projectId: { type: "number" },
+          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
           projectName: {
             type: "string",
             description: "Project name (alternative to projectId).",
           },
           search: { type: "string" },
-          page: { type: "number" },
-          size: { type: "number" },
+          page: { type: "number", description: "Page number, 0-based. Must be a number (integer), not a string." },
+          size: { type: "number", description: "Page size. Must be a number (integer), not a string." },
           sort: { type: "array", items: { type: "string" } },
         },
       },
@@ -58,7 +58,7 @@ export function createTestPlanTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          id: { type: "number" },
+          id: { type: "number", description: "Test plan ID. Must be a number (integer), not a string." },
           payload: { type: "object", additionalProperties: true },
         },
         required: ["id", "payload"],
@@ -79,7 +79,7 @@ export function createTestPlanTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          id: { type: "number" },
+          id: { type: "number", description: "Test plan ID. Must be a number (integer), not a string." },
           payload: { type: "object", additionalProperties: true },
         },
         required: ["id"],
