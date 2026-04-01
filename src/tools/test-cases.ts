@@ -207,7 +207,8 @@ export function createTestCaseTools(
       name: "create_test_case",
       description:
         "Create a new test case. payload.projectId defaults to ALLURE_PROJECT_ID env when omitted. payload.customFields supports values like { customField: { id }, id, name }. " +
-        "payload.steps is an optional array of step objects with { name (step text), expectedResult (optional expected result text) } — steps are created after the test case.",
+        "payload.steps is an optional array of step objects with { name (step text), expectedResult (optional expected result text) } — steps are created after the test case. " +
+        "When a step has multiple expected results, list them in expectedResult separated by semicolons (e.g. \"Result A; Result B\") or as a bullet list (lines starting with -, *, or a number).",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -566,6 +567,21 @@ export function createTestCaseTools(
           const expectedResult = typeof s.expectedResult === "string" ? s.expectedResult : undefined;
           const hasExpectedResult = expectedResult !== undefined;
 
+          // Parse multiple expected results: split by semicolons or bullet/numbered list lines.
+          const expectedLines: string[] = [];
+          if (hasExpectedResult) {
+            const BULLET_RE = /^[\s]*(?:[-*•·]|\d+[.)]\s)\s*/;
+            const byNewline = expectedResult!.split("\n")
+              .map(l => l.replace(BULLET_RE, "").trim())
+              .filter(l => l.length > 0);
+            if (byNewline.length > 1) {
+              expectedLines.push(...byNewline);
+            } else {
+              const bySemicolon = expectedResult!.split(";").map(l => l.trim()).filter(l => l.length > 0);
+              expectedLines.push(...(bySemicolon.length > 1 ? bySemicolon : [expectedResult!.trim()]));
+            }
+          }
+
           // POST step; request an expectedResult header node when needed
           const created = await api.createTestCaseStep(
             client,
@@ -580,12 +596,14 @@ export function createTestCaseTools(
               created.scenario?.scenarioSteps?.[String(created.createdStepId)]?.expectedResultId;
 
             if (typeof expectedResultId === "number") {
-              // Create the actual text as a child of the header node.
-              await api.createTestCaseStep(client, {
-                testCaseId,
-                parentId: expectedResultId,
-                body: expectedResult,
-              });
+              // Create one child step per expected result line.
+              for (const line of expectedLines) {
+                await api.createTestCaseStep(client, {
+                  testCaseId,
+                  parentId: expectedResultId,
+                  body: line,
+                });
+              }
             }
           }
         }
