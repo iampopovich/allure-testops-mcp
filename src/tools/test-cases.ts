@@ -148,15 +148,15 @@ export function createTestCaseTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          projectId: { type: "number" },
+          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
           projectName: {
             type: "string",
             description: "Project name (alternative to projectId).",
           },
           search: { type: "string" },
-          filterId: { type: "number" },
-          page: { type: "number" },
-          size: { type: "number" },
+          filterId: { type: "number", description: "Saved filter ID. Must be a number (integer), not a string." },
+          page: { type: "number", description: "Page number, 0-based. Must be a number (integer), not a string." },
+          size: { type: "number", description: "Page size. Must be a number (integer), not a string." },
           sort: { type: "array", items: { type: "string" } },
         },
       },
@@ -167,7 +167,7 @@ export function createTestCaseTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          projectId: { type: "number" },
+          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
           projectName: {
             type: "string",
             description: "Project name (alternative to projectId).",
@@ -187,8 +187,8 @@ export function createTestCaseTools(
               'not tag in ["nightly"] | cf["Epic"] = "Auth" | ' +
               'name ~= "checkout" and muted = false | (createdBy = "a" or createdBy = "b") and automation = true',
           },
-          page: { type: "number" },
-          size: { type: "number" },
+          page: { type: "number", description: "Page number, 0-based. Must be a number (integer), not a string." },
+          size: { type: "number", description: "Page size. Must be a number (integer), not a string." },
           sort: { type: "array", items: { type: "string" } },
         },
         required: ["rql"],
@@ -239,7 +239,7 @@ export function createTestCaseTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          id: { type: "number" },
+          id: { type: "number", description: "Test case ID. Must be a number (integer), not a string." },
           payload: { type: "object", additionalProperties: true },
         },
         required: ["id", "payload"],
@@ -261,12 +261,12 @@ export function createTestCaseTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          projectId: { type: "number" },
+          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
           projectName: {
             type: "string",
             description: "Project name (alternative to projectId).",
           },
-          testCaseId: { type: "number" },
+          testCaseId: { type: "number", description: "Test case ID. Must be a number (integer), not a string." },
           testCaseIds: { type: "array", items: { type: "number" } },
           tag: { type: "object", additionalProperties: true },
           tags: { type: "array", items: { type: "object" } },
@@ -280,14 +280,14 @@ export function createTestCaseTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          projectId: { type: "number" },
+          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
           projectName: {
             type: "string",
             description: "Project name (alternative to projectId).",
           },
-          testCaseId: { type: "number" },
+          testCaseId: { type: "number", description: "Test case ID. Must be a number (integer), not a string." },
           testCaseIds: { type: "array", items: { type: "number" } },
-          tagId: { type: "number" },
+          tagId: { type: "number", description: "Tag ID. Must be a number (integer), not a string." },
           tagIds: { type: "array", items: { type: "number" } },
         },
       },
@@ -299,12 +299,12 @@ export function createTestCaseTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          projectId: { type: "number" },
+          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
           projectName: {
             type: "string",
             description: "Project name (alternative to projectId).",
           },
-          testCaseId: { type: "number" },
+          testCaseId: { type: "number", description: "Test case ID. Must be a number (integer), not a string." },
           testCaseIds: { type: "array", items: { type: "number" } },
           link: { type: "object", additionalProperties: true },
           links: { type: "array", items: { type: "object" } },
@@ -327,8 +327,8 @@ export function createTestCaseTools(
         type: "object" as const,
         properties: {
           id: { type: "number", description: "Test case ID." },
-          page: { type: "number" },
-          size: { type: "number" },
+          page: { type: "number", description: "Page number, 0-based. Must be a number (integer), not a string." },
+          size: { type: "number", description: "Page size. Must be a number (integer), not a string." },
           sort: { type: "array", items: { type: "string" } },
         },
         required: ["id"],
@@ -367,7 +367,7 @@ export function createTestCaseTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          testCaseId: { type: "number" },
+          testCaseId: { type: "number", description: "Test case ID. Must be a number (integer), not a string." },
           payload: { type: "array", items: { type: "object" } },
         },
         required: ["testCaseId", "payload"],
@@ -388,7 +388,7 @@ export function createTestCaseTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          testCaseId: { type: "number" },
+          testCaseId: { type: "number", description: "Test case ID. Must be a number (integer), not a string." },
           payload: { type: "array", items: { type: "object" } },
         },
         required: ["testCaseId", "payload"],
@@ -409,14 +409,14 @@ export function createTestCaseTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          projectId: { type: "number" },
+          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
           projectName: {
             type: "string",
             description: "Project name (alternative to projectId).",
           },
           query: { type: "string" },
-          page: { type: "number" },
-          size: { type: "number" },
+          page: { type: "number", description: "Page number, 0-based. Must be a number (integer), not a string." },
+          size: { type: "number", description: "Page size. Must be a number (integer), not a string." },
           sort: { type: "array", items: { type: "string" } },
         },
       },
@@ -427,17 +427,17 @@ export function createTestCaseTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          projectId: { type: "number" },
+          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
           projectName: {
             type: "string",
             description: "Project name (alternative to projectId).",
           },
-          customFieldId: { type: "number" },
+          customFieldId: { type: "number", description: "Custom field ID. Must be a number (integer), not a string." },
           query: { type: "string" },
           global: { type: "boolean" },
           testCaseSearch: { type: "string" },
-          page: { type: "number" },
-          size: { type: "number" },
+          page: { type: "number", description: "Page number, 0-based. Must be a number (integer), not a string." },
+          size: { type: "number", description: "Page size. Must be a number (integer), not a string." },
           sort: { type: "array", items: { type: "string" } },
         },
         required: ["customFieldId"],
@@ -449,8 +449,8 @@ export function createTestCaseTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          testCaseId: { type: "number" },
-          projectId: { type: "number" },
+          testCaseId: { type: "number", description: "Test case ID. Must be a number (integer), not a string." },
+          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
           projectName: {
             type: "string",
             description: "Project name (alternative to projectId).",
@@ -466,8 +466,8 @@ export function createTestCaseTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          testCaseId: { type: "number" },
-          projectId: { type: "number" },
+          testCaseId: { type: "number", description: "Test case ID. Must be a number (integer), not a string." },
+          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
           projectName: {
             type: "string",
             description: "Project name (alternative to projectId).",
@@ -483,7 +483,7 @@ export function createTestCaseTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          testCaseId: { type: "number" },
+          testCaseId: { type: "number", description: "Test case ID. Must be a number (integer), not a string." },
         },
         required: ["testCaseId"],
       },
@@ -495,7 +495,7 @@ export function createTestCaseTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          testCaseId: { type: "number" },
+          testCaseId: { type: "number", description: "Test case ID. Must be a number (integer), not a string." },
           filename: { type: "string", description: "File name including extension, e.g. screenshot.png." },
           contentType: { type: "string", description: "MIME type, e.g. image/png or application/pdf." },
           contentBase64: { type: "string", description: "File content encoded as a base64 string." },
@@ -509,7 +509,7 @@ export function createTestCaseTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          attachmentId: { type: "number" },
+          attachmentId: { type: "number", description: "Attachment ID. Must be a number (integer), not a string." },
         },
         required: ["attachmentId"],
       },
@@ -521,7 +521,7 @@ export function createTestCaseTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          attachmentId: { type: "number" },
+          attachmentId: { type: "number", description: "Attachment ID. Must be a number (integer), not a string." },
         },
         required: ["attachmentId"],
       },

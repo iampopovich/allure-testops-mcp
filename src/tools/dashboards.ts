@@ -19,10 +19,10 @@ export function createDashboardTools(client: AllureApiClient): ToolBundle {
       inputSchema: {
         type: "object" as const,
         properties: {
-          projectId: { type: "number", description: "Project ID." },
+          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
           projectName: { type: "string", description: "Project name (alternative to projectId)." },
-          page: { type: "number", description: "Page number (0-based)." },
-          size: { type: "number", description: "Page size." },
+          page: { type: "number", description: "Page number, 0-based. Must be a number (integer), not a string." },
+          size: { type: "number", description: "Page size. Must be a number (integer), not a string." },
         },
       },
     },
@@ -32,7 +32,7 @@ export function createDashboardTools(client: AllureApiClient): ToolBundle {
       inputSchema: {
         type: "object" as const,
         properties: {
-          projectId: { type: "number", description: "Project ID." },
+          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
           projectName: { type: "string", description: "Project name (alternative to projectId)." },
           name: { type: "string", description: "Dashboard name." },
           shared: { type: "boolean", description: "Whether the dashboard is shared with the project." },
@@ -50,7 +50,7 @@ export function createDashboardTools(client: AllureApiClient): ToolBundle {
       inputSchema: {
         type: "object" as const,
         properties: {
-          id: { type: "number", description: "Dashboard ID." },
+          id: { type: "number", description: "Dashboard ID. Must be a number (integer), not a string." },
         },
         required: ["id"],
       },
@@ -61,7 +61,7 @@ export function createDashboardTools(client: AllureApiClient): ToolBundle {
       inputSchema: {
         type: "object" as const,
         properties: {
-          id: { type: "number", description: "Dashboard ID." },
+          id: { type: "number", description: "Dashboard ID. Must be a number (integer), not a string." },
           payload: {
             type: "object",
             description: "Fields to update (e.g. name, shared).",
@@ -76,7 +76,7 @@ export function createDashboardTools(client: AllureApiClient): ToolBundle {
       inputSchema: {
         type: "object" as const,
         properties: {
-          id: { type: "number", description: "Dashboard ID." },
+          id: { type: "number", description: "Dashboard ID. Must be a number (integer), not a string." },
         },
         required: ["id"],
       },
@@ -87,7 +87,7 @@ export function createDashboardTools(client: AllureApiClient): ToolBundle {
       inputSchema: {
         type: "object" as const,
         properties: {
-          id: { type: "number", description: "Source dashboard ID." },
+          id: { type: "number", description: "Source dashboard ID. Must be a number (integer), not a string." },
           name: { type: "string", description: "Name for the copied dashboard." },
           projectId: { type: "number", description: "Target project ID (defaults to source project)." },
           projectName: { type: "string", description: "Target project name (alternative to projectId)." },
@@ -105,11 +105,11 @@ export function createDashboardTools(client: AllureApiClient): ToolBundle {
       inputSchema: {
         type: "object" as const,
         properties: {
-          id: { type: "number", description: "Widget ID." },
-          projectId: { type: "number", description: "Project ID for widget context." },
+          id: { type: "number", description: "Widget ID. Must be a number (integer), not a string." },
+          projectId: { type: "number", description: "Project ID for widget context. Must be a number (integer), not a string." },
           projectName: { type: "string", description: "Project name (alternative to projectId)." },
-          from: { type: "number", description: "Start of time range (Unix timestamp ms)." },
-          to: { type: "number", description: "End of time range (Unix timestamp ms)." },
+          from: { type: "number", description: "Start of time range (Unix timestamp ms). Must be a number, not a string." },
+          to: { type: "number", description: "End of time range (Unix timestamp ms). Must be a number, not a string." },
         },
         required: ["id"],
       },
