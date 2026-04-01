@@ -18,7 +18,7 @@ Preferred for direct GitHub source execution:
 ```json
 {
   "command": "npx",
-  "args": ["-y", "github:armanayvazyan/allure-testops-mcp"],
+  "args": ["-y", "github:iampopovich/allure-testops-mcp"],
   "env": {
     "ALLURE_TESTOPS_URL": "https://your-allure-instance.com",
     "ALLURE_TOKEN": "your-api-token",

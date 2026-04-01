@@ -11,5 +11,5 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 - Public OSS docs set (`CONTRIBUTING`, `LICENSE`, `CODE_OF_CONDUCT`, `SECURITY`)
 - Expanded README with MCP setup instructions for Claude Desktop, Claude Code, Cursor, and other clients
 - GitHub Actions CI (`build` then `lint`) for push and pull requests
-- CODEOWNERS and automatic reviewer request for `@armanayvazyan`
+- CODEOWNERS and automatic reviewer request for `@iampopovich`
 - Dependabot, stale triage workflow, and release drafter automation

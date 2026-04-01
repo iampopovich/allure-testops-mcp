@@ -38,7 +38,7 @@ User-focused runtime and integration docs are in [`docs/usages/`](./docs/usages/
 
 The auto-generated MCP tool catalog is published via GitHub Pages:
 
-- https://armanayvazyan.github.io/allure-testops-mcp/
+- https://iampopovich.github.io/allure-testops-mcp/
 
 The page content is generated from source tool definitions. When a new tool is added to `src/tools/*.ts`, the Pages workflow regenerates `docs/tools.json` and updates the site automatically.
 
@@ -80,7 +80,7 @@ If `ALLURE_PROJECT_ID` is not set, tools that require project scope must receive
 1) Clone the repository:
 
 ```bash
-git clone https://github.com/armanayvazyan/allure-testops-mcp.git
+git clone https://github.com/iampopovich/allure-testops-mcp.git
 cd allure-testops-mcp
 ```
 
@@ -133,13 +133,6 @@ npm run test:integration
 
 Use one of these server commands:
 
-- Local build:
-  - `command`: `node`
-  - `args`: `["/absolute/path/to/allure-testops-mcp/dist/index.js"]`
-- `npx` (GitHub spec):
-  - `command`: `npx`
-  - `args`: `["-y", "github:armanayvazyan/allure-testops-mcp"]`
-
 Common config block:
 
 ```json
@@ -147,35 +140,63 @@ Common config block:
   "mcpServers": {
     "allure-testops": {
       "command": "npx",
-      "args": ["-y", "github:armanayvazyan/allure-testops-mcp"],
+      "args": ["-y", "github:{repo-name}/allure-testops-mcp"],
       "env": {
-        "ALLURE_TESTOPS_URL": "https://allure-testops.instance.com",
-        "ALLURE_TOKEN": "your-api-token",
-        "ALLURE_PROJECT_ID": "37"
+        "ALLURE_TESTOPS_URL": "https://{allure-testops-instance-address}",
+        "ALLURE_TOKEN": "{your-api-token}",
+        "ALLURE_PROJECT_ID": "{allure-project-id}"
       }
     }
   }
 }
 ```
+<details>
+<summary><strong>Local build</strong></summary>
 
-### Claude Desktop
+- `command`: `node`
+- `args`: `["/absolute/path/to/allure-testops-mcp/dist/index.js"]`
+- `example`: `node c:\users\username\allure-testops-mcp/dist/index.js`
+
+</details>
+
+<details>
+<summary><strong>npx (GitHub spec)</strong></summary>
+
+- `command`: `npx`
+- `args`: `["-y", "github:iampopovich/allure-testops-mcp"]`
+
+</details>
+
+<details>
+<summary><strong>Claude Desktop</strong></summary>
 
 - Open Claude Desktop MCP settings and add the `mcpServers` JSON entry above.
 - Restart Claude Desktop after saving config.
 
-### Claude Code
+</details>
+
+<details>
+<summary><strong>Claude Code</strong></summary>
 
 - Add the same `mcpServers` entry in your Claude Code MCP configuration.
 - Restart your Claude Code session to load the server.
 
-### Cursor
+</details>
+
+<details>
+<summary><strong>Cursor</strong></summary>
 
 - Open Cursor MCP settings and add the same `mcpServers` entry.
 - Restart Cursor (or reload MCP servers) after saving.
 
-### Other MCP Clients
+</details>
+
+<details>
+<summary><strong>Other MCP Clients</strong></summary>
 
 Any MCP client that supports `stdio` servers can use this project with the same command/env configuration.
+
+</details>
 
 ## CI and Quality Gates
 
@@ -185,20 +206,6 @@ This repository includes GitHub Actions checks for pushed code and pull requests
 - lint (`npm run lint`)
 
 CI workflow: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
-
-## Review and Merge Policy
-
-The repository uses code ownership with `@armanayvazyan`:
-
-- [`.github/CODEOWNERS`](.github/CODEOWNERS)
-- [`.github/workflows/auto-review-request.yml`](.github/workflows/auto-review-request.yml) auto-requests `@armanayvazyan` on new PRs
-
-To require approval before merge, enable branch protection on your default branch with:
-
-1. Require a pull request before merging
-2. Require approvals
-3. Require review from Code Owners
-4. Require status checks to pass (`CI / checks`)
 
 ## OSS Automation
 

@@ -58,7 +58,7 @@ To enforce review and quality gates on the default branch:
 - Require review from Code Owners
 - Require status checks to pass (`CI / checks`)
 
-Code owner is configured in [`.github/CODEOWNERS`](.github/CODEOWNERS) and points to `@armanayvazyan`.
+Code owner is configured in [`.github/CODEOWNERS`](.github/CODEOWNERS) and points to `@iampopovich`.
 
 ## Commit Guidelines
 

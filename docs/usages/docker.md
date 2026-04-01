@@ -9,7 +9,7 @@ docker run -i --rm \
   -e ALLURE_TESTOPS_URL=https://your-allure-instance.com \
   -e ALLURE_TOKEN=your-api-token \
   -e ALLURE_PROJECT_ID=37 \
-  armanayvazyan/allure-testops-mcp:latest
+  iampopovich/allure-testops-mcp:latest
 ```
 
 ## MCP Server Command (Docker)
@@ -27,7 +27,7 @@ docker run -i --rm \
     "ALLURE_TOKEN=your-api-token",
     "-e",
     "ALLURE_PROJECT_ID=37",
-    "armanayvazyan/allure-testops-mcp:latest"
+    "iampopovich/allure-testops-mcp:latest"
   ]
 }
 ```

@@ -1,0 +1,17 @@
+src/
+tests/
+scripts/
+.github/
+docs/usages/examples/
+allure_api_docs.json
+CLAUDE.md
+DOCKER.md
+Dockerfile
+docker-compose.yml
+eslint.config.js
+tsconfig.json
+vitest.config.ts
+qodana.yaml
+.editorconfig
+.dockerignore
+*.tgz
