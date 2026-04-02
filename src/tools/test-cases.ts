@@ -225,7 +225,7 @@ export function createTestCaseTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          stepId: { type: "number", description: "Step ID to update." },
+          stepId: { type: "number", description: "Step ID to update. Must be a number (integer), not a string." },
           body: { type: "string", description: "New step body text." },
           expectedResult: { type: "string", description: "Expected result text for this step." },
         },
@@ -326,7 +326,7 @@ export function createTestCaseTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          id: { type: "number", description: "Test case ID." },
+          id: { type: "number", description: "Test case ID. Must be a number (integer), not a string." },
           page: { type: "number", description: "Page number, 0-based. Must be a number (integer), not a string." },
           size: { type: "number", description: "Page size. Must be a number (integer), not a string." },
           sort: { type: "array", items: { type: "string" } },
@@ -339,7 +339,7 @@ export function createTestCaseTools(
       description: "Get scenario for a test case.",
       inputSchema: {
         type: "object" as const,
-        properties: { id: { type: "number", description: "Test case ID." } },
+        properties: { id: { type: "number", description: "Test case ID. Must be a number (integer), not a string." } },
         required: ["id"],
       },
     },
@@ -348,7 +348,7 @@ export function createTestCaseTools(
       description: "Get manual scenario steps for a test case. Returns a normalized scenario with root step and a flat map of all steps (scenarioSteps), where each step contains body, expectedResult, children IDs, and optional sharedStepId.",
       inputSchema: {
         type: "object" as const,
-        properties: { id: { type: "number", description: "Test case ID." } },
+        properties: { id: { type: "number", description: "Test case ID. Must be a number (integer), not a string." } },
         required: ["id"],
       },
     },
