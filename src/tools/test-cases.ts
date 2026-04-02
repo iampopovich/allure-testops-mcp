@@ -208,7 +208,7 @@ export function createTestCaseTools(
       description:
         "Create a new test case. payload.projectId defaults to ALLURE_PROJECT_ID env when omitted. " +
         "payload.precondition (string) is the preconditions field — always use this for preconditions/prerequisites text, NOT payload.description. " +
-        "payload.description (string) is the general test case description (unrelated to preconditions). " +
+        "payload.description (string) is the general test case description — always populate this with a meaningful summary of what the test case verifies. " +
         "payload.customFields supports values like { customField: { id }, id, name }. " +
         "payload.steps is an optional array of step objects with { name (step text), expectedResult (optional expected result text) } — steps are created after the test case. " +
         "When a step has multiple expected results, list them in expectedResult separated by semicolons (e.g. \"Result A; Result B\") or as a bullet list (lines starting with -, *, or a number).",
