@@ -1,5 +1,7 @@
 # Allure TestOps MCP
 
+[![npm version](https://img.shields.io/npm/v/allure-testops-mcp)](https://www.npmjs.com/package/allure-testops-mcp) [![monthly downloads](https://img.shields.io/npm/dm/allure-testops-mcp)](https://www.npmjs.com/package/allure-testops-mcp) [![total downloads](https://img.shields.io/npm/dt/allure-testops-mcp)](https://www.npmjs.com/package/allure-testops-mcp) [![package size](https://img.shields.io/bundlephobia/min/allure-testops-mcp)](https://bundlephobia.com/package/allure-testops-mcp) [![MIT License](https://img.shields.io/npm/l/allure-testops-mcp)](https://github.com/iampopovich/allure-testops-mcp/blob/main/LICENSE) [![CI](https://github.com/iampopovich/allure-testops-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/iampopovich/allure-testops-mcp/actions/workflows/ci.yml)
+
 Production-ready MCP server for Allure TestOps focused on test cases, launches, test results, and test plans.
 
 ## Features
