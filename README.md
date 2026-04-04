@@ -20,6 +20,9 @@ Production-ready MCP server for Allure TestOps focused on test cases, launches, 
 - **Test plans**: list, get, create, update, delete, run
 - **Analytics**: automation chart, group by automation/status, launch duration histogram, mute trend, statistic trend, test case last result, test case success rate
 - **Dashboards**: list, get, create, update, delete, copy, widget data
+- **Members**: suggest users, list project members, launch member stats, test case members, test result members
+- **Shared Steps**: list, get, get steps (inline scenario), usage, create, update, archive, unarchive
+- **Environments**: list env vars, suggest env vars, list schemas, list values, suggest values, get result env vars
 
 ## User Usage Docs
 
@@ -36,6 +39,9 @@ User-focused runtime and integration docs are in [`docs/usages/`](./docs/usages/
 - [`docs/usages/examples/test-results.md`](./docs/usages/examples/test-results.md)
 - [`docs/usages/examples/test-plans.md`](./docs/usages/examples/test-plans.md)
 - [`docs/usages/examples/custom-fields.md`](./docs/usages/examples/custom-fields.md)
+- [`docs/usages/examples/members.md`](./docs/usages/examples/members.md)
+- [`docs/usages/examples/shared-steps.md`](./docs/usages/examples/shared-steps.md)
+- [`docs/usages/examples/environments.md`](./docs/usages/examples/environments.md)
 - [`docs/usages/examples/workflows.md`](./docs/usages/examples/workflows.md)
 
 ## Tool Catalog (GitHub Pages)

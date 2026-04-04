@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-03-30T17:43:56.281Z",
-  "totalTools": 68,
+  "generatedAt": "2026-04-04T17:01:32.554Z",
+  "totalTools": 87,
   "categories": [
     {
       "name": "Test Cases",
@@ -12,7 +12,8 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number"
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
                 "type": "string",
@@ -22,13 +23,16 @@
                 "type": "string"
               },
               "filterId": {
-                "type": "number"
+                "type": "number",
+                "description": "Saved filter ID. Must be a number (integer), not a string."
               },
               "page": {
-                "type": "number"
+                "type": "number",
+                "description": "Page number, 0-based. Must be a number (integer), not a string."
               },
               "size": {
-                "type": "number"
+                "type": "number",
+                "description": "Page size. Must be a number (integer), not a string."
               },
               "sort": {
                 "type": "array",
@@ -46,7 +50,8 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number"
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
                 "type": "string",
@@ -57,10 +62,12 @@
                 "description": "AQL (Allure Query Language) filter expression. Operators: = != ~= (contains) > < >= <= in [...] and or not. IMPORTANT: 'not in' is written as 'not field in [...]', NOT 'field not in [...]'. Test case fields: id, name, tag, issue, role[\"R\"], member, cf[\"F\"], cfv, layer, status, workflow, testPlan, automation (boolean), muted, mutedDate, createdDate, createdBy, lastModifiedDate, lastModifiedBy. Dates use 13-digit Unix ms timestamps. Examples: name ~= \"login\" | automation = true | automation = false | status = \"Active\" | tag in [\"smoke\", \"regression\"] | not tag in [\"nightly\"] | cf[\"Epic\"] = \"Auth\" | name ~= \"checkout\" and muted = false | (createdBy = \"a\" or createdBy = \"b\") and automation = true"
               },
               "page": {
-                "type": "number"
+                "type": "number",
+                "description": "Page number, 0-based. Must be a number (integer), not a string."
               },
               "size": {
-                "type": "number"
+                "type": "number",
+                "description": "Page size. Must be a number (integer), not a string."
               },
               "sort": {
                 "type": "array",
@@ -91,7 +98,7 @@
         },
         {
           "name": "create_test_case",
-          "description": "Create a new test case. payload.projectId defaults to ALLURE_PROJECT_ID env when omitted. payload.customFields supports values like { customField: { id }, id, name }. payload.steps is an optional array of step objects with { name (step text), expectedResult (optional expected result text) } — steps are created after the test case.",
+          "description": "Create a new test case. payload.projectId defaults to ALLURE_PROJECT_ID env when omitted. payload.precondition (string) is the preconditions field — always use this for preconditions/prerequisites text, NOT payload.description. payload.description (string) is the general test case description — always populate this with a meaningful summary of what the test case verifies. payload.customFields supports values like { customField: { id }, id, name }. payload.steps is an optional array of step objects with { name (step text), expectedResult (optional expected result text) } — steps are created after the test case. When a step has multiple expected results, list them in expectedResult separated by semicolons (e.g. \"Result A; Result B\") or as a bullet list (lines starting with -, *, or a number).",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -113,7 +120,7 @@
             "properties": {
               "stepId": {
                 "type": "number",
-                "description": "Step ID to update."
+                "description": "Step ID to update. Must be a number (integer), not a string."
               },
               "body": {
                 "type": "string",
@@ -136,7 +143,8 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number"
+                "type": "number",
+                "description": "Test case ID. Must be a number (integer), not a string."
               },
               "payload": {
                 "type": "object",
@@ -171,14 +179,16 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number"
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
                 "type": "string",
                 "description": "Project name (alternative to projectId)."
               },
               "testCaseId": {
-                "type": "number"
+                "type": "number",
+                "description": "Test case ID. Must be a number (integer), not a string."
               },
               "testCaseIds": {
                 "type": "array",
@@ -206,14 +216,16 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number"
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
                 "type": "string",
                 "description": "Project name (alternative to projectId)."
               },
               "testCaseId": {
-                "type": "number"
+                "type": "number",
+                "description": "Test case ID. Must be a number (integer), not a string."
               },
               "testCaseIds": {
                 "type": "array",
@@ -222,7 +234,8 @@
                 }
               },
               "tagId": {
-                "type": "number"
+                "type": "number",
+                "description": "Tag ID. Must be a number (integer), not a string."
               },
               "tagIds": {
                 "type": "array",
@@ -240,14 +253,16 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number"
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
                 "type": "string",
                 "description": "Project name (alternative to projectId)."
               },
               "testCaseId": {
-                "type": "number"
+                "type": "number",
+                "description": "Test case ID. Must be a number (integer), not a string."
               },
               "testCaseIds": {
                 "type": "array",
@@ -291,13 +306,15 @@
             "properties": {
               "id": {
                 "type": "number",
-                "description": "Test case ID."
+                "description": "Test case ID. Must be a number (integer), not a string."
               },
               "page": {
-                "type": "number"
+                "type": "number",
+                "description": "Page number, 0-based. Must be a number (integer), not a string."
               },
               "size": {
-                "type": "number"
+                "type": "number",
+                "description": "Page size. Must be a number (integer), not a string."
               },
               "sort": {
                 "type": "array",
@@ -319,7 +336,7 @@
             "properties": {
               "id": {
                 "type": "number",
-                "description": "Test case ID."
+                "description": "Test case ID. Must be a number (integer), not a string."
               }
             },
             "required": [
@@ -335,7 +352,7 @@
             "properties": {
               "id": {
                 "type": "number",
-                "description": "Test case ID."
+                "description": "Test case ID. Must be a number (integer), not a string."
               }
             },
             "required": [
@@ -365,7 +382,8 @@
             "type": "object",
             "properties": {
               "testCaseId": {
-                "type": "number"
+                "type": "number",
+                "description": "Test case ID. Must be a number (integer), not a string."
               },
               "payload": {
                 "type": "array",
@@ -402,7 +420,8 @@
             "type": "object",
             "properties": {
               "testCaseId": {
-                "type": "number"
+                "type": "number",
+                "description": "Test case ID. Must be a number (integer), not a string."
               },
               "payload": {
                 "type": "array",
@@ -439,7 +458,8 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number"
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
                 "type": "string",
@@ -449,10 +469,12 @@
                 "type": "string"
               },
               "page": {
-                "type": "number"
+                "type": "number",
+                "description": "Page number, 0-based. Must be a number (integer), not a string."
               },
               "size": {
-                "type": "number"
+                "type": "number",
+                "description": "Page size. Must be a number (integer), not a string."
               },
               "sort": {
                 "type": "array",
@@ -470,14 +492,16 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number"
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
                 "type": "string",
                 "description": "Project name (alternative to projectId)."
               },
               "customFieldId": {
-                "type": "number"
+                "type": "number",
+                "description": "Custom field ID. Must be a number (integer), not a string."
               },
               "query": {
                 "type": "string"
@@ -489,10 +513,12 @@
                 "type": "string"
               },
               "page": {
-                "type": "number"
+                "type": "number",
+                "description": "Page number, 0-based. Must be a number (integer), not a string."
               },
               "size": {
-                "type": "number"
+                "type": "number",
+                "description": "Page size. Must be a number (integer), not a string."
               },
               "sort": {
                 "type": "array",
@@ -513,10 +539,12 @@
             "type": "object",
             "properties": {
               "testCaseId": {
-                "type": "number"
+                "type": "number",
+                "description": "Test case ID. Must be a number (integer), not a string."
               },
               "projectId": {
-                "type": "number"
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
                 "type": "string",
@@ -535,10 +563,12 @@
             "type": "object",
             "properties": {
               "testCaseId": {
-                "type": "number"
+                "type": "number",
+                "description": "Test case ID. Must be a number (integer), not a string."
               },
               "projectId": {
-                "type": "number"
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
                 "type": "string",
@@ -564,7 +594,8 @@
             "type": "object",
             "properties": {
               "testCaseId": {
-                "type": "number"
+                "type": "number",
+                "description": "Test case ID. Must be a number (integer), not a string."
               }
             },
             "required": [
@@ -579,7 +610,8 @@
             "type": "object",
             "properties": {
               "testCaseId": {
-                "type": "number"
+                "type": "number",
+                "description": "Test case ID. Must be a number (integer), not a string."
               },
               "filename": {
                 "type": "string",
@@ -609,7 +641,8 @@
             "type": "object",
             "properties": {
               "attachmentId": {
-                "type": "number"
+                "type": "number",
+                "description": "Attachment ID. Must be a number (integer), not a string."
               }
             },
             "required": [
@@ -624,7 +657,8 @@
             "type": "object",
             "properties": {
               "attachmentId": {
-                "type": "number"
+                "type": "number",
+                "description": "Attachment ID. Must be a number (integer), not a string."
               }
             },
             "required": [
@@ -644,7 +678,8 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number"
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
                 "type": "string",
@@ -654,13 +689,16 @@
                 "type": "string"
               },
               "filterId": {
-                "type": "number"
+                "type": "number",
+                "description": "Saved filter ID. Must be a number (integer), not a string."
               },
               "page": {
-                "type": "number"
+                "type": "number",
+                "description": "Page number, 0-based. Must be a number (integer), not a string."
               },
               "size": {
-                "type": "number"
+                "type": "number",
+                "description": "Page size. Must be a number (integer), not a string."
               },
               "sort": {
                 "type": "array",
@@ -678,7 +716,8 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number"
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
                 "type": "string",
@@ -689,10 +728,12 @@
                 "description": "AQL (Allure Query Language) filter expression. Operators: = != ~= (contains) > < >= <= in [...] and or not. IMPORTANT: 'not in' is written as 'not field in [...]', NOT 'field not in [...]'. Launch fields: id, name, tag, issue, job, ev[\"VAR\"], evv, closed (boolean), createdDate, createdBy, lastModifiedDate, lastModifiedBy. Dates use 13-digit Unix ms timestamps. Examples: name ~= \"nightly\" | closed = false | closed = true | tag in [\"release\", \"pre-release\"] | job = \"jenkins_master\" | ev[\"OS\"] = \"Linux\" | not tag in [\"devbuild\"] | name ~= \"regression\" and closed = true"
               },
               "page": {
-                "type": "number"
+                "type": "number",
+                "description": "Page number, 0-based. Must be a number (integer), not a string."
               },
               "size": {
-                "type": "number"
+                "type": "number",
+                "description": "Page size. Must be a number (integer), not a string."
               },
               "sort": {
                 "type": "array",
@@ -744,7 +785,8 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number"
+                "type": "number",
+                "description": "Launch ID. Must be a number (integer), not a string."
               },
               "payload": {
                 "type": "object",
@@ -839,7 +881,8 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number"
+                "type": "number",
+                "description": "Launch ID. Must be a number (integer), not a string."
               },
               "payload": {
                 "type": "object",
@@ -859,7 +902,8 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number"
+                "type": "number",
+                "description": "Launch ID. Must be a number (integer), not a string."
               },
               "payload": {
                 "type": "object",
@@ -890,13 +934,16 @@
                 "type": "string"
               },
               "filterId": {
-                "type": "number"
+                "type": "number",
+                "description": "Saved filter ID. Must be a number (integer), not a string."
               },
               "page": {
-                "type": "number"
+                "type": "number",
+                "description": "Page number, 0-based. Must be a number (integer), not a string."
               },
               "size": {
-                "type": "number"
+                "type": "number",
+                "description": "Page size. Must be a number (integer), not a string."
               },
               "sort": {
                 "type": "array",
@@ -917,7 +964,8 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number"
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
                 "type": "string",
@@ -928,10 +976,12 @@
                 "description": "AQL (Allure Query Language) filter expression. Operators: = != ~= (contains) > < >= <= in [...] and or not. IMPORTANT: 'not in' is written as 'not field in [...]', NOT 'field not in [...]'. Test result fields: id, name, fullName, testCase, status, category, tag, issue, role[\"R\"], member, testedBy, cf[\"F\"], cfv, ev[\"VAR\"], evv, layer, muted (boolean), hidden (boolean), launch, createdDate, createdBy, lastModifiedDate, lastModifiedBy. Dates use 13-digit Unix ms timestamps. Examples: status = \"failed\" | status in [\"failed\", \"broken\"] | name ~= \"login\" | muted = false | hidden = false | launch = \"release-1.0\" | ev[\"OS\"] = \"Linux\" | not tag in [\"nightly\"] | status = \"failed\" and muted = false"
               },
               "page": {
-                "type": "number"
+                "type": "number",
+                "description": "Page number, 0-based. Must be a number (integer), not a string."
               },
               "size": {
-                "type": "number"
+                "type": "number",
+                "description": "Page size. Must be a number (integer), not a string."
               },
               "sort": {
                 "type": "array",
@@ -983,7 +1033,8 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number"
+                "type": "number",
+                "description": "Test result ID. Must be a number (integer), not a string."
               },
               "payload": {
                 "type": "object",
@@ -1003,13 +1054,16 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number"
+                "type": "number",
+                "description": "Test result ID. Must be a number (integer), not a string."
               },
               "page": {
-                "type": "number"
+                "type": "number",
+                "description": "Page number, 0-based. Must be a number (integer), not a string."
               },
               "size": {
-                "type": "number"
+                "type": "number",
+                "description": "Page size. Must be a number (integer), not a string."
               },
               "sort": {
                 "type": "array",
@@ -1030,7 +1084,8 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number"
+                "type": "number",
+                "description": "Test result ID. Must be a number (integer), not a string."
               },
               "payload": {
                 "type": "object",
@@ -1050,7 +1105,8 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number"
+                "type": "number",
+                "description": "Test result ID. Must be a number (integer), not a string."
               },
               "payload": {
                 "type": "object",
@@ -1075,7 +1131,8 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number"
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
                 "type": "string",
@@ -1085,10 +1142,12 @@
                 "type": "string"
               },
               "page": {
-                "type": "number"
+                "type": "number",
+                "description": "Page number, 0-based. Must be a number (integer), not a string."
               },
               "size": {
-                "type": "number"
+                "type": "number",
+                "description": "Page size. Must be a number (integer), not a string."
               },
               "sort": {
                 "type": "array",
@@ -1137,7 +1196,8 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number"
+                "type": "number",
+                "description": "Test plan ID. Must be a number (integer), not a string."
               },
               "payload": {
                 "type": "object",
@@ -1172,7 +1232,8 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number"
+                "type": "number",
+                "description": "Test plan ID. Must be a number (integer), not a string."
               },
               "payload": {
                 "type": "object",
@@ -1196,7 +1257,8 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number"
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
                 "type": "string",
@@ -1212,15 +1274,15 @@
               },
               "from": {
                 "type": "number",
-                "description": "Start of time range (Unix timestamp ms)."
+                "description": "Start of time range (Unix timestamp ms). Must be a number, not a string."
               },
               "to": {
                 "type": "number",
-                "description": "End of time range (Unix timestamp ms)."
+                "description": "End of time range (Unix timestamp ms). Must be a number, not a string."
               },
               "offset": {
                 "type": "number",
-                "description": "Timezone offset in bytes."
+                "description": "Timezone offset in minutes. Must be a number, not a string."
               },
               "interval": {
                 "type": "string",
@@ -1236,7 +1298,8 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number"
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
                 "type": "string",
@@ -1256,7 +1319,8 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number"
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
                 "type": "string",
@@ -1276,7 +1340,8 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number"
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
                 "type": "string",
@@ -1292,15 +1357,15 @@
               },
               "from": {
                 "type": "number",
-                "description": "Start of time range (Unix timestamp ms)."
+                "description": "Start of time range (Unix timestamp ms). Must be a number, not a string."
               },
               "to": {
                 "type": "number",
-                "description": "End of time range (Unix timestamp ms)."
+                "description": "End of time range (Unix timestamp ms). Must be a number, not a string."
               },
               "buckets": {
                 "type": "number",
-                "description": "Number of histogram buckets (default: 10)."
+                "description": "Number of histogram buckets (default: 10). Must be a number, not a string."
               }
             }
           }
@@ -1312,7 +1377,8 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number"
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
                 "type": "string",
@@ -1320,11 +1386,11 @@
               },
               "from": {
                 "type": "number",
-                "description": "Start of time range (Unix timestamp ms)."
+                "description": "Start of time range (Unix timestamp ms). Must be a number, not a string."
               },
               "to": {
                 "type": "number",
-                "description": "End of time range (Unix timestamp ms)."
+                "description": "End of time range (Unix timestamp ms). Must be a number, not a string."
               },
               "interval": {
                 "type": "string",
@@ -1340,7 +1406,8 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number"
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
                 "type": "string",
@@ -1356,15 +1423,15 @@
               },
               "from": {
                 "type": "number",
-                "description": "Start of time range (Unix timestamp ms)."
+                "description": "Start of time range (Unix timestamp ms). Must be a number, not a string."
               },
               "to": {
                 "type": "number",
-                "description": "End of time range (Unix timestamp ms)."
+                "description": "End of time range (Unix timestamp ms). Must be a number, not a string."
               },
               "offset": {
                 "type": "number",
-                "description": "Timezone offset in bytes."
+                "description": "Timezone offset in minutes. Must be a number, not a string."
               },
               "interval": {
                 "type": "string",
@@ -1380,7 +1447,8 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number"
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
                 "type": "string",
@@ -1396,7 +1464,8 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number"
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
                 "type": "string",
@@ -1412,15 +1481,15 @@
               },
               "from": {
                 "type": "number",
-                "description": "Start of time range (Unix timestamp ms)."
+                "description": "Start of time range (Unix timestamp ms). Must be a number, not a string."
               },
               "to": {
                 "type": "number",
-                "description": "End of time range (Unix timestamp ms)."
+                "description": "End of time range (Unix timestamp ms). Must be a number, not a string."
               },
               "offset": {
                 "type": "number",
-                "description": "Timezone offset in bytes."
+                "description": "Timezone offset in minutes. Must be a number, not a string."
               },
               "interval": {
                 "type": "string",
@@ -1442,7 +1511,7 @@
             "properties": {
               "projectId": {
                 "type": "number",
-                "description": "Project ID."
+                "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
                 "type": "string",
@@ -1450,11 +1519,11 @@
               },
               "page": {
                 "type": "number",
-                "description": "Page number (0-based)."
+                "description": "Page number, 0-based. Must be a number (integer), not a string."
               },
               "size": {
                 "type": "number",
-                "description": "Page size."
+                "description": "Page size. Must be a number (integer), not a string."
               }
             }
           }
@@ -1467,7 +1536,7 @@
             "properties": {
               "projectId": {
                 "type": "number",
-                "description": "Project ID."
+                "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
                 "type": "string",
@@ -1499,7 +1568,7 @@
             "properties": {
               "id": {
                 "type": "number",
-                "description": "Dashboard ID."
+                "description": "Dashboard ID. Must be a number (integer), not a string."
               }
             },
             "required": [
@@ -1515,7 +1584,7 @@
             "properties": {
               "id": {
                 "type": "number",
-                "description": "Dashboard ID."
+                "description": "Dashboard ID. Must be a number (integer), not a string."
               },
               "payload": {
                 "type": "object",
@@ -1536,7 +1605,7 @@
             "properties": {
               "id": {
                 "type": "number",
-                "description": "Dashboard ID."
+                "description": "Dashboard ID. Must be a number (integer), not a string."
               }
             },
             "required": [
@@ -1552,7 +1621,7 @@
             "properties": {
               "id": {
                 "type": "number",
-                "description": "Source dashboard ID."
+                "description": "Source dashboard ID. Must be a number (integer), not a string."
               },
               "name": {
                 "type": "string",
@@ -1584,11 +1653,11 @@
             "properties": {
               "id": {
                 "type": "number",
-                "description": "Widget ID."
+                "description": "Widget ID. Must be a number (integer), not a string."
               },
               "projectId": {
                 "type": "number",
-                "description": "Project ID for widget context."
+                "description": "Project ID for widget context. Must be a number (integer), not a string."
               },
               "projectName": {
                 "type": "string",
@@ -1596,15 +1665,418 @@
               },
               "from": {
                 "type": "number",
-                "description": "Start of time range (Unix timestamp ms)."
+                "description": "Start of time range (Unix timestamp ms). Must be a number, not a string."
               },
               "to": {
                 "type": "number",
-                "description": "End of time range (Unix timestamp ms)."
+                "description": "End of time range (Unix timestamp ms). Must be a number, not a string."
               }
             },
             "required": [
               "id"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Members",
+      "tools": [
+        {
+          "name": "suggest_users",
+          "description": "Search users by name or username for assignment and mention workflows. Returns a paginated list of matching users with their IDs and display names. Use this to look up a user before assigning a test result or test case.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "description": "Partial name or username to search for."
+              },
+              "page": {
+                "type": "number",
+                "description": "Page number, 0-based. Must be a number (integer), not a string."
+              },
+              "size": {
+                "type": "number",
+                "description": "Page size. Must be a number (integer), not a string."
+              }
+            }
+          }
+        },
+        {
+          "name": "list_project_members",
+          "description": "List members (collaborators) of a project with their roles and permission sets. Use this to discover who is on the project, what roles they have, and who to assign work to. Supports filtering by partial name via query parameter.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "query": {
+                "type": "string",
+                "description": "Partial name filter."
+              },
+              "page": {
+                "type": "number",
+                "description": "Page number, 0-based. Must be a number (integer), not a string."
+              },
+              "size": {
+                "type": "number",
+                "description": "Page size. Must be a number (integer), not a string."
+              }
+            }
+          }
+        },
+        {
+          "name": "get_launch_member_stats",
+          "description": "Get per-member workload statistics for a launch: how many test results each team member has been assigned or has resolved. Use this to understand workload distribution and identify team members who are overloaded or unassigned during a test run.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Launch ID. Must be a number (integer), not a string."
+              },
+              "page": {
+                "type": "number",
+                "description": "Page number, 0-based. Must be a number (integer), not a string."
+              },
+              "size": {
+                "type": "number",
+                "description": "Page size. Must be a number (integer), not a string."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "get_test_case_members",
+          "description": "Get the list of members (roles) assigned to a test case. Returns who owns, authored, or is responsible for this test case.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "testCaseId": {
+                "type": "number",
+                "description": "Test case ID. Must be a number (integer), not a string."
+              }
+            },
+            "required": [
+              "testCaseId"
+            ]
+          }
+        },
+        {
+          "name": "get_test_result_members",
+          "description": "Get the list of members assigned to a specific test result. Returns who is responsible for investigating or resolving this result.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "testResultId": {
+                "type": "number",
+                "description": "Test result ID. Must be a number (integer), not a string."
+              }
+            },
+            "required": [
+              "testResultId"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Shared Steps",
+      "tools": [
+        {
+          "name": "list_shared_steps",
+          "description": "List shared steps (reusable step library) for a project. Shared steps are referenced from test case scenarios via sharedStepId. Use this to discover the available shared step library before reading test case steps.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "search": {
+                "type": "string",
+                "description": "Text search filter."
+              },
+              "archived": {
+                "type": "boolean",
+                "description": "Filter by archived status. Omit to return active steps only."
+              },
+              "page": {
+                "type": "number",
+                "description": "Page number, 0-based. Must be a number (integer), not a string."
+              },
+              "size": {
+                "type": "number",
+                "description": "Page size. Must be a number (integer), not a string."
+              }
+            }
+          }
+        },
+        {
+          "name": "get_shared_step",
+          "description": "Get a shared step by ID. Returns metadata: name, project, archived status.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Shared step ID. Must be a number (integer), not a string."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "get_shared_step_steps",
+          "description": "Get the full normalized scenario (list of steps) inside a shared step. This is the key tool for resolving sharedStepId references in test case scenarios: when get_test_case_steps returns a step with sharedStepId, call this tool to inline the actual step content. Returns the same NormalizedScenarioDto format as get_test_case_steps.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Shared step ID. Must be a number (integer), not a string."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "get_shared_step_usage",
+          "description": "Get the list of test cases that use a specific shared step. Use this for impact analysis before editing or archiving a shared step: shows which test cases would be affected.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Shared step ID. Must be a number (integer), not a string."
+              },
+              "page": {
+                "type": "number",
+                "description": "Page number, 0-based. Must be a number (integer), not a string."
+              },
+              "size": {
+                "type": "number",
+                "description": "Page size. Must be a number (integer), not a string."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "create_shared_step",
+          "description": "Create a new shared step in a project. payload must include at minimum: name (string) and projectId (number). Use this to extract repeated test steps into a reusable library.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "payload": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "Shared step creation data. Required fields: name, projectId."
+              }
+            },
+            "required": [
+              "payload"
+            ]
+          }
+        },
+        {
+          "name": "update_shared_step",
+          "description": "Update shared step metadata (name, etc.) by ID.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Shared step ID. Must be a number (integer), not a string."
+              },
+              "payload": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "required": [
+              "id",
+              "payload"
+            ]
+          }
+        },
+        {
+          "name": "archive_shared_step",
+          "description": "Archive a shared step to retire it from active use. Archived steps remain readable but are hidden from the active library. Run get_shared_step_usage first to check impact before archiving.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Shared step ID. Must be a number (integer), not a string."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "unarchive_shared_step",
+          "description": "Restore an archived shared step back to active status.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Shared step ID. Must be a number (integer), not a string."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Environments",
+      "tools": [
+        {
+          "name": "list_env_vars",
+          "description": "List all environment variable definitions (keys) available in the system. Environment variables track test configuration context: browser, OS, environment name, build number, etc. Use this to discover what ev[] keys are available before constructing AQL filters like ev[\"browser\"] = \"Chrome\" or ev[\"os\"] = \"Linux\" in search_test_results or search_launches.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {}
+          }
+        },
+        {
+          "name": "suggest_env_vars",
+          "description": "Search environment variable definitions by name. Returns matching env var keys with their IDs. Use this to find the exact name of an env var key before querying values.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "description": "Partial env var name to search for."
+              },
+              "page": {
+                "type": "number",
+                "description": "Page number, 0-based. Must be a number (integer), not a string."
+              },
+              "size": {
+                "type": "number",
+                "description": "Page size. Must be a number (integer), not a string."
+              }
+            }
+          }
+        },
+        {
+          "name": "list_env_var_schemas",
+          "description": "List environment variable schema definitions for a project. Schemas define which env var keys are tracked and displayed for launches in this project. Use this to understand what configuration context is captured per launch in a given project.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "page": {
+                "type": "number",
+                "description": "Page number, 0-based. Must be a number (integer), not a string."
+              },
+              "size": {
+                "type": "number",
+                "description": "Page size. Must be a number (integer), not a string."
+              }
+            }
+          }
+        },
+        {
+          "name": "list_env_var_values",
+          "description": "List all recorded values for a specific environment variable key. Returns the distinct values that have been used across test runs (e.g. all browser versions recorded). Use envVarId from list_env_vars. Useful for building precise AQL filters: know that ev[\"browser\"] has values [\"Chrome 123\", \"Firefox 115\"].",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "envVarId": {
+                "type": "number",
+                "description": "Environment variable ID from list_env_vars. Must be a number (integer), not a string."
+              }
+            },
+            "required": [
+              "envVarId"
+            ]
+          }
+        },
+        {
+          "name": "suggest_env_var_values",
+          "description": "Search for recorded environment variable values by partial text. Optionally scope by envVarId, projectId, or launchId. Use this to autocomplete valid values for AQL ev[] filters before running a search.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "description": "Partial value text to search for."
+              },
+              "envVarId": {
+                "type": "number",
+                "description": "Filter by specific env var key ID. Must be a number (integer), not a string."
+              },
+              "projectId": {
+                "type": "number",
+                "description": "Scope to a project. Must be a number (integer), not a string."
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "launchId": {
+                "type": "number",
+                "description": "Scope to a specific launch. Must be a number (integer), not a string."
+              },
+              "page": {
+                "type": "number",
+                "description": "Page number, 0-based. Must be a number (integer), not a string."
+              },
+              "size": {
+                "type": "number",
+                "description": "Page size. Must be a number (integer), not a string."
+              }
+            }
+          }
+        },
+        {
+          "name": "get_test_result_env_vars",
+          "description": "Get the environment variable values recorded for a specific test result. Shows what configuration context (browser, OS, env name, build) this result ran against. Use this when investigating a failure to understand if the environment is a factor: e.g. 'does this only fail on Chrome 124 but not on Firefox?'",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "testResultId": {
+                "type": "number",
+                "description": "Test result ID. Must be a number (integer), not a string."
+              }
+            },
+            "required": [
+              "testResultId"
             ]
           }
         }
