@@ -14,10 +14,12 @@ Production-ready MCP server for Allure TestOps focused on test cases, launches, 
 
 ## Tool Coverage
 
-- Test cases: list, search, get, create, update, delete, restore, overview, history, scenario, tags, issues, custom fields
-- Launches: list, search, get, create, update, delete, close, reopen, statistics, progress, add test cases/plans
-- Test results: list, search, get, create, update, history, assign, resolve
-- Test plans: list, get, create, update, delete, run
+- **Test cases**: list, search, get, create, update, delete, restore, overview, history, scenario, steps (get/update), tags (get/set/bulk-add/bulk-remove), issues (get/set), external links bulk add, custom fields (list/get/set), attachments (list/upload/download/delete)
+- **Launches**: list, search, get, create, update, delete, close, reopen, statistics, progress, add test cases/plans
+- **Test results**: list, search, get, create, update, history, assign, resolve
+- **Test plans**: list, get, create, update, delete, run
+- **Analytics**: automation chart, group by automation/status, launch duration histogram, mute trend, statistic trend, test case last result, test case success rate
+- **Dashboards**: list, get, create, update, delete, copy, widget data
 
 ## User Usage Docs
 
@@ -88,13 +90,9 @@ cd allure-testops-mcp
 
 2) Install dependencies:
 
-This server follows the Allure TestOps API guide:
-
-1. Use your user-generated API token in `ALLURE_TOKEN`.
-2. Server exchanges it at `/api/uaa/oauth/token`.
-3. Received bearer JWT is cached and reused until near expiry.
-
-Reference: https://docs.qameta.io/allure-testops/advanced/api/
+```bash
+npm install
+```
 
 3) Create your local environment file from the example and fill required values:
 
@@ -105,7 +103,7 @@ cp .env.example .env
 Set:
 - `ALLURE_TESTOPS_URL` (required)
 - `ALLURE_TOKEN` (required)
-- `ALLURE_PROJECT_ID` (optional default project)
+- `ALLURE_PROJECT_ID` (optional. default project = 37)
 
 4) Build the project:
 
