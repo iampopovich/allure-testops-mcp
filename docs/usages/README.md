@@ -21,6 +21,8 @@ This directory contains end-user setup and usage guides for `allure-testops-mcp`
 - [Test Results](./examples/test-results.md)
 - [Test Plans](./examples/test-plans.md)
 - [Custom Fields](./examples/custom-fields.md)
+- [Defects](./examples/defects.md)
+- [Mutes](./examples/mutes.md)
 - [Members](./examples/members.md)
 - [Shared Steps](./examples/shared-steps.md)
 - [Environments](./examples/environments.md)

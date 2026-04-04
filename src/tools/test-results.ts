@@ -134,6 +134,55 @@ export function createTestResultTools(
         required: ["id", "payload"],
       },
     },
+    {
+      name: "get_test_result_retries",
+      description:
+        "Get the retry history for a test result. " +
+        "Returns the list of previous attempts for the same test in the same launch. " +
+        "Key tool for flaky test detection: if a test failed on attempt 1 but passed on attempt 2, " +
+        "it is a flaky test, not a real failure. Check status across retries to assess reliability.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          id: { type: "number", description: "Test result ID. Must be a number (integer), not a string." },
+          page: { type: "number", description: "Page number, 0-based." },
+          size: { type: "number", description: "Page size." },
+        },
+        required: ["id"],
+      },
+    },
+    {
+      name: "list_test_result_attachments",
+      description:
+        "List attachments (screenshots, logs, HAR files, etc.) for a test result. " +
+        "Returns attachment metadata: id, name, contentType, size. " +
+        "Use this to discover what evidence is available before calling get_test_result_attachment_content.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          testResultId: { type: "number", description: "Test result ID. Must be a number (integer), not a string." },
+          page: { type: "number", description: "Page number, 0-based." },
+          size: { type: "number", description: "Page size." },
+        },
+        required: ["testResultId"],
+      },
+    },
+    {
+      name: "get_test_result_attachment_content",
+      description:
+        "Download the binary content of a test result attachment. " +
+        "Returns base64-encoded content with its MIME type. " +
+        "Use attachment ID from list_test_result_attachments. " +
+        "For text-based attachments (logs, JSON, XML): decode base64 to read the content. " +
+        "For images (screenshots): the base64 PNG/JPEG can be rendered directly.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          attachmentId: { type: "number", description: "Attachment ID from list_test_result_attachments. Must be a number (integer), not a string." },
+        },
+        required: ["attachmentId"],
+      },
+    },
   ];
 
   const handlers = {
@@ -175,6 +224,22 @@ export function createTestResultTools(
     resolve_test_result: async (rawArgs: unknown) => {
       const args = asObject(rawArgs);
       return api.resolveTestResult(client, getRequiredId(args), getObjectPayload(args));
+    },
+    get_test_result_retries: async (rawArgs: unknown) => {
+      const args = asObject(rawArgs);
+      return api.getTestResultRetries(client, getRequiredId(args), pickPagination(args));
+    },
+    list_test_result_attachments: async (rawArgs: unknown) => {
+      const args = asObject(rawArgs);
+      return api.listTestResultAttachments(
+        client,
+        getRequiredId(args, "testResultId"),
+        pickPagination(args),
+      );
+    },
+    get_test_result_attachment_content: async (rawArgs: unknown) => {
+      const args = asObject(rawArgs);
+      return api.getTestResultAttachmentContent(client, getRequiredId(args, "attachmentId"));
     },
   };
 

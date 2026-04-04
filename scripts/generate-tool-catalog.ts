@@ -4,9 +4,11 @@ import { fileURLToPath } from "node:url";
 
 import { createAnalyticTools } from "../src/tools/analytic.js";
 import { createDashboardTools } from "../src/tools/dashboards.js";
+import { createDefectTools } from "../src/tools/defects.js";
 import { createEnvironmentTools } from "../src/tools/environments.js";
 import { createLaunchTools } from "../src/tools/launches.js";
 import { createMemberTools } from "../src/tools/members.js";
+import { createMuteTools } from "../src/tools/mutes.js";
 import { createSharedStepTools } from "../src/tools/shared-steps.js";
 import { createTestCaseTools } from "../src/tools/test-cases.js";
 import { createTestPlanTools } from "../src/tools/test-plans.js";
@@ -41,6 +43,8 @@ function buildCatalog(): ToolCatalog {
     { name: "Test Plans", tools: createTestPlanTools(noopClient as never).tools },
     { name: "Analytics", tools: createAnalyticTools(noopClient as never).tools },
     { name: "Dashboards", tools: createDashboardTools(noopClient as never).tools },
+    { name: "Defects", tools: createDefectTools(noopClient as never).tools },
+    { name: "Mutes", tools: createMuteTools(noopClient as never).tools },
     { name: "Members", tools: createMemberTools(noopClient as never).tools },
     { name: "Shared Steps", tools: createSharedStepTools(noopClient as never).tools },
     { name: "Environments", tools: createEnvironmentTools(noopClient as never).tools },

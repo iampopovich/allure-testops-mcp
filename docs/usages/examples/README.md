@@ -16,6 +16,8 @@ Each guide includes:
 - [Test Results](./test-results.md)
 - [Test Plans](./test-plans.md)
 - [Custom Fields](./custom-fields.md)
+- [Defects](./defects.md)
+- [Mutes](./mutes.md)
 - [Members](./members.md)
 - [Shared Steps](./shared-steps.md)
 - [Environments](./environments.md)

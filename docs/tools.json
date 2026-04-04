@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-04-04T17:01:32.554Z",
-  "totalTools": 87,
+  "generatedAt": "2026-04-04T18:35:38.235Z",
+  "totalTools": 114,
   "categories": [
     {
       "name": "Test Cases",
@@ -1118,6 +1118,70 @@
               "payload"
             ]
           }
+        },
+        {
+          "name": "get_test_result_retries",
+          "description": "Get the retry history for a test result. Returns the list of previous attempts for the same test in the same launch. Key tool for flaky test detection: if a test failed on attempt 1 but passed on attempt 2, it is a flaky test, not a real failure. Check status across retries to assess reliability.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Test result ID. Must be a number (integer), not a string."
+              },
+              "page": {
+                "type": "number",
+                "description": "Page number, 0-based."
+              },
+              "size": {
+                "type": "number",
+                "description": "Page size."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "list_test_result_attachments",
+          "description": "List attachments (screenshots, logs, HAR files, etc.) for a test result. Returns attachment metadata: id, name, contentType, size. Use this to discover what evidence is available before calling get_test_result_attachment_content.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "testResultId": {
+                "type": "number",
+                "description": "Test result ID. Must be a number (integer), not a string."
+              },
+              "page": {
+                "type": "number",
+                "description": "Page number, 0-based."
+              },
+              "size": {
+                "type": "number",
+                "description": "Page size."
+              }
+            },
+            "required": [
+              "testResultId"
+            ]
+          }
+        },
+        {
+          "name": "get_test_result_attachment_content",
+          "description": "Download the binary content of a test result attachment. Returns base64-encoded content with its MIME type. Use attachment ID from list_test_result_attachments. For text-based attachments (logs, JSON, XML): decode base64 to read the content. For images (screenshots): the base64 PNG/JPEG can be rendered directly.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "attachmentId": {
+                "type": "number",
+                "description": "Attachment ID from list_test_result_attachments. Must be a number (integer), not a string."
+              }
+            },
+            "required": [
+              "attachmentId"
+            ]
+          }
         }
       ]
     },
@@ -1674,6 +1738,506 @@
             },
             "required": [
               "id"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Defects",
+      "tools": [
+        {
+          "name": "list_defects",
+          "description": "List defect records for a project. Defects group similar test result failures by root cause. Each defect has a name, status (open/closed), and optional matcher rules. Use this as the entry point for failure pattern analysis: 'what are the top open defects in this project right now?'",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "status": {
+                "type": "string",
+                "description": "Filter by defect status. Values: OPEN, CLOSED. Omit to return all."
+              },
+              "name": {
+                "type": "string",
+                "description": "Filter by partial defect name."
+              },
+              "page": {
+                "type": "number",
+                "description": "Page number, 0-based."
+              },
+              "size": {
+                "type": "number",
+                "description": "Page size."
+              }
+            }
+          }
+        },
+        {
+          "name": "get_defect",
+          "description": "Get a defect by ID. Returns the defect name, status, description, and matcher configuration.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Defect ID. Must be a number (integer), not a string."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "create_defect",
+          "description": "Create a new defect record to group a novel failure pattern. payload must include: name (string), projectId (number). Optional: description (string).",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "payload": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "Required: name, projectId. Optional: description."
+              }
+            },
+            "required": [
+              "payload"
+            ]
+          }
+        },
+        {
+          "name": "update_defect",
+          "description": "Update defect name, description, or status.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Defect ID. Must be a number (integer), not a string."
+              },
+              "payload": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "required": [
+              "id",
+              "payload"
+            ]
+          }
+        },
+        {
+          "name": "get_defect_test_results",
+          "description": "Get the test results grouped under a specific defect. Use this to see how many failures belong to this defect and in which launches they appeared.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Defect ID. Must be a number (integer), not a string."
+              },
+              "page": {
+                "type": "number",
+                "description": "Page number, 0-based."
+              },
+              "size": {
+                "type": "number",
+                "description": "Page size."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "get_defect_test_cases",
+          "description": "Get the test cases affected by a specific defect. Use this to understand which test scenarios are impacted by the failure pattern.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Defect ID. Must be a number (integer), not a string."
+              },
+              "page": {
+                "type": "number",
+                "description": "Page number, 0-based."
+              },
+              "size": {
+                "type": "number",
+                "description": "Page size."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "get_defect_launches",
+          "description": "Get launches in which a specific defect has appeared. Use this to understand the blast radius: is this defect appearing in every run or only in specific environments?",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Defect ID. Must be a number (integer), not a string."
+              },
+              "page": {
+                "type": "number",
+                "description": "Page number, 0-based."
+              },
+              "size": {
+                "type": "number",
+                "description": "Page size."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "get_launch_defects",
+          "description": "Get all defects present in a specific launch. This is the fastest way to get a defect summary for a launch: 'what are all the distinct failure patterns in this test run?'",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Launch ID. Must be a number (integer), not a string."
+              },
+              "page": {
+                "type": "number",
+                "description": "Page number, 0-based."
+              },
+              "size": {
+                "type": "number",
+                "description": "Page size."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "find_similar_failures",
+          "description": "Find test results that match a defect pattern within a launch. Use this to detect flaky tests and group failures by root cause: pass launchId to scope the search, optionally pass a defectId to check match against a specific defect. Returns test results that are candidates for linking to the defect.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "launchId": {
+                "type": "number",
+                "description": "Launch ID to scope the search. Must be a number (integer), not a string."
+              },
+              "defectId": {
+                "type": "number",
+                "description": "Defect ID to match against. Must be a number (integer), not a string."
+              },
+              "page": {
+                "type": "number",
+                "description": "Page number, 0-based."
+              },
+              "size": {
+                "type": "number",
+                "description": "Page size."
+              }
+            }
+          }
+        },
+        {
+          "name": "link_defect_to_test_results",
+          "description": "Link one or multiple test results to a defect record (bulk API). payload must include: defectId (number) and testResultIds (array of numbers).",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "payload": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "Required: defectId (number), testResultIds (array of numbers)."
+              }
+            },
+            "required": [
+              "payload"
+            ]
+          }
+        },
+        {
+          "name": "bulk_close_defects",
+          "description": "Close multiple defects at once — mark them as resolved after a fix is confirmed. payload must include: ids (array of defect IDs).",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "payload": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "Required: ids (array of defect ID numbers)."
+              }
+            },
+            "required": [
+              "payload"
+            ]
+          }
+        },
+        {
+          "name": "bulk_reopen_defects",
+          "description": "Reopen multiple closed defects — use when a regression is detected after a fix was marked complete. payload must include: ids (array of defect IDs).",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "payload": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "Required: ids (array of defect ID numbers)."
+              }
+            },
+            "required": [
+              "payload"
+            ]
+          }
+        },
+        {
+          "name": "link_issue_to_defect",
+          "description": "Link an external issue (Jira, GitHub, etc.) to a defect record. payload must include: url (string) and name (string). Use this to associate a tracker ticket with a failure pattern.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Defect ID. Must be a number (integer), not a string."
+              },
+              "payload": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "Required: url (string), name (string). Optional: type (string)."
+              }
+            },
+            "required": [
+              "id",
+              "payload"
+            ]
+          }
+        },
+        {
+          "name": "unlink_issue_from_defect",
+          "description": "Remove the external issue link from a defect record.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Defect ID. Must be a number (integer), not a string."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "apply_defect_matchers",
+          "description": "Apply all configured defect matcher rules to a launch. This auto-triages unresolved test results by matching them to existing defect records based on error message patterns. Run this after a launch completes to auto-group failures.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Launch ID. Must be a number (integer), not a string."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mutes",
+      "tools": [
+        {
+          "name": "list_mutes",
+          "description": "List active mutes for a specific test case. Returns mute records with their reason, linked issues, and creation date. Use this to audit: 'why is this test case muted and is there a tracking issue?'",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "testCaseId": {
+                "type": "number",
+                "description": "Test case ID. Must be a number (integer), not a string."
+              },
+              "page": {
+                "type": "number",
+                "description": "Page number, 0-based."
+              },
+              "size": {
+                "type": "number",
+                "description": "Page size."
+              }
+            },
+            "required": [
+              "testCaseId"
+            ]
+          }
+        },
+        {
+          "name": "create_mute",
+          "description": "Mute a test case to suppress its failures from the launch statistics. Always provide a reason and link to a tracking issue to keep mutes accountable. payload must include: testCaseId (number). Optional but strongly recommended: name (string reason), issues (array of {url, name}).",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "payload": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "Required: testCaseId. Recommended: name (reason string), issues (array of {url, name})."
+              }
+            },
+            "required": [
+              "payload"
+            ]
+          }
+        },
+        {
+          "name": "delete_mute",
+          "description": "Remove a mute record to re-enable failure reporting for a test case. Use this when the underlying issue is confirmed fixed.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Mute ID (from list_mutes). Must be a number (integer), not a string."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "get_muted_test_cases",
+          "description": "List all currently muted test cases in a project. This is the sprint health check tool: run this to answer 'how many tests are silenced right now and which ones have no linked issue?'",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "number",
+                "description": "Project ID. Must be a number (integer), not a string."
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "page": {
+                "type": "number",
+                "description": "Page number, 0-based."
+              },
+              "size": {
+                "type": "number",
+                "description": "Page size."
+              }
+            }
+          }
+        },
+        {
+          "name": "get_launch_muted_results",
+          "description": "Get test results that were muted in a specific launch. Use this to understand the real failure count: 'how many failures were hidden by mutes in this run?'",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Launch ID. Must be a number (integer), not a string."
+              },
+              "page": {
+                "type": "number",
+                "description": "Page number, 0-based."
+              },
+              "size": {
+                "type": "number",
+                "description": "Page size."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "mute_test_result",
+          "description": "Mute a single test result to exclude it from launch statistics. payload may include: reason (string). Use for individual result suppression when the failure is a known infrastructure issue.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Test result ID. Must be a number (integer), not a string."
+              },
+              "payload": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "Optional: reason (string)."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "unmute_test_result",
+          "description": "Remove the mute from a single test result, restoring it to active failure reporting.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "description": "Test result ID. Must be a number (integer), not a string."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "bulk_mute_test_results",
+          "description": "Mute multiple test results at once — use during infrastructure outages to suppress known-bad results in bulk. payload must include: testResultIds (array of numbers). Optional: reason (string).",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "payload": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "Required: testResultIds (array of numbers). Optional: reason (string)."
+              }
+            },
+            "required": [
+              "payload"
+            ]
+          }
+        },
+        {
+          "name": "bulk_unmute_test_results",
+          "description": "Unmute multiple test results at once — use after an infrastructure fix to restore full failure visibility. payload must include: testResultIds (array of numbers).",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "payload": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "Required: testResultIds (array of numbers)."
+              }
+            },
+            "required": [
+              "payload"
             ]
           }
         }

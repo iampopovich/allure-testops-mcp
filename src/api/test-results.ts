@@ -69,3 +69,26 @@ export function resolveTestResult(
 ): Promise<unknown> {
   return client.post(`/api/testresult/${id}/resolve`, payload);
 }
+
+export function getTestResultRetries(
+  client: AllureApiClient,
+  id: number,
+  query: QueryParams,
+): Promise<unknown> {
+  return client.get(`/api/testresult/${id}/retries`, query);
+}
+
+export function listTestResultAttachments(
+  client: AllureApiClient,
+  testResultId: number,
+  query: QueryParams,
+): Promise<unknown> {
+  return client.get("/api/testresult/attachment", { testResultId, ...query });
+}
+
+export function getTestResultAttachmentContent(
+  client: AllureApiClient,
+  attachmentId: number,
+): Promise<unknown> {
+  return client.getRaw(`/api/testresult/attachment/${attachmentId}/content`);
+}

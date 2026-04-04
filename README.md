@@ -16,10 +16,12 @@ Production-ready MCP server for Allure TestOps focused on test cases, launches, 
 
 - **Test cases**: list, search, get, create, update, delete, restore, overview, history, scenario, steps (get/update), tags (get/set/bulk-add/bulk-remove), issues (get/set), external links bulk add, custom fields (list/get/set), attachments (list/upload/download/delete)
 - **Launches**: list, search, get, create, update, delete, close, reopen, statistics, progress, add test cases/plans
-- **Test results**: list, search, get, create, update, history, assign, resolve
+- **Test results**: list, search, get, create, update, history, assign, resolve, retries, attachments (list/download)
 - **Test plans**: list, get, create, update, delete, run
 - **Analytics**: automation chart, group by automation/status, launch duration histogram, mute trend, statistic trend, test case last result, test case success rate
 - **Dashboards**: list, get, create, update, delete, copy, widget data
+- **Defects**: list, get, create, update, get test results/cases/launches, get launch defects, find similar failures, link to results (bulk), bulk close/reopen, link/unlink issue, apply matchers
+- **Mutes**: list, create, delete, get muted test cases, get launch muted results, mute/unmute result, bulk mute/unmute
 - **Members**: suggest users, list project members, launch member stats, test case members, test result members
 - **Shared Steps**: list, get, get steps (inline scenario), usage, create, update, archive, unarchive
 - **Environments**: list env vars, suggest env vars, list schemas, list values, suggest values, get result env vars
@@ -39,6 +41,8 @@ User-focused runtime and integration docs are in [`docs/usages/`](./docs/usages/
 - [`docs/usages/examples/test-results.md`](./docs/usages/examples/test-results.md)
 - [`docs/usages/examples/test-plans.md`](./docs/usages/examples/test-plans.md)
 - [`docs/usages/examples/custom-fields.md`](./docs/usages/examples/custom-fields.md)
+- [`docs/usages/examples/defects.md`](./docs/usages/examples/defects.md)
+- [`docs/usages/examples/mutes.md`](./docs/usages/examples/mutes.md)
 - [`docs/usages/examples/members.md`](./docs/usages/examples/members.md)
 - [`docs/usages/examples/shared-steps.md`](./docs/usages/examples/shared-steps.md)
 - [`docs/usages/examples/environments.md`](./docs/usages/examples/environments.md)

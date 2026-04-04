@@ -1,9 +1,11 @@
 import { AllureApiClient } from "./client.js";
 import { createAnalyticTools } from "./tools/analytic.js";
 import { createDashboardTools } from "./tools/dashboards.js";
+import { createDefectTools } from "./tools/defects.js";
 import { createEnvironmentTools } from "./tools/environments.js";
 import { createLaunchTools } from "./tools/launches.js";
 import { createMemberTools } from "./tools/members.js";
+import { createMuteTools } from "./tools/mutes.js";
 import { createSharedStepTools } from "./tools/shared-steps.js";
 import { createTestCaseTools } from "./tools/test-cases.js";
 import { createTestPlanTools } from "./tools/test-plans.js";
@@ -28,6 +30,8 @@ export function buildToolRegistry(
     createTestPlanTools(client),
     createAnalyticTools(client),
     createDashboardTools(client),
+    createDefectTools(client),
+    createMuteTools(client),
     createMemberTools(client),
     createSharedStepTools(client),
     createEnvironmentTools(client),
