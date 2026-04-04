@@ -1,6 +1,6 @@
 {
   "name": "allure-testops-mcp",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "MCP server for Allure TestOps test cases and launches",
   "type": "module",
   "main": "dist/index.js",
@@ -37,7 +37,6 @@
     "test-analytics",
     "agent-tool-integration"
   ],
-  
   "repository": {
     "type": "git",
     "url": "https://github.com/iampopovich/allure-testops-mcp.git"
