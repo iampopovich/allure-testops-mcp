@@ -11,6 +11,9 @@ export function asObject(args: unknown): ToolArgs {
 
 export function getRequiredNumber(args: ToolArgs, key: string): number {
   const value = args[key];
+  if (typeof value === "string" && /^-?\d+(\.\d+)?$/.test(value)) {
+    return Number(value);
+  }
   if (typeof value !== "number" || Number.isNaN(value)) {
     throw new Error(`"${key}" must be a number.`);
   }
@@ -21,6 +24,9 @@ export function getOptionalNumber(args: ToolArgs, key: string): number | undefin
   const value = args[key];
   if (value === undefined || value === null) {
     return undefined;
+  }
+  if (typeof value === "string" && /^-?\d+(\.\d+)?$/.test(value)) {
+    return Number(value);
   }
   if (typeof value !== "number" || Number.isNaN(value)) {
     throw new Error(`"${key}" must be a number when provided.`);
