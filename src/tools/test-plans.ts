@@ -38,7 +38,7 @@ export function createTestPlanTools(
       description: "Get a test plan by ID.",
       inputSchema: {
         type: "object" as const,
-        properties: { id: { type: "number" } },
+        properties: { id: { type: "number", description: "Test plan ID. Must be a number (integer), not a string." } },
         required: ["id"],
       },
     },
@@ -69,7 +69,7 @@ export function createTestPlanTools(
       description: "Delete a test plan by ID.",
       inputSchema: {
         type: "object" as const,
-        properties: { id: { type: "number" } },
+        properties: { id: { type: "number", description: "Test plan ID. Must be a number (integer), not a string." } },
         required: ["id"],
       },
     },

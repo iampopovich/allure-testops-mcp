@@ -73,7 +73,7 @@ export function createLaunchTools(
       description: "Get a launch by ID.",
       inputSchema: {
         type: "object" as const,
-        properties: { id: { type: "number" } },
+        properties: { id: { type: "number", description: "Launch ID. Must be a number (integer), not a string." } },
         required: ["id"],
       },
     },
@@ -104,7 +104,7 @@ export function createLaunchTools(
       description: "Delete a launch by ID.",
       inputSchema: {
         type: "object" as const,
-        properties: { id: { type: "number" } },
+        properties: { id: { type: "number", description: "Launch ID. Must be a number (integer), not a string." } },
         required: ["id"],
       },
     },
@@ -113,7 +113,7 @@ export function createLaunchTools(
       description: "Close an open launch.",
       inputSchema: {
         type: "object" as const,
-        properties: { id: { type: "number" } },
+        properties: { id: { type: "number", description: "Launch ID. Must be a number (integer), not a string." } },
         required: ["id"],
       },
     },
@@ -122,7 +122,7 @@ export function createLaunchTools(
       description: "Reopen a closed launch.",
       inputSchema: {
         type: "object" as const,
-        properties: { id: { type: "number" } },
+        properties: { id: { type: "number", description: "Launch ID. Must be a number (integer), not a string." } },
         required: ["id"],
       },
     },
@@ -131,7 +131,7 @@ export function createLaunchTools(
       description: "Get launch statistics.",
       inputSchema: {
         type: "object" as const,
-        properties: { id: { type: "number" } },
+        properties: { id: { type: "number", description: "Launch ID. Must be a number (integer), not a string." } },
         required: ["id"],
       },
     },
@@ -140,7 +140,7 @@ export function createLaunchTools(
       description: "Get launch progress widget data.",
       inputSchema: {
         type: "object" as const,
-        properties: { id: { type: "number" } },
+        properties: { id: { type: "number", description: "Launch ID. Must be a number (integer), not a string." } },
         required: ["id"],
       },
     },
