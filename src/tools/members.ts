@@ -3,7 +3,6 @@ import * as api from "../api/members.js";
 import type { ToolBundle } from "./types.js";
 import {
   asObject,
-  getOptionalNumber,
   getOptionalString,
   getRequiredId,
   pickPagination,

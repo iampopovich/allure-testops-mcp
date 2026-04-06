@@ -22,7 +22,7 @@ export function createTestResultTools(
       inputSchema: {
         type: "object" as const,
         properties: {
-          launchId: { type: "number" },
+          launchId: { type: "number", description: "Launch ID. Must be a number (integer), not a string." },
           search: { type: "string" },
           filterId: { type: "number", description: "Saved filter ID. Must be a number (integer), not a string." },
           page: { type: "number", description: "Page number, 0-based. Must be a number (integer), not a string." },
@@ -34,7 +34,7 @@ export function createTestResultTools(
     },
     {
       name: "search_test_results",
-      description: "Search test results by AQL query.",
+      description: "Search test results by AQL query. The 'id' field in returned results is an integer — pass it as a number (not a string) to get_test_result or get_test_result_retries.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -71,7 +71,7 @@ export function createTestResultTools(
       description: "Get a test result by ID.",
       inputSchema: {
         type: "object" as const,
-        properties: { id: { type: "number" } },
+        properties: { id: { type: "number", description: "Test result ID. Must be an integer, not a string." } },
         required: ["id"],
       },
     },
