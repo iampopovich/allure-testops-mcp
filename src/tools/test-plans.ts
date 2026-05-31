@@ -16,24 +16,6 @@ export function createTestPlanTools(
 ): ToolBundle {
   const tools = [
     {
-      name: "list_test_plans",
-      description: "List test plans for a project.",
-      inputSchema: {
-        type: "object" as const,
-        properties: {
-          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
-          projectName: {
-            type: "string",
-            description: "Project name (alternative to projectId).",
-          },
-          search: { type: "string" },
-          page: { type: "number", description: "Page number, 0-based. Must be a number (integer), not a string." },
-          size: { type: "number", description: "Page size. Must be a number (integer), not a string." },
-          sort: { type: "array", items: { type: "string" } },
-        },
-      },
-    },
-    {
       name: "get_test_plan",
       description: "Get a test plan by ID.",
       inputSchema: {
@@ -88,14 +70,6 @@ export function createTestPlanTools(
   ];
 
   const handlers = {
-    list_test_plans: async (rawArgs: unknown) => {
-      const args = asObject(rawArgs);
-      const projectId = await resolveProjectId(args, client);
-      return api.listTestPlans(client, projectId, {
-        search: getOptionalString(args, "search"),
-        ...pickPagination(args),
-      });
-    },
     get_test_plan: async (rawArgs: unknown) => {
       const args = asObject(rawArgs);
       return api.getTestPlan(client, getRequiredId(args));

@@ -99,7 +99,18 @@ chmod +x build-and-push.sh
 docker run -i \
   -e ALLURE_TESTOPS_URL=https://your-allure-instance.com \
   -e ALLURE_TOKEN=your-api-token \
-  -e PROJECT_ID=1 \
+  -e ALLURE_PROJECT_ID=1 \
+  YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:latest
+```
+
+#### With Cache Disabled
+
+```bash
+docker run -i \
+  -e ALLURE_TESTOPS_URL=https://your-allure-instance.com \
+  -e ALLURE_TOKEN=your-api-token \
+  -e ALLURE_PROJECT_ID=1 \
+  -e ALLURE_CACHE_DISABLED=1 \
   YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:latest
 ```
 
@@ -128,7 +139,8 @@ services:
     environment:
       - ALLURE_TESTOPS_URL=${ALLURE_TESTOPS_URL:-https://allure-testops.labs.jb.gg}
       - ALLURE_TOKEN=${ALLURE_TOKEN}
-      - PROJECT_ID=${PROJECT_ID}
+      - ALLURE_PROJECT_ID=${ALLURE_PROJECT_ID}
+      # - ALLURE_CACHE_DISABLED=1   # uncomment to disable in-memory LRU cache
     restart: unless-stopped
     stdin_open: true
     tty: true
@@ -139,7 +151,8 @@ Create a `.env` file in the same directory:
 ```bash
 ALLURE_TESTOPS_URL=https://your-allure-instance.com
 ALLURE_TOKEN=your-api-token-here
-PROJECT_ID=1
+ALLURE_PROJECT_ID=1
+# ALLURE_CACHE_DISABLED=1
 ```
 
 Run with Docker Compose:

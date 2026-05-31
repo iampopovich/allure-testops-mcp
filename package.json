@@ -1,6 +1,6 @@
 {
   "name": "allure-testops-mcp",
-  "version": "1.2.6",
+  "version": "1.3.0",
   "description": "MCP server for Allure TestOps test cases and launches",
   "type": "module",
   "main": "dist/index.js",
@@ -48,7 +48,8 @@
   "author": "iampopovich",
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.27.1"
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "lru-cache": "^11.5.1"
   },
   "devDependencies": {
     "@types/node": "^25.3.3",

@@ -4,6 +4,14 @@
 
 `Create a launch for today's regression in project 37, then check its progress.`
 
+## Resources
+
+Browsing launches for a project is done via the MCP resource protocol:
+
+```
+resources/read  allure://projects/37/launches
+```
+
 ## Typical Tools
 
 - `create_launch`

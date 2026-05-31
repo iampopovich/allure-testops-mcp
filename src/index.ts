@@ -2,10 +2,17 @@
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+  ListResourcesRequestSchema,
+  ReadResourceRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
 import { TokenManager } from "./auth.js";
 import { AllureApiClient } from "./client.js";
 import { buildToolRegistry, requiredEnv } from "./server-bootstrap.js";
+import { LruCacheStore } from "./cache.js";
+import { RESOURCES, readResource } from "./resources/index.js";
 
 function formatToolResult(result: unknown): string {
   if (result === undefined) {
@@ -34,15 +41,37 @@ async function main(): Promise<void> {
   const defaultProjectId = parseOptionalProjectId(process.env.ALLURE_PROJECT_ID);
 
   const tokenManager = new TokenManager({ baseUrl, apiToken });
-  const client = new AllureApiClient({ baseUrl, tokenManager, defaultProjectId });
+  const cache = process.env.ALLURE_CACHE_DISABLED === "1" ? undefined : new LruCacheStore();
+  const client = new AllureApiClient({ baseUrl, tokenManager, defaultProjectId, cache });
   const { tools, handlers } = buildToolRegistry(client);
 
   const server = new Server(
     { name: "allure-testops-mcp", version: "1.0.0" },
-    { capabilities: { tools: {} } },
+    { capabilities: { tools: {}, resources: {} } },
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools }));
+
+  server.setRequestHandler(ListResourcesRequestSchema, async () => ({ resources: RESOURCES }));
+
+  server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+    const uri = request.params.uri;
+    try {
+      const data = await readResource(client, uri);
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: "application/json",
+            text: JSON.stringify(data, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to read resource ${uri}: ${message}`);
+    }
+  });
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {

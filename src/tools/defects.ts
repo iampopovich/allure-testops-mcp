@@ -14,28 +14,6 @@ import {
 export function createDefectTools(client: AllureApiClient): ToolBundle {
   const tools = [
     {
-      name: "list_defects",
-      description:
-        "List defect records for a project. Defects group similar test result failures by root cause. " +
-        "Each defect has a name, status (open/closed), and optional matcher rules. " +
-        "Use this as the entry point for failure pattern analysis: " +
-        "'what are the top open defects in this project right now?'",
-      inputSchema: {
-        type: "object" as const,
-        properties: {
-          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
-          projectName: { type: "string", description: "Project name (alternative to projectId)." },
-          status: {
-            type: "string",
-            description: "Filter by defect status. Values: OPEN, CLOSED. Omit to return all.",
-          },
-          name: { type: "string", description: "Filter by partial defect name." },
-          page: { type: "number", description: "Page number, 0-based." },
-          size: { type: "number", description: "Page size." },
-        },
-      },
-    },
-    {
       name: "get_defect",
       description:
         "Get a defect by ID. Returns the defect name, status, description, and matcher configuration.",
@@ -253,16 +231,6 @@ export function createDefectTools(client: AllureApiClient): ToolBundle {
   ];
 
   const handlers = {
-    list_defects: async (rawArgs: unknown) => {
-      const args = asObject(rawArgs);
-      const projectId = await resolveProjectId(args, client);
-      return api.listDefects(client, projectId, {
-        status: getOptionalString(args, "status"),
-        name: getOptionalString(args, "name"),
-        ...pickPagination(args),
-      });
-    },
-
     get_defect: async (rawArgs: unknown) => {
       const args = asObject(rawArgs);
       return api.getDefect(client, getRequiredId(args));

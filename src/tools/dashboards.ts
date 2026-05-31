@@ -14,19 +14,6 @@ import {
 export function createDashboardTools(client: AllureApiClient): ToolBundle {
   const tools = [
     {
-      name: "list_dashboards",
-      description: "List all dashboards for a project.",
-      inputSchema: {
-        type: "object" as const,
-        properties: {
-          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
-          projectName: { type: "string", description: "Project name (alternative to projectId)." },
-          page: { type: "number", description: "Page number, 0-based. Must be a number (integer), not a string." },
-          size: { type: "number", description: "Page size. Must be a number (integer), not a string." },
-        },
-      },
-    },
-    {
       name: "create_dashboard",
       description: "Create a new dashboard in a project.",
       inputSchema: {
@@ -117,13 +104,6 @@ export function createDashboardTools(client: AllureApiClient): ToolBundle {
   ];
 
   const handlers = {
-    list_dashboards: async (rawArgs: unknown) => {
-      const args = asObject(rawArgs);
-      const projectId = await resolveProjectId(args, client);
-      const pagination = pickPagination(args);
-      return api.listDashboards(client, { projectId, ...pagination });
-    },
-
     create_dashboard: async (rawArgs: unknown) => {
       const args = asObject(rawArgs);
       const projectId = await resolveProjectId(args, client);
