@@ -14,24 +14,6 @@ import {
 export function createSharedStepTools(client: AllureApiClient): ToolBundle {
   const tools = [
     {
-      name: "list_shared_steps",
-      description:
-        "List shared steps (reusable step library) for a project. " +
-        "Shared steps are referenced from test case scenarios via sharedStepId. " +
-        "Use this to discover the available shared step library before reading test case steps.",
-      inputSchema: {
-        type: "object" as const,
-        properties: {
-          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
-          projectName: { type: "string", description: "Project name (alternative to projectId)." },
-          search: { type: "string", description: "Text search filter." },
-          archived: { type: "boolean", description: "Filter by archived status. Omit to return active steps only." },
-          page: { type: "number", description: "Page number, 0-based. Must be a number (integer), not a string." },
-          size: { type: "number", description: "Page size. Must be a number (integer), not a string." },
-        },
-      },
-    },
-    {
       name: "get_shared_step",
       description: "Get a shared step by ID. Returns metadata: name, project, archived status.",
       inputSchema: {
@@ -131,16 +113,6 @@ export function createSharedStepTools(client: AllureApiClient): ToolBundle {
   ];
 
   const handlers = {
-    list_shared_steps: async (rawArgs: unknown) => {
-      const args = asObject(rawArgs);
-      const projectId = await resolveProjectId(args, client);
-      return api.listSharedSteps(client, projectId, {
-        search: getOptionalString(args, "search"),
-        archived: getOptionalBoolean(args, "archived"),
-        ...pickPagination(args),
-      });
-    },
-
     get_shared_step: async (rawArgs: unknown) => {
       const args = asObject(rawArgs);
       return api.getSharedStep(client, getRequiredId(args));

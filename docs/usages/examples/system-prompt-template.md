@@ -54,13 +54,16 @@ Resources (read via resources/read, no tool call needed):
 - allure://projects/{projectId}/launches — launches for a project
 - allure://projects/{projectId}/test-plans — test plans for a project
 - allure://projects/{projectId}/dashboards — dashboards for a project
-
+- allure://projects/{projectId}/test-cases — test cases for a project
+- allure://projects/{projectId}/defects — defect records for a project
+- allure://projects/{projectId}/shared-steps — shared step library for a project
+- allure://projects/{projectId}/custom-fields — custom fields for a project
 Tooling hints:
 - For test cases: search_test_cases, get_test_case, create_test_case, update_test_case
 - For launches: search_launches, create_launch, update_launch, get_launch_progress
-- For test results: list_test_results, search_test_results, get_test_result, resolve_test_result
+- For test results: list_test_results (filter by launchId + page/size), search_test_results (RQL), get_test_result, resolve_test_result
 - For test plans: get_test_plan, run_test_plan, create_test_plan
-- For custom fields: list_project_custom_fields, list_custom_field_values, get_test_case_custom_fields, set_test_case_custom_fields
+- For custom fields: list_custom_field_values, get_test_case_custom_fields, set_test_case_custom_fields
 
 Behavior on ambiguity:
 - If multiple matches are plausible, ask one short clarification question before writing data.

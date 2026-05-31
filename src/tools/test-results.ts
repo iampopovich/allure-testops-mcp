@@ -18,7 +18,7 @@ export function createTestResultTools(
   const tools = [
     {
       name: "list_test_results",
-      description: "List test results for a launch.",
+      description: "List test results for a launch. Supports filtering and pagination — prefer this over the resource when you need status filtering, a specific page, or a bounded result set.",
       inputSchema: {
         type: "object" as const,
         properties: {

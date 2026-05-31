@@ -143,25 +143,6 @@ export function createTestCaseTools(
 ): ToolBundle {
   const tools = [
     {
-      name: "list_test_cases",
-      description: "List test cases for a project.",
-      inputSchema: {
-        type: "object" as const,
-        properties: {
-          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
-          projectName: {
-            type: "string",
-            description: "Project name (alternative to projectId).",
-          },
-          search: { type: "string" },
-          filterId: { type: "number", description: "Saved filter ID. Must be a number (integer), not a string." },
-          page: { type: "number", description: "Page number, 0-based. Must be a number (integer), not a string." },
-          size: { type: "number", description: "Page size. Must be a number (integer), not a string." },
-          sort: { type: "array", items: { type: "string" } },
-        },
-      },
-    },
-    {
       name: "search_test_cases",
       description: "Search test cases by AQL query.",
       inputSchema: {
@@ -407,24 +388,6 @@ export function createTestCaseTools(
       },
     },
     {
-      name: "list_project_custom_fields",
-      description: "List custom fields configured for a project.",
-      inputSchema: {
-        type: "object" as const,
-        properties: {
-          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
-          projectName: {
-            type: "string",
-            description: "Project name (alternative to projectId).",
-          },
-          query: { type: "string" },
-          page: { type: "number", description: "Page number, 0-based. Must be a number (integer), not a string." },
-          size: { type: "number", description: "Page size. Must be a number (integer), not a string." },
-          sort: { type: "array", items: { type: "string" } },
-        },
-      },
-    },
-    {
       name: "list_custom_field_values",
       description: "List values for a custom field in a project.",
       inputSchema: {
@@ -532,15 +495,6 @@ export function createTestCaseTools(
   ];
 
   const handlers = {
-    list_test_cases: async (rawArgs: unknown) => {
-      const args = asObject(rawArgs);
-      const projectId = await resolveProjectId(args, client);
-      return api.listTestCases(client, projectId, {
-        search: getOptionalString(args, "search"),
-        filterId: getOptionalNumber(args, "filterId"),
-        ...pickPagination(args),
-      });
-    },
     search_test_cases: async (rawArgs: unknown) => {
       const args = asObject(rawArgs);
       const projectId = await resolveProjectId(args, client);
@@ -732,14 +686,6 @@ export function createTestCaseTools(
         testCaseId,
         parentId: expectedResultId,
         body: expectedResult,
-      });
-    },
-    list_project_custom_fields: async (rawArgs: unknown) => {
-      const args = asObject(rawArgs);
-      const projectId = await resolveProjectId(args, client);
-      return api.listProjectCustomFields(client, projectId, {
-        query: getOptionalString(args, "query"),
-        ...pickPagination(args),
       });
     },
     list_custom_field_values: async (rawArgs: unknown) => {
