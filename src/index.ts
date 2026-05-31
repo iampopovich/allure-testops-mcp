@@ -11,6 +11,7 @@ import {
 import { TokenManager } from "./auth.js";
 import { AllureApiClient } from "./client.js";
 import { buildToolRegistry, requiredEnv } from "./server-bootstrap.js";
+import { LruCacheStore } from "./cache.js";
 import { RESOURCES, readResource } from "./resources/index.js";
 
 function formatToolResult(result: unknown): string {
@@ -40,7 +41,8 @@ async function main(): Promise<void> {
   const defaultProjectId = parseOptionalProjectId(process.env.ALLURE_PROJECT_ID);
 
   const tokenManager = new TokenManager({ baseUrl, apiToken });
-  const client = new AllureApiClient({ baseUrl, tokenManager, defaultProjectId });
+  const cache = process.env.ALLURE_CACHE_DISABLED === "1" ? undefined : new LruCacheStore();
+  const client = new AllureApiClient({ baseUrl, tokenManager, defaultProjectId, cache });
   const { tools, handlers } = buildToolRegistry(client);
 
   const server = new Server(

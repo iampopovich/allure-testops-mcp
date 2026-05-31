@@ -48,7 +48,8 @@
   "author": "iampopovich",
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.27.1"
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "lru-cache": "^11.5.1"
   },
   "devDependencies": {
     "@types/node": "^25.3.3",
