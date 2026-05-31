@@ -48,11 +48,18 @@ Known custom fields and values:
 - "{{CF_NAME_2}}" (id: {{CF_ID_2}})
   - "{{CF_VALUE_1}}" (id: {{CF_VALUE_ID_1}})
 
+Resources (read via resources/read, no tool call needed):
+- allure://projects — all accessible projects
+- allure://env-vars — all environment variable definitions
+- allure://projects/{projectId}/launches — launches for a project
+- allure://projects/{projectId}/test-plans — test plans for a project
+- allure://projects/{projectId}/dashboards — dashboards for a project
+
 Tooling hints:
-- For test cases: list_test_cases, search_test_cases, get_test_case, create_test_case, update_test_case
-- For launches: list_launches, create_launch, update_launch, get_launch_progress
+- For test cases: search_test_cases, get_test_case, create_test_case, update_test_case
+- For launches: search_launches, create_launch, update_launch, get_launch_progress
 - For test results: list_test_results, search_test_results, get_test_result, resolve_test_result
-- For test plans: list_test_plans, get_test_plan, run_test_plan
+- For test plans: get_test_plan, run_test_plan, create_test_plan
 - For custom fields: list_project_custom_fields, list_custom_field_values, get_test_case_custom_fields, set_test_case_custom_fields
 
 Behavior on ambiguity:

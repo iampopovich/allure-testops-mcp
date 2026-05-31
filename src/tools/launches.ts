@@ -18,25 +18,6 @@ export function createLaunchTools(
 ): ToolBundle {
   const tools = [
     {
-      name: "list_launches",
-      description: "List launches for a project.",
-      inputSchema: {
-        type: "object" as const,
-        properties: {
-          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
-          projectName: {
-            type: "string",
-            description: "Project name (alternative to projectId).",
-          },
-          search: { type: "string" },
-          filterId: { type: "number", description: "Saved filter ID. Must be a number (integer), not a string." },
-          page: { type: "number", description: "Page number, 0-based. Must be a number (integer), not a string." },
-          size: { type: "number", description: "Page size. Must be a number (integer), not a string." },
-          sort: { type: "array", items: { type: "string" } },
-        },
-      },
-    },
-    {
       name: "search_launches",
       description: "Search launches by AQL query.",
       inputSchema: {
@@ -171,15 +152,6 @@ export function createLaunchTools(
   ];
 
   const handlers = {
-    list_launches: async (rawArgs: unknown) => {
-      const args = asObject(rawArgs);
-      const projectId = await resolveProjectId(args, client);
-      return api.listLaunches(client, projectId, {
-        search: getOptionalString(args, "search"),
-        filterId: getOptionalNumber(args, "filterId"),
-        ...pickPagination(args),
-      });
-    },
     search_launches: async (rawArgs: unknown) => {
       const args = asObject(rawArgs);
       const projectId = await resolveProjectId(args, client);

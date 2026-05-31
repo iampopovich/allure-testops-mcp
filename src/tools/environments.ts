@@ -13,18 +13,6 @@ import {
 export function createEnvironmentTools(client: AllureApiClient): ToolBundle {
   const tools = [
     {
-      name: "list_env_vars",
-      description:
-        "List all environment variable definitions (keys) available in the system. " +
-        "Environment variables track test configuration context: browser, OS, environment name, build number, etc. " +
-        "Use this to discover what ev[] keys are available before constructing AQL filters like " +
-        'ev["browser"] = "Chrome" or ev["os"] = "Linux" in search_test_results or search_launches.',
-      inputSchema: {
-        type: "object" as const,
-        properties: {},
-      },
-    },
-    {
       name: "suggest_env_vars",
       description:
         "Search environment variable definitions by name. " +
@@ -107,10 +95,6 @@ export function createEnvironmentTools(client: AllureApiClient): ToolBundle {
   ];
 
   const handlers = {
-    list_env_vars: async (_rawArgs: unknown) => {
-      return api.listEnvVars(client);
-    },
-
     suggest_env_vars: async (rawArgs: unknown) => {
       const args = asObject(rawArgs);
       return api.suggestEnvVars(client, {

@@ -6,11 +6,18 @@
 
 ## Typical Tools
 
-- `list_test_plans`
 - `create_test_plan`
 - `update_test_plan`
 - `run_test_plan`
 - `delete_test_plan`
+
+## Resources
+
+Listing test plans is done via the MCP resource protocol — no tool call needed:
+
+```
+resources/read  allure://projects/37/test-plans
+```
 
 ## Example Calls
 
@@ -24,20 +31,6 @@ Create:
       "projectId": 37,
       "name": "Smoke Plan - Web"
     }
-  }
-}
-```
-
-List:
-
-```json
-{
-  "name": "list_test_plans",
-  "arguments": {
-    "projectId": 37,
-    "search": "Smoke",
-    "page": 0,
-    "size": 20
   }
 }
 ```
