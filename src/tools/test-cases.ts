@@ -205,13 +205,17 @@ export function createTestCaseTools(
       name: "update_test_case_step",
       description:
         "Update a test case step by ID. Supports updating body text and/or expectedResult. " +
-        "If expectedResult is provided, the expected result node is created automatically if it does not exist yet.",
+        "IMPORTANT: expected-result wrapper child steps (marked as _wrapper=true in get_test_case_steps output, " +
+        "or listed in _meta.expectedResultWrapperIds) cannot be edited directly — update the parent step " +
+        "passing the new text as `expectedResult` instead. " +
+        "If `expectedResult` is NOT provided, the existing expected result is preserved (sent as-is to avoid clearing it). " +
+        "If `expectedResult` IS provided, the new value replaces the old one.",
       inputSchema: {
         type: "object" as const,
         properties: {
           stepId: { type: "number", description: "Step ID to update. Must be a number (integer), not a string." },
           body: { type: "string", description: "New step body text." },
-          expectedResult: { type: "string", description: "Expected result text for this step." },
+          expectedResult: { type: "string", description: "Expected result text for this step. When omitted, the existing expected result is preserved." },
         },
         required: ["stepId"],
       },
@@ -329,7 +333,12 @@ export function createTestCaseTools(
     },
     {
       name: "get_test_case_steps",
-      description: "Get manual scenario steps for a test case. Returns a normalized scenario with root step and a flat map of all steps (scenarioSteps), where each step contains body, expectedResult, children IDs, and optional sharedStepId.",
+      description:
+        "Get manual scenario steps for a test case. Returns a normalized scenario with root step and a flat map of all steps (scenarioSteps). " +
+        "Each step contains body, expectedResult, children IDs, and optional sharedStepId. " +
+        "IMPORTANT: the response includes a _meta section with expectedResultWrapperIds — these child nodes are Expected Result containers " +
+        "that CANNOT be edited directly via update_test_case_step. To update expected results, pass the `expectedResult` parameter " +
+        "on the parent step instead. Only steps listed in _meta.regularStepIds should be targeted by update_test_case_step.",
       inputSchema: {
         type: "object" as const,
         properties: { id: { type: "number", description: "Test case ID. Must be a number (integer), not a string." } },
@@ -611,7 +620,42 @@ export function createTestCaseTools(
     },
     get_test_case_steps: async (rawArgs: unknown) => {
       const args = asObject(rawArgs);
-      return api.getTestCaseSteps(client, getRequiredId(args));
+      const data = (await api.getTestCaseSteps(client, getRequiredId(args))) as Record<string, unknown>;
+
+      const scenarioSteps = (data.scenarioSteps ?? {}) as Record<string, Record<string, unknown>>;
+
+      // Identify expected-result wrapper steps: these are child nodes referenced by
+      // another step's `expectedResultId`. They cannot be edited directly via
+      // update_test_case_step — use the parent step's `expectedResult` parameter instead.
+      const wrapperIds = new Set<number>();
+      for (const step of Object.values(scenarioSteps)) {
+        const erId = step.expectedResultId;
+        if (typeof erId === "number") {
+          wrapperIds.add(erId);
+        }
+      }
+
+      const regularIds: number[] = [];
+      for (const [idStr, step] of Object.entries(scenarioSteps)) {
+        const id = Number(idStr);
+        if (wrapperIds.has(id)) {
+          step._wrapper = true; // mark in the step object itself
+        } else {
+          regularIds.push(id);
+        }
+      }
+
+      return {
+        ...data,
+        _meta: {
+          expectedResultWrapperIds: [...wrapperIds],
+          regularStepIds: regularIds,
+          note:
+            "Steps with IDs in expectedResultWrapperIds are Expected Result container nodes. " +
+            "They cannot be edited directly via update_test_case_step — update the parent step " +
+            "passing the new text as the `expectedResult` parameter instead.",
+        },
+      };
     },
     get_test_case_tags: async (rawArgs: unknown) => {
       const args = asObject(rawArgs);
@@ -643,7 +687,10 @@ export function createTestCaseTools(
       if (body !== undefined) payload.body = body;
       if (expectedResult !== undefined) payload.expectedResult = expectedResult;
 
-      return api.updateTestCaseStep(client, stepId, payload);
+      // When expectedResult is provided, the API requires withExpectedResult=true
+      // query parameter to actually process and persist the expected result.
+      // Without it, the expected result child wrapper is silently dropped.
+      return api.updateTestCaseStep(client, stepId, payload, expectedResult !== undefined);
     },
     list_custom_field_values: async (rawArgs: unknown) => {
       const args = asObject(rawArgs);

@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project adheres to Semantic Versioning.
 
+## [1.3.1] - 2026-06-02
+
+### Fixed
+
+- **`get_test_case_steps` now annotates expected-result wrapper steps.** The response includes a `_meta` section with `expectedResultWrapperIds` (child nodes that are Expected Result containers) and `regularStepIds` (editable steps). Wrapper steps are also marked with `_wrapper: true` in `scenarioSteps`. This prevents AI agents from trying to directly `PATCH` wrapper child nodes, which returns 404 — they must be updated through the parent step's `expectedResult` parameter.
+- **`update_test_case_step` expectedResult preservation.** When `expectedResult` is not provided, the existing value is preserved (not cleared). When `expectedResult` is provided, the `withExpectedResult=true` query parameter is now sent to the API — without it, the API silently drops the expected result child wrapper, causing expected results to disappear. Tool description updated to document this behavior and the expected-result wrapper limitation.
+
+### Verified
+
+- **API compatibility with Allure TestOps 26.2.1.5** — all 104 implemented endpoints
+  (`/api/launch`, `/api/testcase`, `/api/testresult`, `/api/testplan`, `/api/defect`,
+  `/api/sharedstep`, `/api/dashboard`, `/api/ev`, `/api/analytic`) verified against the
+  OpenAPI/Swagger specification. HTTP methods, request paths, query parameters, and
+  request bodies match. No breaking changes detected — the server is fully compatible
+  with Allure TestOps version 26.2.1.5.
+
 ## [Unreleased]
 
 ## [1.3.0] - 2026-05-31
