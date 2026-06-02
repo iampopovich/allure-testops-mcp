@@ -639,54 +639,11 @@ export function createTestCaseTools(
       const body = getOptionalString(args, "body");
       const expectedResult = getOptionalString(args, "expectedResult");
 
-      // Fetch current step metadata to get testCaseId and expectedResultId.
-      const currentStep = await api.getTestCaseStep(client, stepId) as {
-        expectedResultId?: number;
-        testCaseId?: number;
-      };
+      const payload: Record<string, unknown> = {};
+      if (body !== undefined) payload.body = body;
+      if (expectedResult !== undefined) payload.expectedResult = expectedResult;
 
-      // Update the step body if requested.
-      if (body !== undefined) {
-        await api.updateTestCaseStep(client, stepId, { body });
-      }
-
-      if (expectedResult === undefined) return currentStep;
-
-      const testCaseId = currentStep.testCaseId;
-      if (typeof testCaseId !== "number") {
-        throw new Error("Could not determine testCaseId for this step.");
-      }
-
-      let expectedResultId = currentStep.expectedResultId;
-
-      // If no expected result header exists yet, create it via PATCH withExpectedResult=true.
-      if (typeof expectedResultId !== "number") {
-        const patchScenario = await api.updateTestCaseStep(client, stepId, {}, true) as {
-          scenarioSteps?: Record<string, { expectedResultId?: number }>;
-        };
-        expectedResultId = patchScenario?.scenarioSteps?.[String(stepId)]?.expectedResultId;
-      }
-
-      if (typeof expectedResultId !== "number") {
-        throw new Error("Could not create or find expected result node for this step.");
-      }
-
-      // Get the full scenario to read the header node's children.
-      const fullScenario = await api.getTestCaseSteps(client, testCaseId) as {
-        scenarioSteps?: Record<string, { children?: number[] }>;
-      };
-      const children = fullScenario?.scenarioSteps?.[String(expectedResultId)]?.children ?? [];
-
-      for (const childId of children) {
-        return api.updateTestCaseStep(client, childId, { body: expectedResult });
-      }
-
-      // Children was empty — create a new text child node under the expected result header.
-      return api.createTestCaseStep(client, {
-        testCaseId,
-        parentId: expectedResultId,
-        body: expectedResult,
-      });
+      return api.updateTestCaseStep(client, stepId, payload);
     },
     list_custom_field_values: async (rawArgs: unknown) => {
       const args = asObject(rawArgs);

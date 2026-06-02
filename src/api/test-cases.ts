@@ -156,10 +156,6 @@ export function getTestCaseSteps(client: AllureApiClient, id: number): Promise<u
   return client.get(`/api/testcase/${id}/step`);
 }
 
-export function getTestCaseStep(client: AllureApiClient, stepId: number): Promise<unknown> {
-  return client.get(`/api/testcase/step/${stepId}`);
-}
-
 export function getTestCaseTags(client: AllureApiClient, testCaseId: number): Promise<unknown> {
   return client.get(`/api/testcase/${testCaseId}/tag`);
 }
