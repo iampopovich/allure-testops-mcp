@@ -206,6 +206,37 @@ export function updateTestCaseStep(
   );
 }
 
+export async function setStepExpectedResult(
+  client: AllureApiClient,
+  stepId: number,
+  testCaseId: number,
+  expectedResult: string,
+  body?: string,
+): Promise<unknown> {
+  // Step 1: PATCH the step to create the expected result header node.
+  // withExpectedResult=true triggers header creation; the API ignores the text value here.
+  const payload: Record<string, unknown> = { expectedResult: " " };
+  if (body !== undefined) payload.body = body;
+  const patchResult = (await client.patch(
+    `/api/testcase/step/${stepId}`,
+    payload,
+    { withExpectedResult: true },
+  )) as { scenarioSteps?: Record<string, { expectedResultId?: number }> };
+
+  const wrapperId = patchResult.scenarioSteps?.[String(stepId)]?.expectedResultId;
+  if (typeof wrapperId !== "number") {
+    throw new Error(`Expected result wrapper not found in response for step ${stepId}`);
+  }
+
+  // Step 2: Create a child step under the header with the actual text.
+  // The expected result text lives in child nodes of the header — not in the header's own body.
+  return client.post("/api/testcase/step", {
+    testCaseId,
+    parentId: wrapperId,
+    body: expectedResult,
+  });
+}
+
 
 export function listProjectCustomFields(
   client: AllureApiClient,

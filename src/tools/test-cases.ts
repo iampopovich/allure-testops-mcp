@@ -208,28 +208,46 @@ export function createTestCaseTools(
         "Add a new step to a test case — works for both NEW and EXISTING test cases. " +
         "This is the ONLY correct tool for adding steps. NEVER use update_test_case to add steps — it replaces the entire scenario and loses expected results.\n" +
         "\n" +
-        "USE THIS TOOL whenever the user asks to:\n" +
-        "- add a step to an existing test case\n" +
-        "- append a step to a scenario\n" +
-        "- create a step with an expected result\n" +
-        "Just call create_test_case_step({ testCaseId, body, expectedResult }) — no need to read the scenario first.\n" +
+        "USE THIS TOOL whenever the user asks to add a step. " +
+        "No need to read the scenario first — just call with testCaseId and body.\n" +
         "\n" +
-        "expectedResult is optional. When provided, it is sent in the same POST request with withExpectedResult=true query flag. " +
-        "Multiple expected results: separate with ; or newlines. " +
+        "expectedResult is optional. When provided, the expected result is set on the new step automatically. " +
+        "Multiple expected result lines: separate with ; or newlines.\n" +
+        "\n" +
         "parentId creates a child step under the given parent (for nested structures). " +
-        "sharedStepId references an existing shared step instead of providing body text.\n" +
-        "\n" +
-        "update_test_case_step is only for EDITING an existing step when you already have its stepId.",
+        "sharedStepId references an existing shared step instead of providing body text.",
       inputSchema: {
         type: "object" as const,
         properties: {
           testCaseId: { type: "number", description: "Test case ID. Must be a number (integer), not a string." },
           body: { type: "string", description: "Step body text. Required unless sharedStepId is provided." },
-          expectedResult: { type: "string", description: "Expected result text for this new step. Separate multiple lines with ; or newlines. Safe to use here — no existing results to lose." },
-          parentId: { type: "number", description: "Parent step ID for nested steps or expected-result child steps." },
+          expectedResult: { type: "string", description: "Expected result text for the new step. Separate multiple lines with ; or newlines." },
+          parentId: { type: "number", description: "Parent step ID for nested steps." },
           sharedStepId: { type: "number", description: "Shared step ID to reference an existing shared step instead of providing body text." },
         },
         required: ["testCaseId"],
+      },
+    },
+    {
+      name: "set_test_case_step_expected_result",
+      description:
+        "Set the expected result on an existing step. Call this after create_test_case_step when an expected result is needed.\n" +
+        "\n" +
+        "WHEN TO USE:\n" +
+        "- User asks to add a step with expected result → use create_test_case_step with expectedResult instead (preferred)\n" +
+        "- User asks to set/update expected result on an already-existing step\n" +
+        "\n" +
+        "body: pass the step's current body text. Omitting it may cause 400 step.onlyonedetail on some API versions.\n" +
+        "Multiple expected result lines: separate with ; or newlines.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          stepId: { type: "number", description: "Step ID. Use createdStepId from create_test_case_step response." },
+          testCaseId: { type: "number", description: "Test case ID that owns this step." },
+          body: { type: "string", description: "Step body text (current or unchanged). Required by the API." },
+          expectedResult: { type: "string", description: "Expected result text. Separate multiple lines with ; or newlines." },
+        },
+        required: ["stepId", "testCaseId", "expectedResult"],
       },
     },
     {
@@ -686,11 +704,35 @@ export function createTestCaseTools(
 
       const payload: Record<string, unknown> = { testCaseId };
       if (body !== undefined) payload.body = body;
-      if (expectedResult !== undefined) payload.expectedResult = expectedResult;
       if (parentId !== undefined) payload.parentId = parentId;
       if (sharedStepId !== undefined) payload.sharedStepId = sharedStepId;
 
-      return api.createTestCaseStep(client, payload, expectedResult !== undefined);
+      const created = await api.createTestCaseStep(
+        client,
+        payload,
+        expectedResult !== undefined,
+      ) as { createdStepId?: number; scenario?: { scenarioSteps?: Record<string, { expectedResultId?: number }> } };
+
+      if (expectedResult !== undefined && typeof created.createdStepId === "number") {
+        const erHeaderId = created.scenario?.scenarioSteps?.[String(created.createdStepId)]?.expectedResultId;
+        if (typeof erHeaderId === "number") {
+          await api.createTestCaseStep(client, {
+            testCaseId,
+            parentId: erHeaderId,
+            body: expectedResult,
+          });
+        }
+      }
+
+      return created;
+    },
+    set_test_case_step_expected_result: async (rawArgs: unknown) => {
+      const args = asObject(rawArgs);
+      const stepId = getRequiredId(args, "stepId");
+      const testCaseId = getRequiredId(args, "testCaseId");
+      const expectedResult = getRequiredString(args, "expectedResult");
+      const body = getOptionalString(args, "body");
+      return api.setStepExpectedResult(client, stepId, testCaseId, expectedResult, body);
     },
     update_test_case_step: async (rawArgs: unknown) => {
       const args = asObject(rawArgs);
