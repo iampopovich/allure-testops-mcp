@@ -124,6 +124,7 @@ export function createTestCase(
   return client.post("/api/testcase", payload);
 }
 
+
 export function updateTestCase(
   client: AllureApiClient,
   id: number,

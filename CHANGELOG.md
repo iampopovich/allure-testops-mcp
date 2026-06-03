@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project adheres to Semantic Versioning.
 
+## [1.3.2] - 2026-06-03
+
+### Changed
+
+- **`create_test_case` now sends steps via native `scenario` API.** Previously, `payload.steps` were stripped from the payload and each step was created separately through `POST /api/testcase/step`. Now steps are translated from the user-friendly format (`{ name, expectedResult, steps }`) into typed API DTOs (`BodyStepDto` with `expectedResultSteps`) and sent as `payload.scenario` in a single atomic `POST /api/testcase` call. This eliminates the race condition and "empty steps with descriptions" bug reported by QA — step body was not reaching the API when `name` field was missing.
+
+### Fixed
+
+- **`create_test_case` step body resolution.** The handler now correctly handles both `name` (user-friendly alias) and `body` (canonical API field) for step text. Previously only `name` was mapped, causing empty steps when the caller used `body` instead.
+
+- **`update_test_case_step` description rewritten.** The tool description now explicitly documents the FULL REPLACE semantics of `expectedResult` — passing it wipes all existing expected-result lines and replaces them. Workflow section with numbered steps, CRITICAL warning, and a "WHAT TO AVOID" checklist added so AI agents understand the tool's behavior before calling it. The `expectedResult` parameter description now states "REPLACES ALL existing lines" directly.
+
+
+
 ## [1.3.1] - 2026-06-02
 
 ### Fixed
@@ -19,8 +33,6 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
   OpenAPI/Swagger specification. HTTP methods, request paths, query parameters, and
   request bodies match. No breaking changes detected — the server is fully compatible
   with Allure TestOps version 26.2.1.5.
-
-## [Unreleased]
 
 ## [1.3.0] - 2026-05-31
 

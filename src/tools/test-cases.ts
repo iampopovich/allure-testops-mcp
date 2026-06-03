@@ -191,8 +191,9 @@ export function createTestCaseTools(
         "payload.precondition (string) is the preconditions field — always use this for preconditions/prerequisites text, NOT payload.description. " +
         "payload.description (string) is the general test case description — always populate this with a meaningful summary of what the test case verifies. " +
         "payload.customFields supports values like { customField: { id }, id, name }. " +
-        "payload.steps is an optional array of step objects with { name (step text), expectedResult (optional expected result text) } — steps are created after the test case. " +
-        "When a step has multiple expected results, list them in expectedResult separated by semicolons (e.g. \"Result A; Result B\") or as a bullet list (lines starting with -, *, or a number).",
+        "IMPORTANT: steps are NOT created via this tool. The Allure API does not support creating steps through the test-case payload — " +
+        "payload.steps is silently ignored. After creating the test case, use create_test_case_step to add each step individually. " +
+        "Example workflow: create_test_case → for each step call create_test_case_step.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -202,20 +203,67 @@ export function createTestCaseTools(
       },
     },
     {
+      name: "create_test_case_step",
+      description:
+        "Add a new step to a test case — works for both NEW and EXISTING test cases. " +
+        "This is the ONLY correct tool for adding steps. NEVER use update_test_case to add steps — it replaces the entire scenario and loses expected results.\n" +
+        "\n" +
+        "USE THIS TOOL whenever the user asks to:\n" +
+        "- add a step to an existing test case\n" +
+        "- append a step to a scenario\n" +
+        "- create a step with an expected result\n" +
+        "Just call create_test_case_step({ testCaseId, body, expectedResult }) — no need to read the scenario first.\n" +
+        "\n" +
+        "expectedResult is optional. When provided, it is sent in the same POST request with withExpectedResult=true query flag. " +
+        "Multiple expected results: separate with ; or newlines. " +
+        "parentId creates a child step under the given parent (for nested structures). " +
+        "sharedStepId references an existing shared step instead of providing body text.\n" +
+        "\n" +
+        "update_test_case_step is only for EDITING an existing step when you already have its stepId.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          testCaseId: { type: "number", description: "Test case ID. Must be a number (integer), not a string." },
+          body: { type: "string", description: "Step body text. Required unless sharedStepId is provided." },
+          expectedResult: { type: "string", description: "Expected result text for this new step. Separate multiple lines with ; or newlines. Safe to use here — no existing results to lose." },
+          parentId: { type: "number", description: "Parent step ID for nested steps or expected-result child steps." },
+          sharedStepId: { type: "number", description: "Shared step ID to reference an existing shared step instead of providing body text." },
+        },
+        required: ["testCaseId"],
+      },
+    },
+    {
       name: "update_test_case_step",
       description:
-        "Update a test case step by ID. Supports updating body text and/or expectedResult. " +
-        "IMPORTANT: expected-result wrapper child steps (marked as _wrapper=true in get_test_case_steps output, " +
-        "or listed in _meta.expectedResultWrapperIds) cannot be edited directly — update the parent step " +
-        "passing the new text as `expectedResult` instead. " +
-        "If `expectedResult` is NOT provided, the existing expected result is preserved (sent as-is to avoid clearing it). " +
-        "If `expectedResult` IS provided, the new value replaces the old one.",
+        "Update a test case step by ID. Supports updating body text and/or expectedResult.\n" +
+        "\n" +
+        "WORKFLOW — read before using:\n" +
+        "1. Change ONLY step text:   { stepId, body: \"new text\" }. Omit expectedResult — existing expected results stay untouched.\n" +
+        "2. Change ONLY expected result: { stepId, expectedResult: \"A; B\" }. Omit body — step text stays as-is.\n" +
+        "3. Change BOTH:             { stepId, body: \"new text\", expectedResult: \"A; B\" }.\n" +
+        "\n" +
+        "CRITICAL — expectedResult is a FULL REPLACE, not an append.\n" +
+        "When you pass expectedResult, the API deletes ALL existing expected-result lines for that step " +
+        "and replaces them with what you provide. You MUST include EVERY expected-result line you want to keep, " +
+        "separated by semicolons (e.g. \"Check value; Verify status\") or newlines.\n" +
+        "If you have 3 expected-result lines and only pass 1, the other 2 are GONE.\n" +
+        "\n" +
+        "WRAPPER STEPS — do not target them directly.\n" +
+        "Steps marked _wrapper=true in get_test_case_steps output (or listed in _meta.expectedResultWrapperIds) " +
+        "are internal child nodes managed by the API. To edit their content, update the PARENT step " +
+        "and pass the complete expectedResult text.\n" +
+        "\n" +
+        "WHAT TO AVOID:\n" +
+        "- Calling this tool with expectedResult, then calling it again — the second call overwrites the first. " +
+        "Update body and expectedResult together in ONE call.\n" +
+        "- Mixing update_test_case_step with update_test_case (full scenario replace) on the same step — pick one approach and stick with it.\n" +
+        "- Passing a partial expectedResult string — it BECOMES the entire expected result. Old lines are wiped.",
       inputSchema: {
         type: "object" as const,
         properties: {
           stepId: { type: "number", description: "Step ID to update. Must be a number (integer), not a string." },
           body: { type: "string", description: "New step body text." },
-          expectedResult: { type: "string", description: "Expected result text for this step. When omitted, the existing expected result is preserved." },
+          expectedResult: { type: "string", description: "FULL expected result text — REPLACES ALL existing lines. Use semicolons or newlines for multiple lines. When omitted, existing expected results are preserved." },
         },
         required: ["stepId"],
       },
@@ -223,7 +271,9 @@ export function createTestCaseTools(
     {
       name: "update_test_case",
       description:
-        "Update an existing test case. payload.customFields supports values like { customField: { id }, id, name }.",
+        "Update an existing test case metadata (name, description, precondition, tags, customFields, etc.). " +
+        "payload.customFields supports values like { customField: { id }, id, name }. " +
+        "DO NOT use this tool to add, edit, or delete steps — use create_test_case_step / update_test_case_step / delete_test_case_step instead.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -519,63 +569,12 @@ export function createTestCaseTools(
       const args = asObject(rawArgs);
       const payload = ensureProjectIdInPayload(getObjectPayload(args), client);
 
-      // Steps are not accepted by POST /api/testcase — extract and create them separately.
-      const { steps, ...testCasePayload } = payload;
-      const result = await api.createTestCase(client, testCasePayload) as { id?: number };
+      // Steps are not supported via the test-case payload — the Allure API either
+      // returns 400 or silently ignores them. Drop them and let the caller use
+      // update_test_case_step after creation.
+      delete payload.steps;
 
-      if (Array.isArray(steps) && steps.length > 0 && typeof result.id === "number") {
-        const testCaseId = result.id;
-        for (const step of steps) {
-          const s = step as Record<string, unknown>;
-          const body = typeof s.name === "string" ? s.name
-            : typeof s.body === "string" ? s.body
-            : undefined;
-          const expectedResult = typeof s.expectedResult === "string" ? s.expectedResult : undefined;
-          const hasExpectedResult = expectedResult !== undefined;
-
-          // Parse multiple expected results: split by semicolons or bullet/numbered list lines.
-          const expectedLines: string[] = [];
-          if (hasExpectedResult) {
-            const BULLET_RE = /^[\s]*(?:[-*•·]|\d+[.)]\s)\s*/;
-            const byNewline = expectedResult!.split("\n")
-              .map(l => l.replace(BULLET_RE, "").trim())
-              .filter(l => l.length > 0);
-            if (byNewline.length > 1) {
-              expectedLines.push(...byNewline);
-            } else {
-              const bySemicolon = expectedResult!.split(";").map(l => l.trim()).filter(l => l.length > 0);
-              expectedLines.push(...(bySemicolon.length > 1 ? bySemicolon : [expectedResult!.trim()]));
-            }
-          }
-
-          // POST step; request an expectedResult header node when needed
-          const created = await api.createTestCaseStep(
-            client,
-            { testCaseId, ...(body !== undefined ? { body } : {}) },
-            hasExpectedResult,
-          ) as { createdStepId?: number; scenario?: { scenarioSteps?: Record<string, { expectedResultId?: number }> } };
-
-          if (hasExpectedResult && typeof created.createdStepId === "number") {
-            // The POST response (ScenarioStepCreatedResponseDto) includes the full scenario.
-            // Extract the expectedResult header node ID from it.
-            const expectedResultId =
-              created.scenario?.scenarioSteps?.[String(created.createdStepId)]?.expectedResultId;
-
-            if (typeof expectedResultId === "number") {
-              // Create one child step per expected result line.
-              for (const line of expectedLines) {
-                await api.createTestCaseStep(client, {
-                  testCaseId,
-                  parentId: expectedResultId,
-                  body: line,
-                });
-              }
-            }
-          }
-        }
-      }
-
-      return result;
+      return api.createTestCase(client, payload);
     },
     update_test_case: async (rawArgs: unknown) => {
       const args = asObject(rawArgs);
@@ -676,6 +675,22 @@ export function createTestCaseTools(
     restore_test_case: async (rawArgs: unknown) => {
       const args = asObject(rawArgs);
       return api.restoreTestCase(client, getRequiredId(args));
+    },
+    create_test_case_step: async (rawArgs: unknown) => {
+      const args = asObject(rawArgs);
+      const testCaseId = getRequiredId(args, "testCaseId");
+      const body = getOptionalString(args, "body");
+      const expectedResult = getOptionalString(args, "expectedResult");
+      const parentId = getOptionalNumber(args, "parentId");
+      const sharedStepId = getOptionalNumber(args, "sharedStepId");
+
+      const payload: Record<string, unknown> = { testCaseId };
+      if (body !== undefined) payload.body = body;
+      if (expectedResult !== undefined) payload.expectedResult = expectedResult;
+      if (parentId !== undefined) payload.parentId = parentId;
+      if (sharedStepId !== undefined) payload.sharedStepId = sharedStepId;
+
+      return api.createTestCaseStep(client, payload, expectedResult !== undefined);
     },
     update_test_case_step: async (rawArgs: unknown) => {
       const args = asObject(rawArgs);
