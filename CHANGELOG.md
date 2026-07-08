@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project adheres to Semantic Versioning.
 
+## [1.4.0] - 2026-07-09
+
+### Added
+
+- **`find_test_cases` tool.** A broad, beginner-friendly search tool intended as the first step before creating a new test case (duplicate check). Supports name (`query`/`name`, contains match), custom field shortcuts (`suite`, `feature`, exact match), `tag`, `automated`, `status`, and a generic `customFieldFilters` array for arbitrary custom fields (exact or contains match). Internally builds and runs an AQL query via `search_test_cases`. Requires at least one search/filter parameter.
+
+### Changed
+
+- **`search_test_cases` description** now points AI agents to `find_test_cases` for broad multi-field discovery, reserving raw AQL for precise/complex queries, and documents `cf["Field"] = "value"` custom-field query patterns.
+
+### Fixed
+
+- **Silent no-op custom field filters.** Some Allure custom field configurations (e.g. multi-select/list-typed fields) treat `cf["Field"] = "value"` as a no-op that matches every test case instead of erroring or filtering — an unfiltered result set could easily be mistaken for "no matches" or a valid filtered list. `find_test_cases` (and any exact-match `customFieldFilters` entry) now validates that the field and value exist via `list_project_custom_fields`/`list_custom_field_values`, and additionally probes the filter against an unfiltered baseline count to detect and reject silently-broken equality filters, raising a clear error instead of returning wrong data.
+
 ## [1.3.2] - 2026-06-03
 
 ### Changed
