@@ -96,6 +96,87 @@ function normalizeBulkTags(args: ToolObject): BulkTag[] {
   });
 }
 
+function escapeAqlString(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
+// AQL treats cf["Field"] = "value" as a no-op (matches everything) instead of erroring
+// or matching nothing when the field name or value doesn't exist — so a typo'd/stale
+// custom field filter silently returns the unfiltered list. Validate field + value exist
+// up front so a bad filter fails loudly instead of looking like "no results filtered".
+async function validateCustomFieldValue(
+  client: AllureApiClient,
+  projectId: number,
+  fieldName: string,
+  value: string,
+): Promise<void> {
+  const fieldsResult = (await api.listProjectCustomFields(client, projectId, {
+    query: fieldName,
+    size: 50,
+  })) as { content?: Array<{ customField?: { id?: number; name?: string } }> };
+
+  const fields = fieldsResult.content ?? [];
+  const field = fields.find(
+    (row) => row.customField?.name?.toLowerCase() === fieldName.toLowerCase(),
+  );
+
+  if (!field?.customField?.id) {
+    const available = fields
+      .map((row) => row.customField?.name)
+      .filter((name): name is string => typeof name === "string" && name.length > 0);
+    throw new Error(
+      `Custom field "${fieldName}" was not found in this project.` +
+        (available.length > 0
+          ? ` Similar fields found: ${available.join(", ")}.`
+          : " No similar custom fields were found either.") +
+        " Check the exact field name before filtering.",
+    );
+  }
+
+  const valuesResult = (await api.listCustomFieldValues(client, projectId, field.customField.id, {
+    query: value,
+    size: 50,
+  })) as { content?: Array<{ name?: string }> };
+
+  const values = valuesResult.content ?? [];
+  const exists = values.some((row) => row.name?.toLowerCase() === value.toLowerCase());
+
+  if (!exists) {
+    const available = values
+      .map((row) => row.name)
+      .filter((name): name is string => typeof name === "string" && name.length > 0);
+    throw new Error(
+      `Value "${value}" was not found for custom field "${fieldName}" in this project.` +
+        (available.length > 0
+          ? ` Similar values found: ${available.join(", ")}.`
+          : " No similar values were found either.") +
+        " The filter would otherwise silently match every test case instead of none.",
+    );
+  }
+
+  // Even with a confirmed-existing field + value, some Allure custom field configurations
+  // (e.g. multi-select/list-typed fields) treat cf["Field"] = "value" as a no-op — matching
+  // every test case in the project instead of filtering. Probe the actual filter against an
+  // unfiltered baseline so a silently-broken filter fails loudly instead of returning wrong data.
+  const probeRql = `cf["${escapeAqlString(fieldName)}"] = "${escapeAqlString(value)}"`;
+  const [probeResult, baselineResult] = await Promise.all([
+    api.searchTestCases(client, projectId, probeRql, { size: 1 }),
+    api.listTestCases(client, projectId, { size: 1 }),
+  ]);
+  const probeTotal = (probeResult as { totalElements?: number }).totalElements ?? 0;
+  const baselineTotal = (baselineResult as { totalElements?: number }).totalElements ?? 0;
+
+  if (baselineTotal > 5 && probeTotal === baselineTotal) {
+    throw new Error(
+      `Filter cf["${fieldName}"] = "${value}" did not narrow results — it matched all ` +
+        `${baselineTotal} test cases in the project, same as no filter at all. This Allure ` +
+        `instance treats equality on this custom field as a no-op (likely a multi-select/list ` +
+        `field type). Use list_custom_field_values to inspect the field, or filter with tags ` +
+        "or a different field instead.",
+    );
+  }
+}
+
 function normalizeBulkExternalLinks(args: ToolObject): BulkExternalLink[] {
   const items: unknown[] = [];
   if (args.link !== undefined) {
@@ -144,7 +225,10 @@ export function createTestCaseTools(
   const tools = [
     {
       name: "search_test_cases",
-      description: "Search test cases by AQL query.",
+      description:
+        "Search test cases by AQL (Allure Query Language) query. " +
+        "PREFER find_test_cases for broad multi-field search — it automatically searches name + Suite + Feature. " +
+        "Use this tool for precise, targeted AQL queries when you need custom field filters or complex logic.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -163,9 +247,11 @@ export function createTestCaseTools(
               "status, workflow, testPlan, automation (boolean), muted, mutedDate, " +
               "createdDate, createdBy, lastModifiedDate, lastModifiedBy. " +
               "Dates use 13-digit Unix ms timestamps. " +
+              "Custom field patterns: cf[\"Feature\"] = \"keyword\" | " +
+              "cf[\"Epic\"] = \"Auth\" | cf[\"Suite\"] = \"MySuite\". " +
               'Examples: name ~= "login" | automation = true | automation = false | ' +
               'status = "Active" | tag in ["smoke", "regression"] | ' +
-              'not tag in ["nightly"] | cf["Epic"] = "Auth" | ' +
+              'not tag in ["nightly"] | cf["Feature"] = "keyword" and cf["Suite"] = "MySuite" | ' +
               'name ~= "checkout" and muted = false | (createdBy = "a" or createdBy = "b") and automation = true',
           },
           page: { type: "number", description: "Page number, 0-based. Must be a number (integer), not a string." },
@@ -173,6 +259,88 @@ export function createTestCaseTools(
           sort: { type: "array", items: { type: "string" } },
         },
         required: ["rql"],
+      },
+    },
+    {
+      name: "find_test_cases",
+      description:
+        "Broad search for test cases — use as the FIRST step before creating new test cases to check for duplicates. " +
+        "The \"query\" parameter searches test case name (contains match). " +
+        "Use \"feature\", \"suite\", or \"customFieldFilters\" to search by custom field values (exact match).\n" +
+        "\n" +
+        "WORKFLOW (general → specific):\n" +
+        "1. Broad search:   find_test_cases({ query: \"keyword\" }) — searches by test case name\n" +
+        "2. By custom field: find_test_cases({ feature: \"keyword\" }) — exact match on Feature custom field\n" +
+        "3. Combined:       find_test_cases({ query: \"login\", feature: \"Auth\", automated: true }) — name + filters\n" +
+        "4. Targeted AQL:   search_test_cases({ rql: 'cf[\"Feature\"] = \"keyword\" and automation = false' }) — precise query\n" +
+        "\n" +
+        "At least one of the search/filter parameters must be provided.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
+          projectName: {
+            type: "string",
+            description: "Project name (alternative to projectId).",
+          },
+          query: {
+            type: "string",
+            description:
+              "Search keyword — searches test case name (contains match). " +
+              "Use for broad name-based discovery. To search custom fields, use the \"feature\", \"suite\", or \"customFieldFilters\" parameters.",
+          },
+          name: {
+            type: "string",
+            description: "Filter by test case name (contains match). Use to narrow results to a specific name pattern.",
+          },
+          suite: {
+            type: "string",
+            description:
+              "Filter by Suite custom field value (exact match). Use to narrow results to a specific suite. " +
+              "NOTE: the custom field must be named \"Suite\" in this project — use customFieldFilters if the name differs.",
+          },
+          feature: {
+            type: "string",
+            description:
+              "Filter by Feature custom field value (exact match). Use to narrow results to a specific feature. " +
+              "NOTE: the custom field must be named \"Feature\" in this project — use customFieldFilters if the name differs.",
+          },
+          tag: {
+            type: "string",
+            description: "Filter by tag name (exact match).",
+          },
+          automated: {
+            type: "boolean",
+            description: "Filter by automation status: true = automated tests only, false = manual tests only.",
+          },
+          status: {
+            type: "string",
+            description: "Filter by test case status (exact match, e.g. 'Active', 'Draft', 'Deprecated').",
+          },
+          customFieldFilters: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                fieldName: { type: "string", description: "Custom field name, e.g. 'Suite', 'Feature', 'Epic'." },
+                value: { type: "string", description: "Value to match." },
+                exactMatch: {
+                  type: "boolean",
+                  description:
+                    "If true, use exact match (=); if false/omitted, use contains match (~=). " +
+                    "Default: false (contains). NOTE: ~= on custom fields is not officially documented and may cause 400 errors on some Allure versions.",
+                },
+              },
+              required: ["fieldName", "value"],
+            },
+            description:
+              "Additional custom field filters for granular targeting. " +
+              "Each filter adds an AND condition. Example: [{ fieldName: \"Epic\", value: \"Auth\" }].",
+          },
+          page: { type: "number", description: "Page number, 0-based. Must be a number (integer), not a string." },
+          size: { type: "number", description: "Page size. Must be a number (integer), not a string." },
+          sort: { type: "array", items: { type: "string" } },
+        },
       },
     },
     {
@@ -576,6 +744,105 @@ export function createTestCaseTools(
       const args = asObject(rawArgs);
       const projectId = await resolveProjectId(args, client);
       return api.searchTestCases(client, projectId, getRequiredString(args, "rql"), {
+        ...pickPagination(args),
+      });
+    },
+    find_test_cases: async (rawArgs: unknown) => {
+      const args = asObject(rawArgs);
+      const projectId = await resolveProjectId(args, client);
+
+      const query = getOptionalString(args, "query");
+      const name = getOptionalString(args, "name");
+      const suite = getOptionalString(args, "suite");
+      const feature = getOptionalString(args, "feature");
+      const tag = getOptionalString(args, "tag");
+      const automated = getOptionalBoolean(args, "automated");
+      const status = getOptionalString(args, "status");
+      const customFieldFilters = args.customFieldFilters;
+
+      const conditions: string[] = [];
+
+      // Broad search query — searches name with contains match
+      if (query !== undefined) {
+        conditions.push(`name ~= "${escapeAqlString(query)}"`);
+      }
+
+      // Name filter (narrowing)
+      if (name !== undefined) {
+        conditions.push(`name ~= "${escapeAqlString(name)}"`);
+      }
+
+      // Suite filter (narrowing)
+      if (suite !== undefined) {
+        await validateCustomFieldValue(client, projectId, "Suite", suite);
+        conditions.push(`cf["Suite"] = "${escapeAqlString(suite)}"`);
+      }
+
+      // Feature filter (narrowing)
+      if (feature !== undefined) {
+        await validateCustomFieldValue(client, projectId, "Feature", feature);
+        conditions.push(`cf["Feature"] = "${escapeAqlString(feature)}"`);
+      }
+
+      // Tag filter
+      if (tag !== undefined) {
+        conditions.push(`tag = "${escapeAqlString(tag)}"`);
+      }
+
+      // Automated filter
+      if (automated !== undefined) {
+        conditions.push(`automation = ${automated}`);
+      }
+
+      // Status filter
+      if (status !== undefined) {
+        conditions.push(`status = "${escapeAqlString(status)}"`);
+      }
+
+      // Custom field filters (granular targeting)
+      if (customFieldFilters !== undefined) {
+        if (!Array.isArray(customFieldFilters)) {
+          throw new Error("\"customFieldFilters\" must be an array when provided.");
+        }
+        for (let i = 0; i < customFieldFilters.length; i++) {
+          const filter = customFieldFilters[i] as Record<string, unknown>;
+          const cfName = filter.fieldName;
+          const cfValue = filter.value;
+          const exactMatch = filter.exactMatch === true;
+
+          if (typeof cfName !== "string" || cfName.length === 0) {
+            throw new Error(
+              `"customFieldFilters[${i}].fieldName" must be a non-empty string.`,
+            );
+          }
+          if (typeof cfValue !== "string" || cfValue.length === 0) {
+            throw new Error(
+              `"customFieldFilters[${i}].value" must be a non-empty string.`,
+            );
+          }
+
+          if (exactMatch) {
+            await validateCustomFieldValue(client, projectId, cfName, cfValue);
+          }
+
+          const operator = exactMatch ? "=" : "~=";
+          conditions.push(
+            `cf["${escapeAqlString(cfName)}"] ${operator} "${escapeAqlString(cfValue)}"`,
+          );
+        }
+      }
+
+      if (conditions.length === 0) {
+        throw new Error(
+          "At least one search or filter parameter must be provided. " +
+            "Use \"query\" for broad multi-field search, or provide at least one of: " +
+            "name, suite, feature, tag, automated, status, customFieldFilters.",
+        );
+      }
+
+      const rql = conditions.join(" and ");
+
+      return api.searchTestCases(client, projectId, rql, {
         ...pickPagination(args),
       });
     },
