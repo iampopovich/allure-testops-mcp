@@ -36,6 +36,17 @@ function parseOptionalProjectId(value: string | undefined): number | undefined {
   return parsed;
 }
 
+function parseMaxConcurrent(value: string | undefined): number {
+  if (!value) {
+    return 5; // default: limit to 5 concurrent requests
+  }
+  const parsed = Number(value);
+  if (Number.isNaN(parsed) || parsed < 0 || !Number.isInteger(parsed)) {
+    throw new Error("ALLURE_MAX_CONCURRENT must be a non-negative integer.");
+  }
+  return parsed;
+}
+
 async function main(): Promise<void> {
   const baseUrl = requiredEnv("ALLURE_TESTOPS_URL");
   const apiToken = requiredEnv("ALLURE_TOKEN");
@@ -43,7 +54,8 @@ async function main(): Promise<void> {
 
   const tokenManager = new TokenManager({ baseUrl, apiToken });
   const cache = process.env.ALLURE_CACHE_DISABLED === "1" ? undefined : new LruCacheStore();
-  const client = new AllureApiClient({ baseUrl, tokenManager, defaultProjectId, cache });
+  const maxConcurrent = parseMaxConcurrent(process.env.ALLURE_MAX_CONCURRENT);
+  const client = new AllureApiClient({ baseUrl, tokenManager, defaultProjectId, cache, maxConcurrent });
   const { tools, handlers } = buildToolRegistry(client);
 
   const server = new Server(
