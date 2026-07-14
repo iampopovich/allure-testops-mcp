@@ -1,4 +1,5 @@
 import type { AllureApiClient } from "../client.js";
+import type { PageDto } from "../types/entities.js";
 
 type QueryParams = Record<string, string | number | boolean | Array<string | number | boolean> | undefined>;
 
@@ -6,11 +7,11 @@ export function listDefects(
   client: AllureApiClient,
   projectId: number,
   query: QueryParams,
-): Promise<unknown> {
+): Promise<PageDto<Record<string, unknown>>> {
   return client.get("/api/defect", { projectId, ...query });
 }
 
-export function getDefect(client: AllureApiClient, id: number): Promise<unknown> {
+export function getDefect(client: AllureApiClient, id: number): Promise<Record<string, unknown>> {
   return client.get(`/api/defect/${id}`);
 }
 
@@ -44,7 +45,7 @@ export function getDefectTestResults(
   client: AllureApiClient,
   id: number,
   query: QueryParams,
-): Promise<unknown> {
+): Promise<PageDto<Record<string, unknown>>> {
   return client.get(`/api/defect/${id}/testresult`, query);
 }
 
@@ -52,7 +53,7 @@ export function getDefectTestCases(
   client: AllureApiClient,
   id: number,
   query: QueryParams,
-): Promise<unknown> {
+): Promise<PageDto<Record<string, unknown>>> {
   return client.get(`/api/defect/${id}/testcase`, query);
 }
 
@@ -60,7 +61,7 @@ export function getDefectLaunches(
   client: AllureApiClient,
   id: number,
   query: QueryParams,
-): Promise<unknown> {
+): Promise<PageDto<Record<string, unknown>>> {
   return client.get(`/api/defect/${id}/launch`, query);
 }
 
@@ -68,7 +69,7 @@ export function getLaunchDefects(
   client: AllureApiClient,
   launchId: number,
   query: QueryParams,
-): Promise<unknown> {
+): Promise<PageDto<Record<string, unknown>>> {
   return client.get(`/api/launch/${launchId}/defect`, query);
 }
 

@@ -1,4 +1,5 @@
 import type { AllureApiClient } from "../client.js";
+import type { ProjectSuggestDto, ProjectSuggestResponse } from "../types/entities.js";
 export type ToolArgs = Record<string, unknown>;
 
 /**
@@ -95,15 +96,6 @@ export function getOptionalStringArray(
 
 export function getRequiredId(args: ToolArgs, key = "id"): number {
   return getRequiredNumber(args, key);
-}
-
-interface ProjectSuggestDto {
-  id?: number;
-  name?: string;
-}
-
-interface ProjectSuggestResponse {
-  content?: ProjectSuggestDto[];
 }
 
 export async function resolveProjectId(

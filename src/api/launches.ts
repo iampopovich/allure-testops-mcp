@@ -1,4 +1,5 @@
 import type { AllureApiClient } from "../client.js";
+import type { PageDto } from "../types/entities.js";
 
 type QueryValue = string | number | boolean | Array<string | number | boolean>;
 type QueryParams = Record<string, QueryValue | undefined>;
@@ -7,7 +8,7 @@ export function listLaunches(
   client: AllureApiClient,
   projectId: number,
   query: QueryParams,
-): Promise<unknown> {
+): Promise<PageDto<Record<string, unknown>>> {
   return client.get("/api/launch", {
     projectId,
     ...query,
@@ -19,7 +20,7 @@ export function searchLaunches(
   projectId: number,
   rql: string,
   query: QueryParams,
-): Promise<unknown> {
+): Promise<PageDto<Record<string, unknown>>> {
   return client.get("/api/launch/__search", {
     projectId,
     rql,
@@ -27,7 +28,7 @@ export function searchLaunches(
   });
 }
 
-export function getLaunch(client: AllureApiClient, id: number): Promise<unknown> {
+export function getLaunch(client: AllureApiClient, id: number): Promise<Record<string, unknown>> {
   return client.get(`/api/launch/${id}`);
 }
 

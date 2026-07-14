@@ -111,10 +111,10 @@ async function validateCustomFieldValue(
   fieldName: string,
   value: string,
 ): Promise<void> {
-  const fieldsResult = (await api.listProjectCustomFields(client, projectId, {
+  const fieldsResult = await api.listProjectCustomFields(client, projectId, {
     query: fieldName,
     size: 50,
-  })) as { content?: Array<{ customField?: { id?: number; name?: string } }> };
+  });
 
   const fields = fieldsResult.content ?? [];
   const field = fields.find(
@@ -134,10 +134,10 @@ async function validateCustomFieldValue(
     );
   }
 
-  const valuesResult = (await api.listCustomFieldValues(client, projectId, field.customField.id, {
+  const valuesResult = await api.listCustomFieldValues(client, projectId, field.customField.id, {
     query: value,
     size: 50,
-  })) as { content?: Array<{ name?: string }> };
+  });
 
   const values = valuesResult.content ?? [];
   const exists = values.some((row) => row.name?.toLowerCase() === value.toLowerCase());
@@ -902,9 +902,9 @@ export function createTestCaseTools(
     },
     get_test_case_steps: async (rawArgs: unknown) => {
       const args = asObject(rawArgs);
-      const data = (await api.getTestCaseSteps(client, getRequiredId(args))) as Record<string, unknown>;
+      const data = await api.getTestCaseSteps(client, getRequiredId(args));
 
-      const scenarioSteps = (data.scenarioSteps ?? {}) as Record<string, Record<string, unknown>>;
+      const scenarioSteps = data.scenarioSteps ?? {};
 
       // Identify expected-result wrapper steps: these are child nodes referenced by
       // another step's `expectedResultId`. They cannot be edited directly via
@@ -976,7 +976,7 @@ export function createTestCaseTools(
         client,
         payload,
         expectedResult !== undefined,
-      ) as { createdStepId?: number; scenario?: { scenarioSteps?: Record<string, { expectedResultId?: number }> } };
+      );
 
       if (expectedResult !== undefined && typeof created.createdStepId === "number") {
         const erHeaderId = created.scenario?.scenarioSteps?.[String(created.createdStepId)]?.expectedResultId;
