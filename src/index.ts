@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { version } from "../package.json";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
   CallToolRequestSchema,
@@ -46,7 +47,7 @@ async function main(): Promise<void> {
   const { tools, handlers } = buildToolRegistry(client);
 
   const server = new Server(
-    { name: "allure-testops-mcp", version: "1.0.0" },
+    { name: "allure-testops-mcp", version: version },
     { capabilities: { tools: {}, resources: {} } },
   );
 
