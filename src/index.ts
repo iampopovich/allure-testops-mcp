@@ -88,10 +88,12 @@ async function main(): Promise<void> {
   });
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const toolName = request.params.name;
+    const start = Date.now();
     try {
-      const toolName = request.params.name;
       const handler = handlers.get(toolName);
       if (!handler) {
+        logger.warn({ tool: toolName }, "unknown tool requested");
         return {
           isError: true,
           content: [
@@ -103,7 +105,9 @@ async function main(): Promise<void> {
         };
       }
 
+      logger.debug({ tool: toolName }, "tool call started");
       const result = await handler(request.params.arguments);
+      logger.debug({ tool: toolName, durationMs: Date.now() - start }, "tool call completed");
       return {
         content: [
           {
@@ -114,6 +118,7 @@ async function main(): Promise<void> {
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      logger.error({ tool: toolName, err: message, durationMs: Date.now() - start }, "tool call failed");
       return {
         isError: true,
         content: [

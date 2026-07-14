@@ -5,6 +5,9 @@
  * When `max` is positive, at most `max` calls can hold an acquired permit simultaneously;
  * further callers will queue until a permit is released.
  */
+
+import { logger } from "./logger.js";
+
 export class Semaphore {
   private _current = 0;
   private readonly _waiters: Array<() => void> = [];
@@ -25,8 +28,13 @@ export class Semaphore {
       return;
     }
 
+    const queueStart = Date.now();
+    logger.trace({ current: this._current, max: this._max, queueLength: this._waiters.length }, "semaphore: waiting for slot");
+
     return new Promise<void>((resolve) => {
       this._waiters.push(() => {
+        const waitedMs = Date.now() - queueStart;
+        logger.trace({ waitedMs, current: this._current, max: this._max }, "semaphore: slot acquired after wait");
         this._current += 1;
         resolve();
       });

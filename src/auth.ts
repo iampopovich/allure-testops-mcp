@@ -11,6 +11,8 @@ export interface TokenManagerOptions {
   refreshSkewSeconds?: number;
 }
 
+import { logger } from "./logger.js";
+
 export class TokenManager {
   private readonly baseUrl: string;
   private readonly apiToken: string;
@@ -27,13 +29,17 @@ export class TokenManager {
 
   async getAccessToken(): Promise<string> {
     if (this.hasValidCachedToken()) {
+      logger.debug("using cached access token");
       return this.cachedAccessToken as string;
     }
 
     if (!this.refreshInFlight) {
+      logger.debug("exchanging API token for JWT");
       this.refreshInFlight = this.exchangeToken().finally(() => {
         this.refreshInFlight = null;
       });
+    } else {
+      logger.debug("token exchange already in flight, waiting");
     }
 
     return this.refreshInFlight;
@@ -47,6 +53,7 @@ export class TokenManager {
   }
 
   private async exchangeToken(): Promise<string> {
+    const start = Date.now();
     const form = new URLSearchParams();
     form.set("grant_type", "apitoken");
     form.set("scope", "openid");
@@ -62,6 +69,7 @@ export class TokenManager {
 
     if (!response.ok) {
       const errorText = await response.text();
+      logger.error({ status: response.status, durationMs: Date.now() - start }, "token exchange failed");
       throw new Error(
         `Failed to exchange API token (HTTP ${response.status}): ${errorText}`,
       );
@@ -74,6 +82,7 @@ export class TokenManager {
 
     this.cachedAccessToken = tokenData.access_token;
     this.expiresAtMs = Date.now() + tokenData.expires_in * 1000;
+    logger.debug({ expiresInS: tokenData.expires_in, durationMs: Date.now() - start }, "token exchange successful");
     return this.cachedAccessToken;
   }
 }

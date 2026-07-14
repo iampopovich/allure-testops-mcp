@@ -1,6 +1,7 @@
 import { CacheStore, NullCacheStore } from "./cache.js";
 import { TokenManager } from "./auth.js";
 import { Semaphore } from "./rate-limiter.js";
+import { logger } from "./logger.js";
 
 type QueryValue = string | number | boolean | Array<string | number | boolean>;
 type QueryParams = Record<string, QueryValue | undefined | null>;
@@ -57,11 +58,14 @@ export class AllureApiClient {
     const key = this.cacheKey(path, query);
     const hit = this.cache.get(key);
     if (hit !== undefined) {
+      logger.debug({ method: "GET", path, cache: "hit" }, "cache hit");
       return hit as T;
     }
+    logger.debug({ method: "GET", path, cache: "miss" }, "cache miss");
     const result = await this.request<T>("GET", path, undefined, query);
     if (result !== null && result !== undefined && typeof result === "object") {
       this.cache.set(key, result as object, getTtl(path));
+      logger.debug({ method: "GET", path, cached: true }, "response cached");
     }
     return result;
   }
@@ -100,7 +104,7 @@ export class AllureApiClient {
         method: "POST",
         headers: {
           Accept: "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: "Bearer " + accessToken,
         },
         body: formData,
         signal: AbortSignal.timeout(this.requestTimeoutMs),
@@ -108,7 +112,7 @@ export class AllureApiClient {
 
       if (!response.ok) {
         const text = await response.text();
-        throw new Error(`Allure API POST ${path} failed (${response.status}): ${text}`);
+        throw new Error("Allure API POST " + path + " failed (" + response.status + "): " + text);
       }
 
       if (response.status === 204) {
@@ -135,14 +139,14 @@ export class AllureApiClient {
       const response = await fetch(url, {
         method: "GET",
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: "Bearer " + accessToken,
         },
         signal: AbortSignal.timeout(this.requestTimeoutMs),
       });
 
       if (!response.ok) {
         const text = await response.text();
-        throw new Error(`Allure API GET ${path} failed (${response.status}): ${text}`);
+        throw new Error("Allure API GET " + path + " failed (" + response.status + "): " + text);
       }
 
       const contentType = response.headers.get("content-type") ?? "application/octet-stream";
@@ -156,14 +160,14 @@ export class AllureApiClient {
   }
 
   private cacheKey(path: string, query?: QueryParams): string {
-    const normalized = path.startsWith("/") ? path : `/${path}`;
+    const normalized = path.startsWith("/") ? path : "/" + path;
     if (!query) return normalized;
     const params = Object.entries(query)
       .filter(([, v]) => v !== undefined && v !== null)
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([k, v]) => `${k}=${Array.isArray(v) ? (v as unknown[]).join(",") : v}`)
+      .map(([k, v]) => k + "=" + (Array.isArray(v) ? (v as unknown[]).join(",") : v))
       .join("&");
-    return params ? `${normalized}?${params}` : normalized;
+    return params ? normalized + "?" + params : normalized;
   }
 
   private invalidateByPrefix(path: string): void {
@@ -177,10 +181,12 @@ export class AllureApiClient {
     body?: unknown,
     query?: QueryParams,
   ): Promise<T> {
+    const start = Date.now();
     await this.semaphore.acquire();
     try {
       if (method !== "GET") {
         this.invalidateByPrefix(path);
+        logger.debug({ method, path }, "cache invalidated by write");
       }
       const accessToken = await this.tokenManager.getAccessToken();
       const url = this.buildUrl(path, query);
@@ -193,7 +199,7 @@ export class AllureApiClient {
             method,
             headers: {
               Accept: "application/json",
-              Authorization: `Bearer ${accessToken}`,
+              Authorization: "Bearer " + accessToken,
               ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
             },
             body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -203,21 +209,28 @@ export class AllureApiClient {
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           if (attempt < retries && this.isRetryableNetworkError(message)) {
+            logger.warn({ method, path, attempt, err: message }, "network error, retrying");
             await this.wait(300 * (attempt + 1));
             continue;
           }
+          logger.error({ method, path, err: message, durationMs: Date.now() - start }, "request failed");
           throw error;
         }
 
         if (!response.ok) {
           const text = await response.text();
-          const message = `Allure API ${method} ${path} failed (${response.status}): ${text}`;
+          const errMsg = "Allure API " + method + " " + path + " failed (" + response.status + "): " + text;
           if (attempt < retries && [502, 503, 504].includes(response.status)) {
+            logger.warn({ method, path, attempt, status: response.status }, "server error, retrying");
             await this.wait(300 * (attempt + 1));
             continue;
           }
-          throw new Error(message);
+          logger.error({ method, path, status: response.status, durationMs: Date.now() - start }, "request failed");
+          throw new Error(errMsg);
         }
+
+        const durationMs = Date.now() - start;
+        logger.debug({ method, path, status: response.status, durationMs, attempt: attempt > 0 ? attempt : undefined }, "request completed");
 
         if (response.status === 204) {
           return undefined as T;
@@ -231,15 +244,15 @@ export class AllureApiClient {
         return (await response.text()) as T;
       }
 
-      throw new Error(`Allure API ${method} ${path} failed after retries.`);
+      throw new Error("Allure API " + method + " " + path + " failed after retries.");
     } finally {
       this.semaphore.release();
     }
   }
 
   private buildUrl(path: string, query?: QueryParams): string {
-    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-    const url = new URL(`${this.baseUrl}${normalizedPath}`);
+    const normalizedPath = path.startsWith("/") ? path : "/" + path;
+    const url = new URL(this.baseUrl + normalizedPath);
 
     if (!query) {
       return url.toString();
