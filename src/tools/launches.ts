@@ -2,6 +2,7 @@ import type { AllureApiClient } from "../client.js";
 import * as api from "../api/launches.js";
 import type { ToolBundle } from "./types.js";
 import {
+  AQL_SYNTAX,
   asObject,
   ensureProjectIdInPayload,
   getObjectPayload,
@@ -31,16 +32,13 @@ export function createLaunchTools(
           rql: {
             type: "string",
             description:
-              "AQL (Allure Query Language) filter expression. " +
-              "Operators: = != ~= (contains) > < >= <= in [...] and or not. " +
-              "IMPORTANT: 'not in' is written as 'not field in [...]', NOT 'field not in [...]'. " +
+              AQL_SYNTAX + " " +
               "Launch fields: id, name, tag, issue, job, ev[\"VAR\"], evv, closed (boolean), " +
               "createdDate, createdBy, lastModifiedDate, lastModifiedBy. " +
-              "Dates use 13-digit Unix ms timestamps. " +
-              'Examples: name ~= "nightly" | closed = false | closed = true | ' +
-              'tag in ["release", "pre-release"] | job = "jenkins_master" | ' +
-              'ev["OS"] = "Linux" | not tag in ["devbuild"] | ' +
-              'name ~= "regression" and closed = true',
+              "Examples: name ~= \"nightly\" | closed = false | closed = true | " +
+              "tag in [\"release\", \"pre-release\"] | job = \"jenkins_master\" | " +
+              "ev[\"OS\"] = \"Linux\" | not tag in [\"devbuild\"] | " +
+              "name ~= \"regression\" and closed = true",
           },
           page: { type: "number", description: "Page number, 0-based. Must be a number (integer), not a string." },
           size: { type: "number", description: "Page size. Must be a number (integer), not a string." },

@@ -1,6 +1,20 @@
 import type { AllureApiClient } from "../client.js";
 export type ToolArgs = Record<string, unknown>;
 
+/**
+ * Shared AQL (Allure Query Language) reference — used by search_test_cases,
+ * search_test_results, and search_launches to avoid duplicating the full
+ * AQL syntax in every tool description.
+ *
+ * Full AQL docs: https://docs.qameta.io/reference/aql/
+ */
+export const AQL_SYNTAX =
+  "AQL (Allure Query Language) filter expression. " +
+  "Operators: = != ~= (contains) > < >= <= in [...] and or not. " +
+  "IMPORTANT: 'not in' is written as 'not field in [...]', NOT 'field not in [...]'. " +
+  "Dates use 13-digit Unix ms timestamps. " +
+  "Full syntax: https://docs.qameta.io/reference/aql/";
+
 export function asObject(args: unknown): ToolArgs {
   if (!args || typeof args !== "object" || Array.isArray(args)) {
     return {};

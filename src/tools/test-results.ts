@@ -2,6 +2,7 @@ import type { AllureApiClient } from "../client.js";
 import * as api from "../api/test-results.js";
 import type { ToolBundle } from "./types.js";
 import {
+  AQL_SYNTAX,
   asObject,
   getObjectPayload,
   getOptionalNumber,
@@ -46,18 +47,15 @@ export function createTestResultTools(
           rql: {
             type: "string",
             description:
-              "AQL (Allure Query Language) filter expression. " +
-              "Operators: = != ~= (contains) > < >= <= in [...] and or not. " +
-              "IMPORTANT: 'not in' is written as 'not field in [...]', NOT 'field not in [...]'. " +
+              AQL_SYNTAX + " " +
               "Test result fields: id, name, fullName, testCase, status, category, tag, issue, " +
               "role[\"R\"], member, testedBy, cf[\"F\"], cfv, ev[\"VAR\"], evv, layer, " +
               "muted (boolean), hidden (boolean), launch, " +
               "createdDate, createdBy, lastModifiedDate, lastModifiedBy. " +
-              "Dates use 13-digit Unix ms timestamps. " +
-              'Examples: status = "failed" | status in ["failed", "broken"] | ' +
-              'name ~= "login" | muted = false | hidden = false | ' +
-              'launch = "release-1.0" | ev["OS"] = "Linux" | ' +
-              'not tag in ["nightly"] | status = "failed" and muted = false',
+              "Examples: status = \"failed\" | status in [\"failed\", \"broken\"] | " +
+              "name ~= \"login\" | muted = false | hidden = false | " +
+              "launch = \"release-1.0\" | ev[\"OS\"] = \"Linux\" | " +
+              "not tag in [\"nightly\"] | status = \"failed\" and muted = false",
           },
           page: { type: "number", description: "Page number, 0-based. Must be a number (integer), not a string." },
           size: { type: "number", description: "Page size. Must be a number (integer), not a string." },

@@ -2,6 +2,7 @@ import type { AllureApiClient } from "../client.js";
 import * as api from "../api/test-cases.js";
 import type { ToolBundle } from "./types.js";
 import {
+  AQL_SYNTAX,
   asObject,
   ensureProjectIdInPayload,
   getOptionalBoolean,
@@ -240,19 +241,16 @@ export function createTestCaseTools(
           rql: {
             type: "string",
             description:
-              "AQL (Allure Query Language) filter expression. " +
-              "Operators: = != ~= (contains) > < >= <= in [...] and or not. " +
-              "IMPORTANT: 'not in' is written as 'not field in [...]', NOT 'field not in [...]'. " +
+              AQL_SYNTAX + " " +
               "Test case fields: id, name, tag, issue, role[\"R\"], member, cf[\"F\"], cfv, layer, " +
               "status, workflow, testPlan, automation (boolean), muted, mutedDate, " +
               "createdDate, createdBy, lastModifiedDate, lastModifiedBy. " +
-              "Dates use 13-digit Unix ms timestamps. " +
               "Custom field patterns: cf[\"Feature\"] = \"keyword\" | " +
               "cf[\"Epic\"] = \"Auth\" | cf[\"Suite\"] = \"MySuite\". " +
-              'Examples: name ~= "login" | automation = true | automation = false | ' +
-              'status = "Active" | tag in ["smoke", "regression"] | ' +
-              'not tag in ["nightly"] | cf["Feature"] = "keyword" and cf["Suite"] = "MySuite" | ' +
-              'name ~= "checkout" and muted = false | (createdBy = "a" or createdBy = "b") and automation = true',
+              "Examples: name ~= \"login\" | automation = true | automation = false | " +
+              "status = \"Active\" | tag in [\"smoke\", \"regression\"] | " +
+              "not tag in [\"nightly\"] | cf[\"Feature\"] = \"keyword\" and cf[\"Suite\"] = \"MySuite\" | " +
+              "name ~= \"checkout\" and muted = false | (createdBy = \"a\" or createdBy = \"b\") and automation = true",
           },
           page: { type: "number", description: "Page number, 0-based. Must be a number (integer), not a string." },
           size: { type: "number", description: "Page size. Must be a number (integer), not a string." },
