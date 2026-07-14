@@ -14,6 +14,7 @@ import { AllureApiClient } from "./client.js";
 import { buildToolRegistry, requiredEnv } from "./server-bootstrap.js";
 import { LruCacheStore } from "./cache.js";
 import { RESOURCES, readResource } from "./resources/index.js";
+import { logger } from "./logger.js";
 
 function formatToolResult(result: unknown): string {
   if (result === undefined) {
@@ -127,18 +128,18 @@ async function main(): Promise<void> {
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("Allure TestOps MCP server started.");
+  logger.info("server started");
 
   let shuttingDown = false;
   const shutdown = async (signal: string) => {
     if (shuttingDown) return;
     shuttingDown = true;
-    console.error(`Received ${signal}, shutting down gracefully...`);
+    logger.info({ signal }, "shutting down gracefully");
     try {
       await server.close();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.error(`Error during server close: ${msg}`);
+      logger.error({ err: msg }, "error during server close");
     }
     process.exit(0);
   };
@@ -149,6 +150,6 @@ async function main(): Promise<void> {
 
 main().catch((error) => {
   const message = error instanceof Error ? error.message : String(error);
-  console.error(`Fatal startup error: ${message}`);
+  logger.fatal({ err: message }, "fatal startup error");
   process.exit(1);
 });
