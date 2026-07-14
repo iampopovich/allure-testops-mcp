@@ -128,6 +128,23 @@ async function main(): Promise<void> {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("Allure TestOps MCP server started.");
+
+  let shuttingDown = false;
+  const shutdown = async (signal: string) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.error(`Received ${signal}, shutting down gracefully...`);
+    try {
+      await server.close();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`Error during server close: ${msg}`);
+    }
+    process.exit(0);
+  };
+
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+  process.on("SIGINT", () => shutdown("SIGINT"));
 }
 
 main().catch((error) => {
