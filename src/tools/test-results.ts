@@ -2,7 +2,7 @@ import type { AllureApiClient } from "../client.js";
 import * as api from "../api/test-results.js";
 import type { ToolBundle } from "./types.js";
 import { z } from "zod";
-import { zodTool, idSchema, paginationSchema, projectIdSchema, projectNameSchema, sortSchema } from "./schema.js";
+import { zodTool, coerceInt, idSchema, paginationSchema, projectIdSchema, projectNameSchema, sortSchema } from "./schema.js";
 import { AQL_SYNTAX, resolveProjectId } from "./utils.js";
 
 const listTestResults = zodTool("list_test_results",
@@ -38,7 +38,7 @@ const searchTestResults = zodTool("search_test_results",
 );
 
 const getTestResult = zodTool("get_test_result", "Get a test result by ID.",
-  z.object({ id: z.number().int().describe("Test result ID. Must be an integer, not a string.") }),
+  z.object({ id: coerceInt().describe("Test result ID. Must be an integer, not a string.") }),
 );
 
 const createTestResult = zodTool("create_test_result", "Create a new test result.",

@@ -6,8 +6,8 @@ import { zodTool, paginationSchema, projectIdSchema, projectNameSchema } from ".
 import { resolveProjectId } from "./utils.js";
 
 const rangeFields = {
-  from: z.number().optional().describe("Start of time range (Unix timestamp ms). Must be a number, not a string."),
-  to: z.number().optional().describe("End of time range (Unix timestamp ms). Must be a number, not a string."),
+  from: z.coerce.number().optional().describe("Start of time range (Unix timestamp ms). Must be a number, not a string."),
+  to: z.coerce.number().optional().describe("End of time range (Unix timestamp ms). Must be a number, not a string."),
 };
 
 const rqlFields = {
@@ -21,7 +21,7 @@ const intervalField = {
 };
 
 const offsetField = {
-  offset: z.number().optional().describe("Timezone offset in minutes. Must be a number, not a string."),
+  offset: z.coerce.number().optional().describe("Timezone offset in minutes. Must be a number, not a string."),
 };
 
 const getAutomationChart = zodTool("get_automation_chart",
@@ -41,7 +41,7 @@ const getGroupByStatus = zodTool("get_group_by_status",
 
 const getLaunchDurationHistogram = zodTool("get_launch_duration_histogram",
   "Get histogram of launch durations for a project.",
-  z.object({ projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(), ...rqlFields, ...rangeFields, buckets: z.number().optional().describe("Number of histogram buckets (default: 10). Must be a number, not a string.") }),
+  z.object({ projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(), ...rqlFields, ...rangeFields, buckets: z.coerce.number().optional().describe("Number of histogram buckets (default: 10). Must be a number, not a string.") }),
 );
 
 const getMuteTrend = zodTool("get_mute_trend",

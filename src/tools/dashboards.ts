@@ -48,8 +48,8 @@ const getWidgetData = zodTool("get_widget_data",
     id: idSchema("Widget"),
     projectId: projectIdSchema.optional().describe("Project ID for widget context. Must be a number (integer), not a string."),
     projectName: projectNameSchema.optional().describe("Project name (alternative to projectId)."),
-    from: z.number().optional().describe("Start of time range (Unix timestamp ms). Must be a number, not a string."),
-    to: z.number().optional().describe("End of time range (Unix timestamp ms). Must be a number, not a string."),
+    from: z.coerce.number().optional().describe("Start of time range (Unix timestamp ms). Must be a number, not a string."),
+    to: z.coerce.number().optional().describe("End of time range (Unix timestamp ms). Must be a number, not a string."),
   }),
 );
 

@@ -2,7 +2,7 @@ import type { AllureApiClient } from "../client.js";
 import * as api from "../api/environments.js";
 import type { ToolBundle } from "./types.js";
 import { z } from "zod";
-import { zodTool, idSchema, projectIdSchema, projectNameSchema, paginationSchema } from "./schema.js";
+import { zodTool, coerceInt, idSchema, projectIdSchema, projectNameSchema, paginationSchema } from "./schema.js";
 import { resolveProjectId } from "./utils.js";
 
 const suggestEnvVars = zodTool("suggest_env_vars",
@@ -14,10 +14,10 @@ const suggestEnvVarValues = zodTool("suggest_env_var_values",
   "Search for recorded environment variable values by partial text. Optionally scope by envVarId, projectId, or launchId. Use this to autocomplete valid values for AQL ev[] filters before running a search.",
   z.object({
     query: z.string().optional().describe("Partial value text to search for."),
-    envVarId: z.number().int().optional().describe("Filter by specific env var key ID. Must be a number (integer), not a string."),
+    envVarId: coerceInt().optional().describe("Filter by specific env var key ID. Must be a number (integer), not a string."),
     projectId: projectIdSchema.optional(),
     projectName: projectNameSchema.optional(),
-    launchId: z.number().int().optional().describe("Scope to a specific launch. Must be a number (integer), not a string."),
+    launchId: coerceInt().optional().describe("Scope to a specific launch. Must be a number (integer), not a string."),
     ...paginationSchema,
   }),
 );
@@ -29,7 +29,7 @@ const listEnvVarSchemas = zodTool("list_env_var_schemas",
 
 const listEnvVarValues = zodTool("list_env_var_values",
   "List all recorded values for a specific environment variable key. Returns the distinct values that have been used across test runs (e.g. all browser versions recorded). Use envVarId from list_env_vars. Useful for building precise AQL filters: know that ev[\"browser\"] has values [\"Chrome 123\", \"Firefox 115\"].",
-  z.object({ envVarId: z.number().int().describe("Environment variable ID from list_env_vars. Must be a number (integer), not a string.") }),
+  z.object({ envVarId: coerceInt().describe("Environment variable ID from list_env_vars. Must be a number (integer), not a string.") }),
 );
 
 const getTestResultEnvVars = zodTool("get_test_result_env_vars",

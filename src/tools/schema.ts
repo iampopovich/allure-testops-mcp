@@ -52,8 +52,13 @@ export function zodTool<S extends z.ZodTypeAny>(
 
 // ─── Reusable schema fragments ───────────────────────────────────────────────
 
+/** Coerces string numbers to actual numbers (MCP clients often pass numbers as strings). */
+export function coerceInt() {
+  return z.coerce.number().int();
+}
+
 /** Numeric project ID. */
-export const projectIdSchema = z.number().int().describe(
+export const projectIdSchema = coerceInt().describe(
   "Project ID. Must be a number (integer), not a string.",
 );
 
@@ -64,12 +69,12 @@ export const projectNameSchema = z.string().describe(
 
 /** Numeric ID field. */
 export const idSchema = (label: string) =>
-  z.number().int().describe(label + " ID. Must be a number (integer), not a string.");
+  coerceInt().describe(label + " ID. Must be a number (integer), not a string.");
 
 /** Pagination fields. */
 export const paginationSchema = {
-  page: z.number().int().min(0).optional().describe("Page number, 0-based."),
-  size: z.number().int().optional().describe("Page size."),
+  page: coerceInt().min(0).optional().describe("Page number, 0-based."),
+  size: coerceInt().optional().describe("Page size."),
 };
 
 /** Sort array. */

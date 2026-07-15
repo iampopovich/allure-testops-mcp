@@ -2,7 +2,7 @@ import type { AllureApiClient } from "../client.js";
 import * as api from "../api/test-cases.js";
 import type { ToolBundle } from "./types.js";
 import { z } from "zod";
-import { zodTool, idSchema, paginationSchema, projectIdSchema, projectNameSchema, sortSchema } from "./schema.js";
+import { zodTool, coerceInt, idSchema, paginationSchema, projectIdSchema, projectNameSchema, sortSchema } from "./schema.js";
 import { AQL_SYNTAX, ensureProjectIdInPayload, resolveProjectId } from "./utils.js";
 
 // ─── Helpers (unchanged from pre-Zod) ────────────────────────────────────────
@@ -178,15 +178,15 @@ const createTestCaseStep = zodTool("create_test_case_step",
     testCaseId: idSchema("Test case"),
     body: z.string().optional().describe("Step body text. Required unless sharedStepId is provided."),
     expectedResult: z.string().optional().describe("Expected result text for the new step. Separate multiple lines with ; or newlines."),
-    parentId: z.number().int().optional().describe("Parent step ID for nested steps."),
-    sharedStepId: z.number().int().optional().describe("Shared step ID to reference an existing shared step instead of providing body text."),
+    parentId: coerceInt().optional().describe("Parent step ID for nested steps."),
+    sharedStepId: coerceInt().optional().describe("Shared step ID to reference an existing shared step instead of providing body text."),
   }).passthrough(),
 );
 
 const setTestCaseStepExpectedResult = zodTool("set_test_case_step_expected_result",
   "Set the expected result on an existing step. Call this after create_test_case_step when an expected result is needed.\n\nWHEN TO USE:\n- User asks to add a step with expected result → use create_test_case_step with expectedResult instead (preferred)\n- User asks to set/update expected result on an already-existing step\n\nbody: pass the step's current body text. Omitting it may cause 400 step.onlyonedetail on some API versions.\nMultiple expected result lines: separate with ; or newlines.",
   z.object({
-    stepId: z.number().int().describe("Step ID. Use createdStepId from create_test_case_step response."),
+    stepId: coerceInt().describe("Step ID. Use createdStepId from create_test_case_step response."),
     testCaseId: idSchema("Test case"),
     body: z.string().optional().describe("Step body text (current or unchanged). Required by the API."),
     expectedResult: z.string().describe("Expected result text. Separate multiple lines with ; or newlines."),
@@ -196,7 +196,7 @@ const setTestCaseStepExpectedResult = zodTool("set_test_case_step_expected_resul
 const updateTestCaseStep = zodTool("update_test_case_step",
   "Update a test case step by ID. Supports updating body text and/or expectedResult.\n\nWORKFLOW — read before using:\n1. Change ONLY step text:   { stepId, body: \"new text\" }. Omit expectedResult — existing expected results stay untouched.\n2. Change ONLY expected result: { stepId, expectedResult: \"A; B\" }. Omit body — step text stays as-is.\n3. Change BOTH:             { stepId, body: \"new text\", expectedResult: \"A; B\" }.\n\nCRITICAL — expectedResult is a FULL REPLACE, not an append.\nWhen you pass expectedResult, the API deletes ALL existing expected-result lines for that step and replaces them with what you provide. You MUST include EVERY expected-result line you want to keep, separated by semicolons (e.g. \"Check value; Verify status\") or newlines.\nIf you have 3 expected-result lines and only pass 1, the other 2 are GONE.\n\nWRAPPER STEPS — do not target them directly.\nSteps marked _wrapper=true in get_test_case_steps output (or listed in _meta.expectedResultWrapperIds) are internal child nodes managed by the API. To edit their content, update the PARENT step and pass the complete expectedResult text.\n\nWHAT TO AVOID:\n- Calling this tool with expectedResult, then calling it again — the second call overwrites the first. Update body and expectedResult together in ONE call.\n- Mixing update_test_case_step with update_test_case (full scenario replace) on the same step — pick one approach and stick with it.\n- Passing a partial expectedResult string — it BECOMES the entire expected result. Old lines are wiped.",
   z.object({
-    stepId: z.number().int().describe("Step ID to update. Must be a number (integer), not a string."),
+    stepId: coerceInt().describe("Step ID to update. Must be a number (integer), not a string."),
     body: z.string().optional().describe("New step body text."),
     expectedResult: z.string().optional().describe("FULL expected result text — REPLACES ALL existing lines. Use semicolons or newlines for multiple lines. When omitted, existing expected results are preserved."),
   }),
@@ -213,8 +213,8 @@ const addTestCaseTagsBulk = zodTool("add_test_case_tags_bulk",
   "Add one or multiple tags to one or multiple test cases using bulk API.",
   z.object({
     projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(),
-    testCaseId: z.number().int().optional().describe("Test case ID. Must be a number (integer), not a string."),
-    testCaseIds: z.array(z.number().int()).optional().describe("Test case IDs."),
+    testCaseId: coerceInt().optional().describe("Test case ID. Must be a number (integer), not a string."),
+    testCaseIds: z.array(coerceInt()).optional().describe("Test case IDs."),
     tag: z.object({}).passthrough().optional(),
     tags: z.array(z.object({}).passthrough()).optional(),
   }).passthrough(),
@@ -224,10 +224,10 @@ const removeTestCaseTagsBulk = zodTool("remove_test_case_tags_bulk",
   "Remove one or multiple tags from one or multiple test cases using bulk API.",
   z.object({
     projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(),
-    testCaseId: z.number().int().optional().describe("Test case ID."),
-    testCaseIds: z.array(z.number().int()).optional(),
-    tagId: z.number().int().optional().describe("Tag ID."),
-    tagIds: z.array(z.number().int()).optional(),
+    testCaseId: coerceInt().optional().describe("Test case ID."),
+    testCaseIds: z.array(coerceInt()).optional(),
+    tagId: coerceInt().optional().describe("Tag ID."),
+    tagIds: z.array(coerceInt()).optional(),
   }).passthrough(),
 );
 
@@ -235,8 +235,8 @@ const addTestCaseExternalLinksBulk = zodTool("add_test_case_external_links_bulk"
   "Add one or multiple external links to one or multiple test cases using bulk API.",
   z.object({
     projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(),
-    testCaseId: z.number().int().optional(),
-    testCaseIds: z.array(z.number().int()).optional(),
+    testCaseId: coerceInt().optional(),
+    testCaseIds: z.array(coerceInt()).optional(),
     link: z.object({}).passthrough().optional(),
     links: z.array(z.object({}).passthrough()).optional(),
   }).passthrough(),
