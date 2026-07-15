@@ -2,7 +2,7 @@ import type { AllureApiClient } from "../client.js";
 import * as api from "../api/shared-steps.js";
 import type { ToolBundle } from "./types.js";
 import { z } from "zod";
-import { zodTool, idSchema, payloadSchema, paginationSchema } from "./schema.js";
+import { zodTool, idSchema, paginationSchema , coerceObject} from "./schema.js"
 
 const getSharedStep = zodTool("get_shared_step",
   "Get a shared step by ID. Returns metadata: name, project, archived status.",
@@ -21,12 +21,12 @@ const getSharedStepUsage = zodTool("get_shared_step_usage",
 
 const createSharedStep = zodTool("create_shared_step",
   "Create a new shared step in a project. payload must include at minimum: name (string) and projectId (number). Use this to extract repeated test steps into a reusable library.",
-  z.object({ payload: z.object({}).passthrough().describe("Shared step creation data. Required fields: name, projectId.") }),
+  z.object({ payload: coerceObject().describe("Shared step creation data. Required fields: name, projectId.") }),
 );
 
 const updateSharedStep = zodTool("update_shared_step",
   "Update shared step metadata (name, etc.) by ID.",
-  z.object({ id: idSchema("Shared step"), payload: z.object({}).passthrough() }),
+  z.object({ id: idSchema("Shared step"), payload: coerceObject() }),
 );
 
 const archiveSharedStep = zodTool("archive_shared_step",

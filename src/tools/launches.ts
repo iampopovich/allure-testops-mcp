@@ -2,7 +2,7 @@ import type { AllureApiClient } from "../client.js";
 import * as api from "../api/launches.js";
 import type { ToolBundle } from "./types.js";
 import { z } from "zod";
-import { zodTool, idSchema, paginationSchema, projectIdSchema, projectNameSchema, sortSchema } from "./schema.js";
+import { zodTool, idSchema, paginationSchema, projectIdSchema, projectNameSchema, sortSchema , coerceObject} from "./schema.js";
 import { AQL_SYNTAX, ensureProjectIdInPayload, resolveProjectId } from "./utils.js";
 
 const searchLaunches = zodTool("search_launches",
@@ -30,11 +30,11 @@ const getLaunch = zodTool("get_launch", "Get a launch by ID.",
 
 const createLaunch = zodTool("create_launch",
   "Create a new launch. payload.projectId defaults to ALLURE_PROJECT_ID env when omitted.",
-  z.object({ payload: z.object({}).passthrough() }),
+  z.object({ payload: coerceObject() }),
 );
 
 const updateLaunch = zodTool("update_launch", "Update an existing launch.",
-  z.object({ id: idSchema("Launch"), payload: z.object({}).passthrough() }),
+  z.object({ id: idSchema("Launch"), payload: coerceObject() }),
 );
 
 const deleteLaunch = zodTool("delete_launch", "Delete a launch by ID.",
@@ -58,11 +58,11 @@ const getLaunchProgress = zodTool("get_launch_progress", "Get launch progress wi
 );
 
 const addTestCasesToLaunch = zodTool("add_test_cases_to_launch", "Add test cases to a launch.",
-  z.object({ id: idSchema("Launch"), payload: z.object({}).passthrough() }),
+  z.object({ id: idSchema("Launch"), payload: coerceObject() }),
 );
 
 const addTestPlanToLaunch = zodTool("add_test_plan_to_launch", "Add a test plan to a launch.",
-  z.object({ id: idSchema("Launch"), payload: z.object({}).passthrough() }),
+  z.object({ id: idSchema("Launch"), payload: coerceObject() }),
 );
 
 export function createLaunchTools(client: AllureApiClient): ToolBundle {

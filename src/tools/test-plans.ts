@@ -2,7 +2,7 @@ import type { AllureApiClient } from "../client.js";
 import * as api from "../api/test-plans.js";
 import type { ToolBundle } from "./types.js";
 import { z } from "zod";
-import { zodTool, idSchema, payloadSchema, paginationSchema, projectIdSchema, projectNameSchema } from "./schema.js";
+import { zodTool, idSchema, paginationSchema, projectIdSchema, projectNameSchema , coerceObject} from "./schema.js"
 import { resolveProjectId } from "./utils.js";
 
 const getTestPlan = zodTool("get_test_plan",
@@ -12,12 +12,12 @@ const getTestPlan = zodTool("get_test_plan",
 
 const createTestPlan = zodTool("create_test_plan",
   "Create a new test plan. payload.projectId defaults to ALLURE_PROJECT_ID env when omitted.",
-  z.object({ payload: z.object({}).passthrough() }),
+  z.object({ payload: coerceObject() }),
 );
 
 const updateTestPlan = zodTool("update_test_plan",
   "Update an existing test plan.",
-  z.object({ id: idSchema("Test plan"), payload: z.object({}).passthrough() }),
+  z.object({ id: idSchema("Test plan"), payload: coerceObject() }),
 );
 
 const deleteTestPlan = zodTool("delete_test_plan",
@@ -27,7 +27,7 @@ const deleteTestPlan = zodTool("delete_test_plan",
 
 const runTestPlan = zodTool("run_test_plan",
   "Run a test plan by ID.",
-  z.object({ id: idSchema("Test plan"), payload: z.object({}).passthrough().optional() }),
+  z.object({ id: idSchema("Test plan"), payload: coerceObject().optional() }),
 );
 
 export function createTestPlanTools(client: AllureApiClient): ToolBundle {

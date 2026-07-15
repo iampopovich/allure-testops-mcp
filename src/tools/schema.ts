@@ -80,5 +80,15 @@ export const paginationSchema = {
 /** Sort array. */
 export const sortSchema = z.array(z.string()).optional();
 
-/** Generic object payload. */
-export const payloadSchema = z.object({}).passthrough();
+/** Accepts both objects and JSON-stringified objects (MCP clients may serialize nested params as JSON strings). */
+export function coerceObject() {
+  return z.union([
+    z.object({}).passthrough(),
+    z.string().transform((s) => {
+      try { return JSON.parse(s); } catch { return {}; }
+    }).pipe(z.object({}).passthrough()),
+  ]);
+}
+
+/** Generic object payload (legacy — prefer coerceObject() for new code). */
+export const payloadSchema = coerceObject();

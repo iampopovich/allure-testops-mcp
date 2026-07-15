@@ -2,7 +2,7 @@ import type { AllureApiClient } from "../client.js";
 import * as api from "../api/defects.js";
 import type { ToolBundle } from "./types.js";
 import { z } from "zod";
-import { zodTool, idSchema, paginationSchema } from "./schema.js";
+import { zodTool, idSchema, paginationSchema , coerceObject} from "./schema.js";
 
 const getDefect = zodTool("get_defect",
   "Get a defect by ID. Returns the defect name, status, description, and matcher configuration.",
@@ -11,12 +11,12 @@ const getDefect = zodTool("get_defect",
 
 const createDefect = zodTool("create_defect",
   "Create a new defect record to group a novel failure pattern. payload must include: name (string), projectId (number). Optional: description (string).",
-  z.object({ payload: z.object({}).passthrough().describe("Required: name, projectId. Optional: description.") }),
+  z.object({ payload: coerceObject().describe("Required: name, projectId. Optional: description.") }),
 );
 
 const updateDefect = zodTool("update_defect",
   "Update defect name, description, or status.",
-  z.object({ id: idSchema("Defect"), payload: z.object({}).passthrough() }),
+  z.object({ id: idSchema("Defect"), payload: coerceObject() }),
 );
 
 const getDefectTestResults = zodTool("get_defect_test_results",
@@ -50,24 +50,24 @@ const findSimilarFailures = zodTool("find_similar_failures",
 
 const linkDefectToTestResults = zodTool("link_defect_to_test_results",
   "Link one or multiple test results to a defect record (bulk API). payload must include: defectId (number) and testResultIds (array of numbers).",
-  z.object({ payload: z.object({}).passthrough().describe("Required: defectId (number), testResultIds (array of numbers).") }),
+  z.object({ payload: coerceObject().describe("Required: defectId (number), testResultIds (array of numbers).") }),
 );
 
 const bulkCloseDefects = zodTool("bulk_close_defects",
   "Close multiple defects at once — mark them as resolved after a fix is confirmed. payload must include: ids (array of defect IDs).",
-  z.object({ payload: z.object({}).passthrough().describe("Required: ids (array of defect ID numbers).") }),
+  z.object({ payload: coerceObject().describe("Required: ids (array of defect ID numbers).") }),
 );
 
 const bulkReopenDefects = zodTool("bulk_reopen_defects",
   "Reopen multiple closed defects — use when a regression is detected after a fix was marked complete. payload must include: ids (array of defect IDs).",
-  z.object({ payload: z.object({}).passthrough().describe("Required: ids (array of defect ID numbers).") }),
+  z.object({ payload: coerceObject().describe("Required: ids (array of defect ID numbers).") }),
 );
 
 const linkIssueToDefect = zodTool("link_issue_to_defect",
   "Link an external issue (Jira, GitHub, etc.) to a defect record. payload must include: url (string) and name (string). Use this to associate a tracker ticket with a failure pattern.",
   z.object({
     id: idSchema("Defect"),
-    payload: z.object({}).passthrough().describe("Required: url (string), name (string). Optional: type (string)."),
+    payload: coerceObject().describe("Required: url (string), name (string). Optional: type (string)."),
   }),
 );
 

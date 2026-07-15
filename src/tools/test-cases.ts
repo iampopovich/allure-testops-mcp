@@ -2,7 +2,7 @@ import type { AllureApiClient } from "../client.js";
 import * as api from "../api/test-cases.js";
 import type { ToolBundle } from "./types.js";
 import { z } from "zod";
-import { zodTool, coerceInt, idSchema, paginationSchema, projectIdSchema, projectNameSchema, sortSchema } from "./schema.js";
+import { zodTool, coerceInt, idSchema, paginationSchema, projectIdSchema, projectNameSchema, sortSchema , coerceObject} from "./schema.js";
 import { AQL_SYNTAX, ensureProjectIdInPayload, resolveProjectId } from "./utils.js";
 
 // ─── Helpers (unchanged from pre-Zod) ────────────────────────────────────────
@@ -169,11 +169,11 @@ const getTestCase = zodTool("get_test_case", "Get a test case by ID.", z.object(
 
 const createTestCase = zodTool("create_test_case",
   "Create a new test case. payload.projectId defaults to ALLURE_PROJECT_ID env when omitted. payload.precondition (string) is the preconditions field — always use this for preconditions/prerequisites text, NOT payload.description. payload.description (string) is the general test case description — always populate this with a meaningful summary of what the test case verifies. payload.customFields supports values like { customField: { id }, id, name }. IMPORTANT: steps are NOT created via this tool. The Allure API does not support creating steps through the test-case payload — payload.steps is silently ignored. After creating the test case, use create_test_case_step to add each step individually. Example workflow: create_test_case → for each step call create_test_case_step.",
-  z.object({ payload: z.object({}).passthrough() }),
+  z.object({ payload: coerceObject() }),
 );
 
 const createTestCaseStep = zodTool("create_test_case_step",
-  "Add a new step to a test case — works for both NEW and EXISTING test cases. This is the ONLY correct tool for adding steps. NEVER use update_test_case to add steps — it replaces the entire scenario and loses expected results.\n\nUSE THIS TOOL whenever the user asks to add a step. No need to read the scenario first — just call with testCaseId and body.\n\nexpectedResult is optional. When provided, the expected result is set on the new step automatically. Multiple expected result lines: separate with ; or newlines.\n\nparentId creates a child step under the given parent (for nested structures). sharedStepId references an existing shared step instead of providing body text.",
+  "Add a new step to a test case — works for both NEW and EXISTING test cases. This is the ONLY correct tool for adding steps. NEVER use update_test_case to add steps — it replaces the entire scenario and loses expected results.\n\nUSE THIS TOOL whenever the user asks to add a step. No need to read the scenario first — just call with testCaseId and body.\n\nexpectedResult is optional. When provided, the expected result is set on the new step automatically via the Allure API (body and expectedResult are passed in a single request). Multiple expected result lines: separate with ; or newlines.\n\nNOTE: when expectedResult is provided, the API response includes a created wrapper step whose body is initially a placeholder (e.g. Expected Result) — this is normal Allure API behavior, not a bug. The wrapper step gets an ID and can be edited later via update_test_case_step. The actual expectedResult text is accessible through get_test_case_steps.\n\nparentId creates a child step under the given parent (for nested structures). sharedStepId references an existing shared step instead of providing body text.",
   z.object({
     testCaseId: idSchema("Test case"),
     body: z.string().optional().describe("Step body text. Required unless sharedStepId is provided."),
@@ -204,7 +204,7 @@ const updateTestCaseStep = zodTool("update_test_case_step",
 
 const updateTestCase = zodTool("update_test_case",
   "Update an existing test case metadata (name, description, precondition, tags, customFields, etc.). payload.customFields supports values like { customField: { id }, id, name }. DO NOT use this tool to add, edit, or delete steps — use create_test_case_step / update_test_case_step / delete_test_case_step instead.",
-  z.object({ id: idSchema("Test case"), payload: z.object({}).passthrough() }),
+  z.object({ id: idSchema("Test case"), payload: coerceObject() }),
 );
 
 const deleteTestCase = zodTool("delete_test_case", "Delete a test case by ID.", z.object({ id: idSchema("Test case") }));
@@ -215,8 +215,8 @@ const addTestCaseTagsBulk = zodTool("add_test_case_tags_bulk",
     projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(),
     testCaseId: coerceInt().optional().describe("Test case ID. Must be a number (integer), not a string."),
     testCaseIds: z.array(coerceInt()).optional().describe("Test case IDs."),
-    tag: z.object({}).passthrough().optional(),
-    tags: z.array(z.object({}).passthrough()).optional(),
+    tag: coerceObject().optional(),
+    tags: z.array(coerceObject()).optional(),
   }).passthrough(),
 );
 
@@ -237,8 +237,8 @@ const addTestCaseExternalLinksBulk = zodTool("add_test_case_external_links_bulk"
     projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(),
     testCaseId: coerceInt().optional(),
     testCaseIds: z.array(coerceInt()).optional(),
-    link: z.object({}).passthrough().optional(),
-    links: z.array(z.object({}).passthrough()).optional(),
+    link: coerceObject().optional(),
+    links: z.array(coerceObject()).optional(),
   }).passthrough(),
 );
 
@@ -247,16 +247,16 @@ const getTestCaseOverview = zodTool("get_test_case_overview", "Get test case ove
 );
 
 const getTestCaseHistory = zodTool("get_test_case_history", "Get test case run history.",
-  z.object({ id: idSchema("Test case"), ...paginationSchema, sort: sortSchema }),
+  z.object({ testCaseId: idSchema("Test case"), ...paginationSchema, sort: sortSchema }),
 );
 
 const getTestCaseScenario = zodTool("get_test_case_scenario", "Get scenario for a test case.",
-  z.object({ id: idSchema("Test case") }),
+  z.object({ testCaseId: idSchema("Test case") }),
 );
 
 const getTestCaseStepsTool = zodTool("get_test_case_steps",
   "Get manual scenario steps for a test case. Returns a normalized scenario with root step and a flat map of all steps (scenarioSteps). Each step contains body, expectedResult, children IDs, and optional sharedStepId. IMPORTANT: the response includes a _meta section with expectedResultWrapperIds — these child nodes are Expected Result containers that CANNOT be edited directly via update_test_case_step. To update expected results, pass the `expectedResult` parameter on the parent step instead. Only steps listed in _meta.regularStepIds should be targeted by update_test_case_step.",
-  z.object({ id: idSchema("Test case") }),
+  z.object({ testCaseId: idSchema("Test case") }),
 );
 
 const getTestCaseTags = zodTool("get_test_case_tags", "Get tags assigned to a test case.",
@@ -264,7 +264,7 @@ const getTestCaseTags = zodTool("get_test_case_tags", "Get tags assigned to a te
 );
 
 const setTestCaseTags = zodTool("set_test_case_tags", "Set tags for a test case.",
-  z.object({ testCaseId: idSchema("Test case"), payload: z.array(z.object({}).passthrough()) }),
+  z.object({ testCaseId: idSchema("Test case"), payload: z.array(coerceObject()) }),
 );
 
 const getTestCaseIssues = zodTool("get_test_case_issues", "Get linked issues for a test case.",
@@ -272,7 +272,7 @@ const getTestCaseIssues = zodTool("get_test_case_issues", "Get linked issues for
 );
 
 const setTestCaseIssues = zodTool("set_test_case_issues", "Set linked issues for a test case.",
-  z.object({ testCaseId: idSchema("Test case"), payload: z.array(z.object({}).passthrough()) }),
+  z.object({ testCaseId: idSchema("Test case"), payload: z.array(coerceObject()) }),
 );
 
 const restoreTestCase = zodTool("restore_test_case", "Restore a deleted test case.",
@@ -294,7 +294,7 @@ const getTestCaseCustomFields = zodTool("get_test_case_custom_fields", "Get cust
 
 const setTestCaseCustomFields = zodTool("set_test_case_custom_fields",
   "Add custom field values for a test case via bulk API. Supports grouped values [{ customField: { id }, values: [{ id|name }] }] and flat values [{ id|name, customField: { id } }].",
-  z.object({ testCaseId: idSchema("Test case"), projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(), payload: z.array(z.object({}).passthrough()) }),
+  z.object({ testCaseId: idSchema("Test case"), projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(), payload: z.array(coerceObject()) }),
 );
 
 const listTestCaseAttachments = zodTool("list_test_case_attachments", "List attachments for a test case.",
@@ -394,16 +394,10 @@ export function createTestCaseTools(client: AllureApiClient): ToolBundle {
         const args = createTestCaseStep.parse(rawArgs);
         const payload: Record<string, unknown> = { testCaseId: args.testCaseId };
         if (args.body !== undefined) payload.body = args.body;
+        if (args.expectedResult !== undefined) payload.expectedResult = args.expectedResult;
         if (args.parentId !== undefined) payload.parentId = args.parentId;
         if (args.sharedStepId !== undefined) payload.sharedStepId = args.sharedStepId;
-        const created = await api.createTestCaseStep(client, payload, args.expectedResult !== undefined);
-        if (args.expectedResult !== undefined && typeof created.createdStepId === "number") {
-          const erHeaderId = created.scenario?.scenarioSteps?.[String(created.createdStepId)]?.expectedResultId;
-          if (typeof erHeaderId === "number") {
-            await api.createTestCaseStep(client, { testCaseId: args.testCaseId, parentId: erHeaderId, body: args.expectedResult });
-          }
-        }
-        return created;
+        return api.createTestCaseStep(client, payload, args.expectedResult !== undefined);
       },
       set_test_case_step_expected_result: async (rawArgs: unknown) => {
         const { stepId, testCaseId, expectedResult, body } = setTestCaseStepExpectedResult.parse(rawArgs);
@@ -439,13 +433,13 @@ export function createTestCaseTools(client: AllureApiClient): ToolBundle {
       },
       get_test_case_overview: async (rawArgs) => api.getTestCaseOverview(client, getTestCaseOverview.parse(rawArgs).testCaseId),
       get_test_case_history: async (rawArgs) => {
-        const { id, page, size, sort } = getTestCaseHistory.parse(rawArgs);
-        return api.getTestCaseHistory(client, id, { page, size, sort });
+        const { testCaseId, page, size, sort } = getTestCaseHistory.parse(rawArgs);
+        return api.getTestCaseHistory(client, testCaseId, { page, size, sort });
       },
-      get_test_case_scenario: async (rawArgs) => api.getTestCaseScenario(client, getTestCaseScenario.parse(rawArgs).id),
+      get_test_case_scenario: async (rawArgs) => api.getTestCaseScenario(client, getTestCaseScenario.parse(rawArgs).testCaseId),
       get_test_case_steps: async (rawArgs: unknown) => {
-        const { id } = getTestCaseStepsTool.parse(rawArgs);
-        const data = await api.getTestCaseSteps(client, id);
+        const { testCaseId } = getTestCaseStepsTool.parse(rawArgs);
+        const data = await api.getTestCaseSteps(client, testCaseId);
         const scenarioSteps = data.scenarioSteps ?? {};
         const wrapperIds = new Set<number>();
         for (const step of Object.values(scenarioSteps)) {

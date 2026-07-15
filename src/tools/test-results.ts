@@ -2,7 +2,7 @@ import type { AllureApiClient } from "../client.js";
 import * as api from "../api/test-results.js";
 import type { ToolBundle } from "./types.js";
 import { z } from "zod";
-import { zodTool, coerceInt, idSchema, paginationSchema, projectIdSchema, projectNameSchema, sortSchema } from "./schema.js";
+import { zodTool, coerceInt, idSchema, paginationSchema, projectIdSchema, projectNameSchema, sortSchema , coerceObject} from "./schema.js";
 import { AQL_SYNTAX, resolveProjectId } from "./utils.js";
 
 const listTestResults = zodTool("list_test_results",
@@ -42,11 +42,11 @@ const getTestResult = zodTool("get_test_result", "Get a test result by ID.",
 );
 
 const createTestResult = zodTool("create_test_result", "Create a new test result.",
-  z.object({ payload: z.object({}).passthrough() }),
+  z.object({ payload: coerceObject() }),
 );
 
 const updateTestResult = zodTool("update_test_result", "Update an existing test result.",
-  z.object({ id: idSchema("Test result"), payload: z.object({}).passthrough() }),
+  z.object({ id: idSchema("Test result"), payload: coerceObject() }),
 );
 
 const getTestResultHistory = zodTool("get_test_result_history", "Get history for a test result.",
@@ -55,12 +55,12 @@ const getTestResultHistory = zodTool("get_test_result_history", "Get history for
 
 const assignTestResult = zodTool("assign_test_result",
   "Assign a test result. payload must include username.",
-  z.object({ id: idSchema("Test result"), payload: z.object({}).passthrough() }),
+  z.object({ id: idSchema("Test result"), payload: coerceObject() }),
 );
 
 const resolveTestResult = zodTool("resolve_test_result",
   "Resolve a test result. payload must include status.",
-  z.object({ id: idSchema("Test result"), payload: z.object({}).passthrough() }),
+  z.object({ id: idSchema("Test result"), payload: coerceObject() }),
 );
 
 const getTestResultRetries = zodTool("get_test_result_retries",

@@ -2,7 +2,7 @@ import type { AllureApiClient } from "../client.js";
 import * as api from "../api/dashboards.js";
 import type { ToolBundle } from "./types.js";
 import { z } from "zod";
-import { zodTool, idSchema, projectIdSchema, projectNameSchema } from "./schema.js";
+import { zodTool, idSchema, projectIdSchema, projectNameSchema , coerceObject} from "./schema.js";
 import { resolveProjectId } from "./utils.js";
 
 const createDashboard = zodTool("create_dashboard",
@@ -12,7 +12,7 @@ const createDashboard = zodTool("create_dashboard",
     projectName: projectNameSchema.optional(),
     name: z.string().describe("Dashboard name."),
     shared: z.boolean().optional().describe("Whether the dashboard is shared with the project."),
-    payload: z.object({}).passthrough().optional().describe("Additional dashboard fields (e.g. description, widgets)."),
+    payload: coerceObject().optional().describe("Additional dashboard fields (e.g. description, widgets)."),
   }),
 );
 
@@ -23,7 +23,7 @@ const getDashboard = zodTool("get_dashboard",
 
 const updateDashboard = zodTool("update_dashboard",
   "Update dashboard fields (name, shared status, etc.).",
-  z.object({ id: idSchema("Dashboard"), payload: z.object({}).passthrough().describe("Fields to update (e.g. name, shared).") }),
+  z.object({ id: idSchema("Dashboard"), payload: coerceObject().describe("Fields to update (e.g. name, shared).") }),
 );
 
 const deleteDashboard = zodTool("delete_dashboard",
@@ -38,7 +38,7 @@ const copyDashboard = zodTool("copy_dashboard",
     name: z.string().optional().describe("Name for the copied dashboard."),
     projectId: projectIdSchema.optional().describe("Target project ID (defaults to source project)."),
     projectName: projectNameSchema.optional().describe("Target project name (alternative to projectId)."),
-    payload: z.object({}).passthrough().optional().describe("Additional copy options."),
+    payload: coerceObject().optional().describe("Additional copy options."),
   }),
 );
 
