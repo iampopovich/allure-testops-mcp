@@ -34,7 +34,7 @@ const listEnvVarValues = zodTool("list_env_var_values",
 
 const getTestResultEnvVars = zodTool("get_test_result_env_vars",
   "Get the environment variable values recorded for a specific test result. Shows what configuration context (browser, OS, env name, build) this result ran against. Use this when investigating a failure to understand if the environment is a factor: e.g. 'does this only fail on Chrome 124 but not on Firefox?'",
-  z.object({ testResultId: idSchema("Test result") }),
+  z.object({ id: idSchema("Test result") }),
 );
 
 export function createEnvironmentTools(client: AllureApiClient): ToolBundle {
@@ -69,8 +69,8 @@ export function createEnvironmentTools(client: AllureApiClient): ToolBundle {
         return api.listEnvVarValues(client, envVarId);
       },
       get_test_result_env_vars: async (rawArgs: unknown) => {
-        const { testResultId } = getTestResultEnvVars.parse(rawArgs);
-        return api.getTestResultEnvVars(client, testResultId);
+        const { id } = getTestResultEnvVars.parse(rawArgs);
+        return api.getTestResultEnvVars(client, id);
       },
     },
   };

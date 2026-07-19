@@ -61,7 +61,7 @@ Resources (read via resources/read, no tool call needed):
 Tooling hints:
 - For test cases: search_test_cases, get_test_case, create_test_case, update_test_case
 - For launches: search_launches, create_launch, update_launch, get_launch_progress
-- For test results: list_test_results (filter by launchId + page/size), search_test_results (RQL), get_test_result, resolve_test_result
+- For test results: list_test_results (filter by launch id + page/size), search_test_results (RQL), get_test_result, resolve_test_result
 - For test plans: get_test_plan, run_test_plan, create_test_plan
 - For custom fields: list_custom_field_values, get_test_case_custom_fields, set_test_case_custom_fields
 

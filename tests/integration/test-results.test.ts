@@ -93,7 +93,7 @@ describeIntegration("test result tools integration", () => {
 
   it("list_test_results", async () => {
     const list = await callTool("list_test_results", {
-      launchId: launchId as number,
+      id: launchId as number,
       size: 100,
     });
     const found = asArrayContent(list).some((item) => pickId(item) === testResultId);

@@ -139,7 +139,7 @@ describeIntegration("test case tools integration", () => {
 
   it("get_test_case_overview", async () => {
     const overview = await callTool("get_test_case_overview", {
-      testCaseId: testCaseId as number,
+      id: testCaseId as number,
     });
     expect(overview).toBeTruthy();
   });
@@ -163,7 +163,7 @@ describeIntegration("test case tools integration", () => {
       payload: [],
     });
     const tags = await callTool("get_test_case_tags", {
-      testCaseId: testCaseId as number,
+      id: testCaseId as number,
     });
     expect(tags).toBeDefined();
   });
@@ -177,7 +177,7 @@ describeIntegration("test case tools integration", () => {
     });
 
     const tags = await callTool("get_test_case_tags", {
-      testCaseId: testCaseId as number,
+      id: testCaseId as number,
     });
     const tagId = asArrayContent(tags)
       .map((item) => (item && typeof item === "object" ? (item as JsonRecord) : undefined))
@@ -194,7 +194,7 @@ describeIntegration("test case tools integration", () => {
     });
 
     const tagsAfterRemove = await callTool("get_test_case_tags", {
-      testCaseId: testCaseId as number,
+      id: testCaseId as number,
     });
     const stillAssigned = asArrayContent(tagsAfterRemove).some((item) => {
       if (!item || typeof item !== "object") {
@@ -228,7 +228,7 @@ describeIntegration("test case tools integration", () => {
       payload: [],
     });
     const issues = await callTool("get_test_case_issues", {
-      testCaseId: testCaseId as number,
+      id: testCaseId as number,
     });
     expect(issues).toBeDefined();
   });
@@ -259,7 +259,7 @@ describeIntegration("test case tools integration", () => {
 
   it("get_test_case_custom_fields", async () => {
     const values = await callTool("get_test_case_custom_fields", {
-      testCaseId: testCaseId as number,
+      id: testCaseId as number,
       projectId,
     });
     expect(values).toBeDefined();
@@ -267,7 +267,7 @@ describeIntegration("test case tools integration", () => {
 
   it("set_test_case_custom_fields then verify by get_test_case_custom_fields", async () => {
     const current = await callTool("get_test_case_custom_fields", {
-      testCaseId: testCaseId as number,
+      id: testCaseId as number,
       projectId,
     });
     const payload = toCustomFieldUpdatePayload(current);
@@ -281,7 +281,7 @@ describeIntegration("test case tools integration", () => {
       payload,
     });
     const values = await callTool("get_test_case_custom_fields", {
-      testCaseId: testCaseId as number,
+      id: testCaseId as number,
       projectId,
     });
     expect(values).toBeDefined();

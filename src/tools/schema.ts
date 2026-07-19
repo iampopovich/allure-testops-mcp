@@ -78,7 +78,7 @@ export const paginationSchema = {
 };
 
 /** Sort array. */
-export const sortSchema = z.array(z.string()).optional();
+export const sortSchema = coerceArray(z.string()).optional();
 
 /** Accepts both objects and JSON-stringified objects (MCP clients may serialize nested params as JSON strings). */
 export function coerceObject() {
@@ -92,3 +92,24 @@ export function coerceObject() {
 
 /** Generic object payload (legacy — prefer coerceObject() for new code). */
 export const payloadSchema = coerceObject();
+
+/** Accepts both arrays and JSON-stringified arrays (MCP clients often serialize array params as JSON strings). */
+export function coerceArray<T extends z.ZodTypeAny>(elementSchema: T) {
+  return z.union([
+    z.array(elementSchema),
+    z.string().transform((s, ctx) => {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(s);
+      } catch {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Expected an array or a JSON-encoded array string." });
+        return z.NEVER;
+      }
+      if (!Array.isArray(parsed)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Expected an array or a JSON-encoded array string." });
+        return z.NEVER;
+      }
+      return parsed;
+    }).pipe(z.array(elementSchema)),
+  ]);
+}

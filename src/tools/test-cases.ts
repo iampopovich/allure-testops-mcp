@@ -2,7 +2,7 @@ import type { AllureApiClient } from "../client.js";
 import * as api from "../api/test-cases.js";
 import type { ToolBundle } from "./types.js";
 import { z } from "zod";
-import { zodTool, coerceInt, idSchema, paginationSchema, projectIdSchema, projectNameSchema, sortSchema , coerceObject} from "./schema.js";
+import { zodTool, coerceInt, idSchema, paginationSchema, projectIdSchema, projectNameSchema, sortSchema, coerceObject, coerceArray } from "./schema.js";
 import { AQL_SYNTAX, ensureProjectIdInPayload, resolveProjectId } from "./utils.js";
 
 // ─── Helpers (unchanged from pre-Zod) ────────────────────────────────────────
@@ -156,7 +156,7 @@ const findTestCases = zodTool("find_test_cases",
     tag: z.string().optional().describe("Filter by tag name (exact match)."),
     automated: z.boolean().optional().describe("Filter by automation status: true = automated tests only, false = manual tests only."),
     status: z.string().optional().describe("Filter by test case status (exact match, e.g. 'Active', 'Draft', 'Deprecated')."),
-    customFieldFilters: z.array(z.object({
+    customFieldFilters: coerceArray(z.object({
       fieldName: z.string().describe("Custom field name, e.g. 'Suite', 'Feature', 'Epic'."),
       value: z.string().describe("Value to match."),
       exactMatch: z.boolean().optional().describe("If true, use exact match (=); if false/omitted, use contains match (~=). Default: false (contains). NOTE: ~= on custom fields is not officially documented and may cause 400 errors on some Allure versions."),
@@ -214,9 +214,9 @@ const addTestCaseTagsBulk = zodTool("add_test_case_tags_bulk",
   z.object({
     projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(),
     testCaseId: coerceInt().optional().describe("Test case ID. Must be a number (integer), not a string."),
-    testCaseIds: z.array(coerceInt()).optional().describe("Test case IDs."),
+    testCaseIds: coerceArray(coerceInt()).optional().describe("Test case IDs."),
     tag: coerceObject().optional(),
-    tags: z.array(coerceObject()).optional(),
+    tags: coerceArray(coerceObject()).optional(),
   }).passthrough(),
 );
 
@@ -225,9 +225,9 @@ const removeTestCaseTagsBulk = zodTool("remove_test_case_tags_bulk",
   z.object({
     projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(),
     testCaseId: coerceInt().optional().describe("Test case ID."),
-    testCaseIds: z.array(coerceInt()).optional(),
+    testCaseIds: coerceArray(coerceInt()).optional(),
     tagId: coerceInt().optional().describe("Tag ID."),
-    tagIds: z.array(coerceInt()).optional(),
+    tagIds: coerceArray(coerceInt()).optional(),
   }).passthrough(),
 );
 
@@ -236,43 +236,43 @@ const addTestCaseExternalLinksBulk = zodTool("add_test_case_external_links_bulk"
   z.object({
     projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(),
     testCaseId: coerceInt().optional(),
-    testCaseIds: z.array(coerceInt()).optional(),
+    testCaseIds: coerceArray(coerceInt()).optional(),
     link: coerceObject().optional(),
-    links: z.array(coerceObject()).optional(),
+    links: coerceArray(coerceObject()).optional(),
   }).passthrough(),
 );
 
 const getTestCaseOverview = zodTool("get_test_case_overview", "Get test case overview data.",
-  z.object({ testCaseId: idSchema("Test case") }),
+  z.object({ id: idSchema("Test case") }),
 );
 
 const getTestCaseHistory = zodTool("get_test_case_history", "Get test case run history.",
-  z.object({ testCaseId: idSchema("Test case"), ...paginationSchema, sort: sortSchema }),
+  z.object({ id: idSchema("Test case"), ...paginationSchema, sort: sortSchema }),
 );
 
 const getTestCaseScenario = zodTool("get_test_case_scenario", "Get scenario for a test case.",
-  z.object({ testCaseId: idSchema("Test case") }),
+  z.object({ id: idSchema("Test case") }),
 );
 
 const getTestCaseStepsTool = zodTool("get_test_case_steps",
   "Get manual scenario steps for a test case. Returns a normalized scenario with root step and a flat map of all steps (scenarioSteps). Each step contains body, expectedResult, children IDs, and optional sharedStepId. IMPORTANT: the response includes a _meta section with expectedResultWrapperIds — these child nodes are Expected Result containers that CANNOT be edited directly via update_test_case_step. To update expected results, pass the `expectedResult` parameter on the parent step instead. Only steps listed in _meta.regularStepIds should be targeted by update_test_case_step.",
-  z.object({ testCaseId: idSchema("Test case") }),
+  z.object({ id: idSchema("Test case") }),
 );
 
 const getTestCaseTags = zodTool("get_test_case_tags", "Get tags assigned to a test case.",
-  z.object({ testCaseId: idSchema("Test case") }),
+  z.object({ id: idSchema("Test case") }),
 );
 
 const setTestCaseTags = zodTool("set_test_case_tags", "Set tags for a test case.",
-  z.object({ testCaseId: idSchema("Test case"), payload: z.array(coerceObject()) }),
+  z.object({ testCaseId: idSchema("Test case"), payload: coerceArray(coerceObject()) }),
 );
 
 const getTestCaseIssues = zodTool("get_test_case_issues", "Get linked issues for a test case.",
-  z.object({ testCaseId: idSchema("Test case") }),
+  z.object({ id: idSchema("Test case") }),
 );
 
 const setTestCaseIssues = zodTool("set_test_case_issues", "Set linked issues for a test case.",
-  z.object({ testCaseId: idSchema("Test case"), payload: z.array(coerceObject()) }),
+  z.object({ testCaseId: idSchema("Test case"), payload: coerceArray(coerceObject()) }),
 );
 
 const restoreTestCase = zodTool("restore_test_case", "Restore a deleted test case.",
@@ -289,16 +289,16 @@ const listCustomFieldValues = zodTool("list_custom_field_values", "List values f
 );
 
 const getTestCaseCustomFields = zodTool("get_test_case_custom_fields", "Get custom field values for a test case.",
-  z.object({ testCaseId: idSchema("Test case"), projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional() }),
+  z.object({ id: idSchema("Test case"), projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional() }),
 );
 
 const setTestCaseCustomFields = zodTool("set_test_case_custom_fields",
   "Add custom field values for a test case via bulk API. Supports grouped values [{ customField: { id }, values: [{ id|name }] }] and flat values [{ id|name, customField: { id } }].",
-  z.object({ testCaseId: idSchema("Test case"), projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(), payload: z.array(coerceObject()) }),
+  z.object({ testCaseId: idSchema("Test case"), projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(), payload: coerceArray(coerceObject()) }),
 );
 
 const listTestCaseAttachments = zodTool("list_test_case_attachments", "List attachments for a test case.",
-  z.object({ testCaseId: idSchema("Test case") }),
+  z.object({ id: idSchema("Test case") }),
 );
 
 const uploadTestCaseAttachment = zodTool("upload_test_case_attachment",
@@ -431,15 +431,15 @@ export function createTestCaseTools(client: AllureApiClient): ToolBundle {
         const testCaseIds = getBulkIdList(args, "testCaseId", "testCaseIds", "test case");
         return api.addExternalLinksToTestCases(client, projectId, testCaseIds, normalizeBulkExternalLinks(args));
       },
-      get_test_case_overview: async (rawArgs) => api.getTestCaseOverview(client, getTestCaseOverview.parse(rawArgs).testCaseId),
+      get_test_case_overview: async (rawArgs) => api.getTestCaseOverview(client, getTestCaseOverview.parse(rawArgs).id),
       get_test_case_history: async (rawArgs) => {
-        const { testCaseId, page, size, sort } = getTestCaseHistory.parse(rawArgs);
-        return api.getTestCaseHistory(client, testCaseId, { page, size, sort });
+        const { id, page, size, sort } = getTestCaseHistory.parse(rawArgs);
+        return api.getTestCaseHistory(client, id, { page, size, sort });
       },
-      get_test_case_scenario: async (rawArgs) => api.getTestCaseScenario(client, getTestCaseScenario.parse(rawArgs).testCaseId),
+      get_test_case_scenario: async (rawArgs) => api.getTestCaseScenario(client, getTestCaseScenario.parse(rawArgs).id),
       get_test_case_steps: async (rawArgs: unknown) => {
-        const { testCaseId } = getTestCaseStepsTool.parse(rawArgs);
-        const data = await api.getTestCaseSteps(client, testCaseId);
+        const { id } = getTestCaseStepsTool.parse(rawArgs);
+        const data = await api.getTestCaseSteps(client, id);
         const scenarioSteps = data.scenarioSteps ?? {};
         const wrapperIds = new Set<number>();
         for (const step of Object.values(scenarioSteps)) {
@@ -452,12 +452,12 @@ export function createTestCaseTools(client: AllureApiClient): ToolBundle {
         }
         return { ...data, _meta: { expectedResultWrapperIds: [...wrapperIds], regularStepIds: regularIds, note: "Steps with IDs in expectedResultWrapperIds are Expected Result container nodes. They cannot be edited directly via update_test_case_step — update the parent step passing the new text as the `expectedResult` parameter instead." } };
       },
-      get_test_case_tags: async (rawArgs) => api.getTestCaseTags(client, getTestCaseTags.parse(rawArgs).testCaseId),
+      get_test_case_tags: async (rawArgs) => api.getTestCaseTags(client, getTestCaseTags.parse(rawArgs).id),
       set_test_case_tags: async (rawArgs) => {
         const { testCaseId, payload } = setTestCaseTags.parse(rawArgs);
         return api.setTestCaseTags(client, testCaseId, payload);
       },
-      get_test_case_issues: async (rawArgs) => api.getTestCaseIssues(client, getTestCaseIssues.parse(rawArgs).testCaseId),
+      get_test_case_issues: async (rawArgs) => api.getTestCaseIssues(client, getTestCaseIssues.parse(rawArgs).id),
       set_test_case_issues: async (rawArgs) => {
         const { testCaseId, payload } = setTestCaseIssues.parse(rawArgs);
         return api.setTestCaseIssues(client, testCaseId, payload);
@@ -475,7 +475,7 @@ export function createTestCaseTools(client: AllureApiClient): ToolBundle {
       get_test_case_custom_fields: async (rawArgs: unknown) => {
         const args = getTestCaseCustomFields.parse(rawArgs);
         const projectId = await resolveProjectId(args, client);
-        return api.getTestCaseCustomFields(client, args.testCaseId, projectId);
+        return api.getTestCaseCustomFields(client, args.id, projectId);
       },
       set_test_case_custom_fields: async (rawArgs: unknown) => {
         const args = setTestCaseCustomFields.parse(rawArgs);
@@ -483,7 +483,7 @@ export function createTestCaseTools(client: AllureApiClient): ToolBundle {
         return api.setTestCaseCustomFields(client, projectId, args.testCaseId, args.payload);
       },
       list_test_case_attachments: async (rawArgs) =>
-        api.listTestCaseAttachments(client, listTestCaseAttachments.parse(rawArgs).testCaseId),
+        api.listTestCaseAttachments(client, listTestCaseAttachments.parse(rawArgs).id),
       upload_test_case_attachment: async (rawArgs) => {
         const { testCaseId, filename, contentType, contentBase64 } = uploadTestCaseAttachment.parse(rawArgs);
         return api.uploadTestCaseAttachment(client, testCaseId, filename, contentType, contentBase64);

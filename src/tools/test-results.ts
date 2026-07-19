@@ -8,7 +8,7 @@ import { AQL_SYNTAX, resolveProjectId } from "./utils.js";
 const listTestResults = zodTool("list_test_results",
   "List test results for a launch. Supports filtering and pagination — prefer this over the resource when you need status filtering, a specific page, or a bounded result set.",
   z.object({
-    launchId: idSchema("Launch"),
+    id: idSchema("Launch"),
     search: z.string().optional(),
     filterId: idSchema("Saved filter").optional(),
     ...paginationSchema,
@@ -70,7 +70,7 @@ const getTestResultRetries = zodTool("get_test_result_retries",
 
 const listTestResultAttachments = zodTool("list_test_result_attachments",
   "List attachments (screenshots, logs, HAR files, etc.) for a test result. Returns attachment metadata: id, name, contentType, size. Use this to discover what evidence is available before calling get_test_result_attachment_content.",
-  z.object({ testResultId: idSchema("Test result"), page: paginationSchema.page, size: paginationSchema.size }),
+  z.object({ id: idSchema("Test result"), page: paginationSchema.page, size: paginationSchema.size }),
 );
 
 const getTestResultAttachmentContent = zodTool("get_test_result_attachment_content",
@@ -96,7 +96,7 @@ export function createTestResultTools(client: AllureApiClient): ToolBundle {
     handlers: {
       list_test_results: async (rawArgs: unknown) => {
         const args = listTestResults.parse(rawArgs);
-        return api.listTestResults(client, args.launchId, {
+        return api.listTestResults(client, args.id, {
           search: args.search, filterId: args.filterId, page: args.page, size: args.size, sort: args.sort,
         });
       },
@@ -128,8 +128,8 @@ export function createTestResultTools(client: AllureApiClient): ToolBundle {
         return api.getTestResultRetries(client, id, { page, size });
       },
       list_test_result_attachments: async (rawArgs) => {
-        const { testResultId, page, size } = listTestResultAttachments.parse(rawArgs);
-        return api.listTestResultAttachments(client, testResultId, { page, size });
+        const { id, page, size } = listTestResultAttachments.parse(rawArgs);
+        return api.listTestResultAttachments(client, id, { page, size });
       },
       get_test_result_attachment_content: async (rawArgs) =>
         api.getTestResultAttachmentContent(client, getTestResultAttachmentContent.parse(rawArgs).attachmentId),

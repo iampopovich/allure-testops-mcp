@@ -20,7 +20,7 @@ List for launch:
 {
   "name": "list_test_results",
   "arguments": {
-    "launchId": 9981,
+    "id": 9981,
     "page": 0,
     "size": 20
   }

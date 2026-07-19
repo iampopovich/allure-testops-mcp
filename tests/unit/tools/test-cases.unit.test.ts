@@ -141,7 +141,7 @@ describe("createTestCaseTools", () => {
     vi.mocked(api.getTestCaseHistory).mockResolvedValueOnce([]);
     vi.mocked(api.getTestCaseScenario).mockResolvedValueOnce({});
 
-    await bundle.handlers.get_test_case_overview({ testCaseId: 20 });
+    await bundle.handlers.get_test_case_overview({ id: 20 });
     await bundle.handlers.get_test_case_history({ id: 20, size: 10 });
     await bundle.handlers.get_test_case_scenario({ id: 20 });
 
@@ -154,16 +154,16 @@ describe("createTestCaseTools", () => {
     expect(api.getTestCaseScenario).toHaveBeenCalledWith(client, 20);
   });
 
-  it("tags and issues handlers use testCaseId and payload", async () => {
+  it("tags and issues handlers use id/testCaseId and payload", async () => {
     const bundle = createTestCaseTools(client as never);
     vi.mocked(api.getTestCaseTags).mockResolvedValueOnce([]);
     vi.mocked(api.setTestCaseTags).mockResolvedValueOnce([]);
     vi.mocked(api.getTestCaseIssues).mockResolvedValueOnce([]);
     vi.mocked(api.setTestCaseIssues).mockResolvedValueOnce([]);
 
-    await bundle.handlers.get_test_case_tags({ testCaseId: 30 });
+    await bundle.handlers.get_test_case_tags({ id: 30 });
     await bundle.handlers.set_test_case_tags({ testCaseId: 30, payload: [] });
-    await bundle.handlers.get_test_case_issues({ testCaseId: 30 });
+    await bundle.handlers.get_test_case_issues({ id: 30 });
     await bundle.handlers.set_test_case_issues({ testCaseId: 30, payload: [] });
 
     expect(api.getTestCaseTags).toHaveBeenCalledWith(client, 30);
@@ -241,7 +241,7 @@ describe("createTestCaseTools", () => {
       '"customFieldId" must be a number.',
     );
     await bundle.handlers.list_custom_field_values({ customFieldId: 5 });
-    await bundle.handlers.get_test_case_custom_fields({ testCaseId: 9 });
+    await bundle.handlers.get_test_case_custom_fields({ id: 9 });
     await bundle.handlers.set_test_case_custom_fields({ testCaseId: 9, payload: [] });
 
     expect(api.listProjectCustomFields).toHaveBeenCalledWith(client, defaultProjectId, {
