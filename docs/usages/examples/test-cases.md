@@ -6,7 +6,7 @@
 
 ## Typical Tools
 
-- `list_test_cases`
+- `find_test_cases`
 - `search_test_cases`
 - `get_test_case`
 - `create_test_case`
@@ -16,14 +16,14 @@
 
 ## Example Calls
 
-List by search text:
+List by search text (name contains match, no AQL needed):
 
 ```json
 {
-  "name": "list_test_cases",
+  "name": "find_test_cases",
   "arguments": {
     "projectId": 37,
-    "search": "checkout",
+    "query": "checkout",
     "page": 0,
     "size": 10
   }

@@ -6,26 +6,13 @@
 
 ## Typical Tools
 
-- `list_project_custom_fields`
 - `list_custom_field_values`
 - `get_test_case_custom_fields`
 - `set_test_case_custom_fields`
 
+Project-level custom field definitions are looked up internally when needed (e.g. by `find_test_cases`'s `customFieldFilters`) — there is no standalone `list_project_custom_fields` tool. To find a field's ID for `list_custom_field_values`, check the project's custom field configuration in the Allure TestOps UI, or inspect `get_test_case_custom_fields` output on a test case that already has the field set.
+
 ## Example Calls
-
-List fields:
-
-```json
-{
-  "name": "list_project_custom_fields",
-  "arguments": {
-    "projectId": 37,
-    "query": "Priority",
-    "page": 0,
-    "size": 20
-  }
-}
-```
 
 List values for a field:
 

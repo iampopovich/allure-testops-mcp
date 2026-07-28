@@ -20,7 +20,7 @@ List for launch:
 {
   "name": "list_test_results",
   "arguments": {
-    "launchId": 9981,
+    "id": 9981,
     "page": 0,
     "size": 20
   }
@@ -34,7 +34,7 @@ Search across project:
   "name": "search_test_results",
   "arguments": {
     "projectId": 37,
-    "rql": "status == FAILED",
+    "rql": "status = \"failed\"",
     "page": 0,
     "size": 20
   }

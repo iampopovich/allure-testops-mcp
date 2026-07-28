@@ -1,4 +1,5 @@
 import type { AllureApiClient } from "../client.js";
+import type { PageDto } from "../types/entities.js";
 
 type QueryValue = string | number | boolean | Array<string | number | boolean>;
 type QueryParams = Record<string, QueryValue | undefined>;
@@ -7,14 +8,14 @@ export function listTestPlans(
   client: AllureApiClient,
   projectId: number,
   query: QueryParams,
-): Promise<unknown> {
+): Promise<PageDto<Record<string, unknown>>> {
   return client.get("/api/testplan", {
     projectId,
     ...query,
   });
 }
 
-export function getTestPlan(client: AllureApiClient, id: number): Promise<unknown> {
+export function getTestPlan(client: AllureApiClient, id: number): Promise<Record<string, unknown>> {
   return client.get(`/api/testplan/${id}`);
 }
 

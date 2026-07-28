@@ -1,4 +1,14 @@
 import type { AllureApiClient } from "../client.js";
+import type {
+  PageDto,
+  CreateStepResponse,
+  SetExpectedResultResponse,
+  TestCaseStepsResponse,
+  AttachmentDto,
+  AttachmentContentDto,
+  CustomFieldRowDto,
+  CustomFieldValueDto,
+} from "../types/entities.js";
 
 type QueryValue = string | number | boolean | Array<string | number | boolean>;
 type QueryParams = Record<string, QueryValue | undefined>;
@@ -93,7 +103,7 @@ export function listTestCases(
   client: AllureApiClient,
   projectId: number,
   query: QueryParams,
-): Promise<unknown> {
+): Promise<PageDto<Record<string, unknown>>> {
   return client.get("/api/testcase", {
     projectId,
     ...query,
@@ -105,7 +115,7 @@ export function searchTestCases(
   projectId: number,
   rql: string,
   query: QueryParams,
-): Promise<unknown> {
+): Promise<PageDto<Record<string, unknown>>> {
   return client.get("/api/testcase/__search", {
     projectId,
     rql,
@@ -113,7 +123,7 @@ export function searchTestCases(
   });
 }
 
-export function getTestCase(client: AllureApiClient, id: number): Promise<unknown> {
+export function getTestCase(client: AllureApiClient, id: number): Promise<Record<string, unknown>> {
   return client.get(`/api/testcase/${id}`);
 }
 
@@ -153,7 +163,7 @@ export function getTestCaseScenario(client: AllureApiClient, id: number): Promis
   return client.get(`/api/testcase/${id}/scenario`);
 }
 
-export function getTestCaseSteps(client: AllureApiClient, id: number): Promise<unknown> {
+export function getTestCaseSteps(client: AllureApiClient, id: number): Promise<TestCaseStepsResponse> {
   return client.get(`/api/testcase/${id}/step`);
 }
 
@@ -189,7 +199,7 @@ export function createTestCaseStep(
   client: AllureApiClient,
   payload: Record<string, unknown>,
   withExpectedResult?: boolean,
-): Promise<unknown> {
+): Promise<CreateStepResponse> {
   return client.post("/api/testcase/step", payload, withExpectedResult ? { withExpectedResult: true } : undefined);
 }
 
@@ -221,7 +231,7 @@ export async function setStepExpectedResult(
     `/api/testcase/step/${stepId}`,
     payload,
     { withExpectedResult: true },
-  )) as { scenarioSteps?: Record<string, { expectedResultId?: number }> };
+  )) as SetExpectedResultResponse;
 
   const wrapperId = patchResult.scenarioSteps?.[String(stepId)]?.expectedResultId;
   if (typeof wrapperId !== "number") {
@@ -242,7 +252,7 @@ export function listProjectCustomFields(
   client: AllureApiClient,
   projectId: number,
   query: QueryParams,
-): Promise<unknown> {
+): Promise<PageDto<CustomFieldRowDto>> {
   return client.get(`/api/project/${projectId}/cf`, query);
 }
 
@@ -251,7 +261,7 @@ export function listCustomFieldValues(
   projectId: number,
   customFieldId: number,
   query: QueryParams,
-): Promise<unknown> {
+): Promise<PageDto<CustomFieldValueDto>> {
   return client.get(`/api/project/${projectId}/cfv`, {
     customFieldId,
     ...query,
@@ -320,7 +330,7 @@ export function removeTagsFromTestCases(
 export function listTestCaseAttachments(
   client: AllureApiClient,
   testCaseId: number,
-): Promise<unknown> {
+): Promise<PageDto<AttachmentDto>> {
   return client.get("/api/testcase/attachment", { testCaseId });
 }
 
@@ -348,7 +358,7 @@ export function deleteTestCaseAttachment(
 export function getTestCaseAttachmentContent(
   client: AllureApiClient,
   attachmentId: number,
-): Promise<unknown> {
+): Promise<AttachmentContentDto> {
   return client.getRaw(`/api/testcase/attachment/${attachmentId}/content`);
 }
 

@@ -1,212 +1,132 @@
 import type { AllureApiClient } from "../client.js";
 import * as api from "../api/analytic.js";
 import type { ToolBundle } from "./types.js";
-import {
-  asObject,
-  getOptionalNumber,
-  getOptionalString,
-  resolveProjectId,
-} from "./utils.js";
+import { z } from "zod";
+import { zodTool, paginationSchema, projectIdSchema, projectNameSchema } from "./schema.js";
+import { resolveProjectId } from "./utils.js";
 
-const ANALYTIC_INTERVAL_DESCRIPTION =
-  'Time interval for grouping. One of: "hour", "day", "week", "month".';
-
-const RANGE_PROPERTIES = {
-  from: { type: "number", description: "Start of time range (Unix timestamp ms). Must be a number, not a string." },
-  to: { type: "number", description: "End of time range (Unix timestamp ms). Must be a number, not a string." },
+const rangeFields = {
+  from: z.coerce.number().optional().describe("Start of time range (Unix timestamp ms). Must be a number, not a string."),
+  to: z.coerce.number().optional().describe("End of time range (Unix timestamp ms). Must be a number, not a string."),
 };
 
-const RQL_PROPERTIES = {
-  tcRql: { type: "string", description: "RQL filter for test cases." },
-  launchRql: { type: "string", description: "RQL filter for launches." },
+const rqlFields = {
+  tcRql: z.string().optional().describe("RQL filter for test cases."),
+  launchRql: z.string().optional().describe("RQL filter for launches."),
 };
+
+const intervalField = {
+  interval: z.enum(["hour", "day", "week", "month"]).optional()
+    .describe('Time interval for grouping. One of: "hour", "day", "week", "month".'),
+};
+
+const offsetField = {
+  offset: z.coerce.number().optional().describe("Timezone offset in minutes. Must be a number, not a string."),
+};
+
+const getAutomationChart = zodTool("get_automation_chart",
+  "Get automation trend chart data for a project (test automation coverage over time).",
+  z.object({ projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(), ...rqlFields, ...rangeFields, ...offsetField, ...intervalField }),
+);
+
+const getGroupByAutomation = zodTool("get_group_by_automation",
+  "Get test case counts grouped by automation status for a project.",
+  z.object({ projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(), tcRql: rqlFields.tcRql }),
+);
+
+const getGroupByStatus = zodTool("get_group_by_status",
+  "Get test case counts grouped by status for a project.",
+  z.object({ projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(), tcRql: rqlFields.tcRql }),
+);
+
+const getLaunchDurationHistogram = zodTool("get_launch_duration_histogram",
+  "Get histogram of launch durations for a project.",
+  z.object({ projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(), ...rqlFields, ...rangeFields, buckets: z.coerce.number().optional().describe("Number of histogram buckets (default: 10). Must be a number, not a string.") }),
+);
+
+const getMuteTrend = zodTool("get_mute_trend",
+  "Get trend of muted test cases over time for a project.",
+  z.object({ projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(), ...rangeFields, ...intervalField }),
+);
+
+const getStatisticTrend = zodTool("get_statistic_trend",
+  "Get test result statistic trend over time for a project.",
+  z.object({ projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(), ...rqlFields, ...rangeFields, ...offsetField, ...intervalField }),
+);
+
+const getTcLastResult = zodTool("get_tc_last_result",
+  "Get last test result for each test case in a project.",
+  z.object({ projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional() }),
+);
+
+const getTcSuccessRate = zodTool("get_tc_success_rate",
+  "Get test case success rate analytics over time for a project.",
+  z.object({ projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(), ...rqlFields, ...rangeFields, ...offsetField, ...intervalField }),
+);
 
 export function createAnalyticTools(client: AllureApiClient): ToolBundle {
   const tools = [
-    {
-      name: "get_automation_chart",
-      description:
-        "Get automation trend chart data for a project (test automation coverage over time).",
-      inputSchema: {
-        type: "object" as const,
-        properties: {
-          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
-          projectName: { type: "string", description: "Project name (alternative to projectId)." },
-          ...RQL_PROPERTIES,
-          ...RANGE_PROPERTIES,
-          offset: { type: "number", description: "Timezone offset in minutes. Must be a number, not a string." },
-          interval: { type: "string", description: ANALYTIC_INTERVAL_DESCRIPTION },
-        },
-      },
-    },
-    {
-      name: "get_group_by_automation",
-      description: "Get test case counts grouped by automation status for a project.",
-      inputSchema: {
-        type: "object" as const,
-        properties: {
-          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
-          projectName: { type: "string", description: "Project name (alternative to projectId)." },
-          tcRql: RQL_PROPERTIES.tcRql,
-        },
-      },
-    },
-    {
-      name: "get_group_by_status",
-      description: "Get test case counts grouped by status for a project.",
-      inputSchema: {
-        type: "object" as const,
-        properties: {
-          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
-          projectName: { type: "string", description: "Project name (alternative to projectId)." },
-          tcRql: RQL_PROPERTIES.tcRql,
-        },
-      },
-    },
-    {
-      name: "get_launch_duration_histogram",
-      description: "Get histogram of launch durations for a project.",
-      inputSchema: {
-        type: "object" as const,
-        properties: {
-          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
-          projectName: { type: "string", description: "Project name (alternative to projectId)." },
-          ...RQL_PROPERTIES,
-          ...RANGE_PROPERTIES,
-          buckets: { type: "number", description: "Number of histogram buckets (default: 10). Must be a number, not a string." },
-        },
-      },
-    },
-    {
-      name: "get_mute_trend",
-      description: "Get trend of muted test cases over time for a project.",
-      inputSchema: {
-        type: "object" as const,
-        properties: {
-          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
-          projectName: { type: "string", description: "Project name (alternative to projectId)." },
-          ...RANGE_PROPERTIES,
-          interval: { type: "string", description: ANALYTIC_INTERVAL_DESCRIPTION },
-        },
-      },
-    },
-    {
-      name: "get_statistic_trend",
-      description: "Get test result statistic trend over time for a project.",
-      inputSchema: {
-        type: "object" as const,
-        properties: {
-          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
-          projectName: { type: "string", description: "Project name (alternative to projectId)." },
-          ...RQL_PROPERTIES,
-          ...RANGE_PROPERTIES,
-          offset: { type: "number", description: "Timezone offset in minutes. Must be a number, not a string." },
-          interval: { type: "string", description: ANALYTIC_INTERVAL_DESCRIPTION },
-        },
-      },
-    },
-    {
-      name: "get_tc_last_result",
-      description: "Get last test result for each test case in a project.",
-      inputSchema: {
-        type: "object" as const,
-        properties: {
-          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
-          projectName: { type: "string", description: "Project name (alternative to projectId)." },
-        },
-      },
-    },
-    {
-      name: "get_tc_success_rate",
-      description: "Get test case success rate analytics over time for a project.",
-      inputSchema: {
-        type: "object" as const,
-        properties: {
-          projectId: { type: "number", description: "Project ID. Must be a number (integer), not a string." },
-          projectName: { type: "string", description: "Project name (alternative to projectId)." },
-          ...RQL_PROPERTIES,
-          ...RANGE_PROPERTIES,
-          offset: { type: "number", description: "Timezone offset in minutes. Must be a number, not a string." },
-          interval: { type: "string", description: ANALYTIC_INTERVAL_DESCRIPTION },
-        },
-      },
-    },
+    getAutomationChart.definition,
+    getGroupByAutomation.definition,
+    getGroupByStatus.definition,
+    getLaunchDurationHistogram.definition,
+    getMuteTrend.definition,
+    getStatisticTrend.definition,
+    getTcLastResult.definition,
+    getTcSuccessRate.definition,
   ];
 
   const handlers = {
     get_automation_chart: async (rawArgs: unknown) => {
-      const args = asObject(rawArgs);
+      const args = getAutomationChart.parse(rawArgs);
       const projectId = await resolveProjectId(args, client);
       return api.getAutomationChart(client, projectId, {
-        tcRql: getOptionalString(args, "tcRql"),
-        launchRql: getOptionalString(args, "launchRql"),
-        from: getOptionalNumber(args, "from"),
-        to: getOptionalNumber(args, "to"),
-        offset: getOptionalNumber(args, "offset"),
-        interval: getOptionalString(args, "interval"),
+        tcRql: args.tcRql, launchRql: args.launchRql,
+        from: args.from, to: args.to, offset: args.offset, interval: args.interval,
       });
     },
     get_group_by_automation: async (rawArgs: unknown) => {
-      const args = asObject(rawArgs);
+      const args = getGroupByAutomation.parse(rawArgs);
       const projectId = await resolveProjectId(args, client);
-      return api.getGroupByAutomation(client, projectId, {
-        tcRql: getOptionalString(args, "tcRql"),
-      });
+      return api.getGroupByAutomation(client, projectId, { tcRql: args.tcRql });
     },
     get_group_by_status: async (rawArgs: unknown) => {
-      const args = asObject(rawArgs);
+      const args = getGroupByStatus.parse(rawArgs);
       const projectId = await resolveProjectId(args, client);
-      return api.getGroupByStatus(client, projectId, {
-        tcRql: getOptionalString(args, "tcRql"),
-      });
+      return api.getGroupByStatus(client, projectId, { tcRql: args.tcRql });
     },
     get_launch_duration_histogram: async (rawArgs: unknown) => {
-      const args = asObject(rawArgs);
+      const args = getLaunchDurationHistogram.parse(rawArgs);
       const projectId = await resolveProjectId(args, client);
       return api.getLaunchDurationHistogram(client, projectId, {
-        tcRql: getOptionalString(args, "tcRql"),
-        launchRql: getOptionalString(args, "launchRql"),
-        from: getOptionalNumber(args, "from"),
-        to: getOptionalNumber(args, "to"),
-        buckets: getOptionalNumber(args, "buckets"),
+        tcRql: args.tcRql, launchRql: args.launchRql,
+        from: args.from, to: args.to, buckets: args.buckets,
       });
     },
     get_mute_trend: async (rawArgs: unknown) => {
-      const args = asObject(rawArgs);
+      const args = getMuteTrend.parse(rawArgs);
       const projectId = await resolveProjectId(args, client);
-      return api.getMuteTrend(client, projectId, {
-        from: getOptionalNumber(args, "from"),
-        to: getOptionalNumber(args, "to"),
-        interval: getOptionalString(args, "interval"),
-      });
+      return api.getMuteTrend(client, projectId, { from: args.from, to: args.to, interval: args.interval });
     },
     get_statistic_trend: async (rawArgs: unknown) => {
-      const args = asObject(rawArgs);
+      const args = getStatisticTrend.parse(rawArgs);
       const projectId = await resolveProjectId(args, client);
       return api.getStatisticTrend(client, projectId, {
-        tcRql: getOptionalString(args, "tcRql"),
-        launchRql: getOptionalString(args, "launchRql"),
-        from: getOptionalNumber(args, "from"),
-        to: getOptionalNumber(args, "to"),
-        offset: getOptionalNumber(args, "offset"),
-        interval: getOptionalString(args, "interval"),
+        tcRql: args.tcRql, launchRql: args.launchRql,
+        from: args.from, to: args.to, offset: args.offset, interval: args.interval,
       });
     },
     get_tc_last_result: async (rawArgs: unknown) => {
-      const args = asObject(rawArgs);
+      const args = getTcLastResult.parse(rawArgs);
       const projectId = await resolveProjectId(args, client);
       return api.getTcLastResult(client, projectId);
     },
     get_tc_success_rate: async (rawArgs: unknown) => {
-      const args = asObject(rawArgs);
+      const args = getTcSuccessRate.parse(rawArgs);
       const projectId = await resolveProjectId(args, client);
       return api.getTcSuccessRate(client, projectId, {
-        tcRql: getOptionalString(args, "tcRql"),
-        launchRql: getOptionalString(args, "launchRql"),
-        from: getOptionalNumber(args, "from"),
-        to: getOptionalNumber(args, "to"),
-        offset: getOptionalNumber(args, "offset"),
-        interval: getOptionalString(args, "interval"),
+        tcRql: args.tcRql, launchRql: args.launchRql,
+        from: args.from, to: args.to, offset: args.offset, interval: args.interval,
       });
     },
   };

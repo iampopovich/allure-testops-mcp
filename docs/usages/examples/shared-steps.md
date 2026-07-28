@@ -9,7 +9,6 @@
 
 ## Typical Tools
 
-- `list_shared_steps`
 - `get_shared_step`
 - `get_shared_step_steps`
 - `get_shared_step_usage`
@@ -18,19 +17,9 @@
 - `archive_shared_step`
 - `unarchive_shared_step`
 
+There is no `list_shared_steps` tool. To browse a project's shared step library, read the `allure://projects/{projectId}/shared-steps` resource (via `resources/read`, not `tools/call`).
+
 ## Example Calls
-
-List the shared step library for a project:
-
-```json
-{
-  "name": "list_shared_steps",
-  "arguments": {
-    "projectId": 37,
-    "size": 50
-  }
-}
-```
 
 Read the full step content of a shared step (resolves `sharedStepId` references):
 
@@ -85,4 +74,3 @@ Archive an outdated shared step:
 - When `get_test_case_steps` returns a step with a `sharedStepId` field, call `get_shared_step_steps` with that ID to inline the actual step body.
 - Always run `get_shared_step_usage` before archiving or editing — a shared step may be referenced by many test cases.
 - Archived shared steps are hidden from the active library but remain readable. Use `unarchive_shared_step` to restore them.
-- `list_shared_steps` accepts `archived: true` to list only archived steps.

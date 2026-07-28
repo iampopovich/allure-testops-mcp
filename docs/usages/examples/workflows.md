@@ -42,14 +42,13 @@ Attach plan:
 }
 ```
 
-List failed results:
+List failed results (scope by launch with `list_test_results`, not `search_test_results` — AQL has no numeric launch-id field, only a name-based `launch` field):
 
 ```json
 {
-  "name": "search_test_results",
+  "name": "list_test_results",
   "arguments": {
-    "projectId": 37,
-    "rql": "launchId == 9981 and status == FAILED",
+    "id": 9981,
     "page": 0,
     "size": 20
   }

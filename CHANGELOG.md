@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project adheres to Semantic Versioning.
 
+## [1.5.0] - 2026-07-28
+
+### Changed
+
+- **Verified compatibility with Allure TestOps 26.2.2.3.** No changes required to implemented tools — the spec update deprecated `/api/license` (replaced by `/api/v2/license`) and added a `test-report-controller` (`/api/test-report/**`), neither of which this server exposes as tools. `/api/testcase/**` endpoints were relocated within the spec but kept identical operation IDs, paths, and payloads.
+- Bumped `supportedApiVersion` to `26.2.2.3` in `package.json`.
+
 ## [1.4.0] - 2026-07-09
 
 ### Added

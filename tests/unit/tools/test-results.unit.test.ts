@@ -37,7 +37,7 @@ describe("createTestResultTools", () => {
   it("has expected required fields in critical tool schemas", () => {
     const bundle = createTestResultTools(client as never);
 
-    expectRequiredFields(bundle.tools, "list_test_results", ["launchId"]);
+    expectRequiredFields(bundle.tools, "list_test_results", ["id"]);
     expectRequiredFields(bundle.tools, "search_test_results", ["rql"]);
     expectRequiredFields(bundle.tools, "create_test_result", ["payload"]);
     expectRequiredFields(bundle.tools, "update_test_result", ["id", "payload"]);
@@ -47,12 +47,12 @@ describe("createTestResultTools", () => {
     expectSchemaProperty(bundle.tools, "search_test_results", "projectName");
   });
 
-  it("list_test_results validates launchId and forwards pagination", async () => {
+  it("list_test_results validates id and forwards pagination", async () => {
     const bundle = createTestResultTools(client as never);
     vi.mocked(api.listTestResults).mockResolvedValueOnce([{ id: 1 }]);
 
     const result = await bundle.handlers.list_test_results({
-      launchId: 12,
+      id: 12,
       search: "failed",
       page: 2,
       size: 15,

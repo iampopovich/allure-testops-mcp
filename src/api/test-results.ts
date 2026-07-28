@@ -1,4 +1,5 @@
 import type { AllureApiClient } from "../client.js";
+import type { PageDto, AttachmentDto, AttachmentContentDto } from "../types/entities.js";
 
 type QueryValue = string | number | boolean | Array<string | number | boolean>;
 type QueryParams = Record<string, QueryValue | undefined>;
@@ -7,7 +8,7 @@ export function listTestResults(
   client: AllureApiClient,
   launchId: number,
   query: QueryParams,
-): Promise<unknown> {
+): Promise<PageDto<Record<string, unknown>>> {
   return client.get("/api/testresult", {
     launchId,
     ...query,
@@ -19,7 +20,7 @@ export function searchTestResults(
   projectId: number,
   rql: string,
   query: QueryParams,
-): Promise<unknown> {
+): Promise<PageDto<Record<string, unknown>>> {
   return client.get("/api/testresult/__search", {
     projectId,
     rql,
@@ -27,7 +28,7 @@ export function searchTestResults(
   });
 }
 
-export function getTestResult(client: AllureApiClient, id: number): Promise<unknown> {
+export function getTestResult(client: AllureApiClient, id: number): Promise<Record<string, unknown>> {
   return client.get(`/api/testresult/${id}`);
 }
 
@@ -38,12 +39,13 @@ export function createTestResult(
   return client.post("/api/testresult", payload);
 }
 
-export function updateTestResult(
+export async function updateTestResult(
   client: AllureApiClient,
   id: number,
   payload: Record<string, unknown>,
 ): Promise<unknown> {
-  return client.patch(`/api/testresult/${id}`, payload);
+  const current = await client.get<Record<string, unknown>>(`/api/testresult/${id}`);
+  return client.patch(`/api/testresult/${id}`, { ...current, ...payload });
 }
 
 export function getTestResultHistory(
@@ -82,13 +84,13 @@ export function listTestResultAttachments(
   client: AllureApiClient,
   testResultId: number,
   query: QueryParams,
-): Promise<unknown> {
+): Promise<PageDto<AttachmentDto>> {
   return client.get("/api/testresult/attachment", { testResultId, ...query });
 }
 
 export function getTestResultAttachmentContent(
   client: AllureApiClient,
   attachmentId: number,
-): Promise<unknown> {
+): Promise<AttachmentContentDto> {
   return client.getRaw(`/api/testresult/attachment/${attachmentId}/content`);
 }

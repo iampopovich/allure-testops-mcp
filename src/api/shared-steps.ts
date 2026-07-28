@@ -1,4 +1,5 @@
 import type { AllureApiClient } from "../client.js";
+import type { PageDto, TestCaseStepsResponse } from "../types/entities.js";
 
 type QueryParams = Record<string, string | number | boolean | Array<string | number | boolean> | undefined>;
 
@@ -6,21 +7,21 @@ export function listSharedSteps(
   client: AllureApiClient,
   projectId: number,
   query: QueryParams,
-): Promise<unknown> {
+): Promise<PageDto<Record<string, unknown>>> {
   return client.get("/api/sharedstep", { projectId, ...query });
 }
 
 export function getSharedStep(
   client: AllureApiClient,
   id: number,
-): Promise<unknown> {
+): Promise<Record<string, unknown>> {
   return client.get(`/api/sharedstep/${id}`);
 }
 
 export function getSharedStepSteps(
   client: AllureApiClient,
   id: number,
-): Promise<unknown> {
+): Promise<TestCaseStepsResponse> {
   return client.get(`/api/sharedstep/${id}/step`);
 }
 
