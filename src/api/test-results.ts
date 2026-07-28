@@ -39,12 +39,13 @@ export function createTestResult(
   return client.post("/api/testresult", payload);
 }
 
-export function updateTestResult(
+export async function updateTestResult(
   client: AllureApiClient,
   id: number,
   payload: Record<string, unknown>,
 ): Promise<unknown> {
-  return client.patch(`/api/testresult/${id}`, payload);
+  const current = await client.get<Record<string, unknown>>(`/api/testresult/${id}`);
+  return client.patch(`/api/testresult/${id}`, { ...current, ...payload });
 }
 
 export function getTestResultHistory(

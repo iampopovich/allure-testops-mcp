@@ -45,7 +45,8 @@ const createTestResult = zodTool("create_test_result", "Create a new test result
   z.object({ payload: coerceObject() }),
 );
 
-const updateTestResult = zodTool("update_test_result", "Update an existing test result.",
+const updateTestResult = zodTool("update_test_result",
+  "Update an existing test result. payload only needs the fields you want to change (e.g. { status: \"failed\" }) — the current test result is fetched and merged automatically before saving.",
   z.object({ id: idSchema("Test result"), payload: coerceObject() }),
 );
 
