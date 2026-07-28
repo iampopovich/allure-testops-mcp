@@ -9,23 +9,15 @@
 
 ## Typical Tools
 
-- `list_env_vars`
 - `suggest_env_vars`
 - `list_env_var_schemas`
 - `list_env_var_values`
 - `suggest_env_var_values`
 - `get_test_result_env_vars`
 
+Env var keys are also available as a read-only MCP resource at `allure://env-vars` (use `resources/read`, not `tools/call`) if you need the full raw list instead of a search.
+
 ## Example Calls
-
-Discover all environment variable keys in the system:
-
-```json
-{
-  "name": "list_env_vars",
-  "arguments": {}
-}
-```
 
 Search for an env var key by partial name:
 
@@ -79,14 +71,14 @@ Get the environment context for a specific failed test result:
 {
   "name": "get_test_result_env_vars",
   "arguments": {
-    "testResultId": 5500
+    "id": 5500
   }
 }
 ```
 
 ## Notes
 
-- Use `list_env_vars` or `suggest_env_vars` to discover valid key names before writing AQL filters like `ev["browser"] = "Chrome 124"` in `search_test_results` or `search_launches`.
+- Use `suggest_env_vars` (or read the `allure://env-vars` resource) to discover valid key names before writing AQL filters like `ev["browser"] = "Chrome 124"` in `search_test_results` or `search_launches`.
 - Use `suggest_env_var_values` to find the exact value strings used in runs — values are case-sensitive in AQL.
 - `get_test_result_env_vars` is the fastest way to check if a specific failure is environment-specific (e.g. only fails on Windows, only on Chrome).
 - `list_env_var_schemas` shows which env vars a project is configured to capture per launch — useful to understand what context is available before querying.

@@ -12,7 +12,6 @@
 
 ## Typical Tools
 
-- `list_defects`
 - `get_defect`
 - `create_defect`
 - `get_defect_test_results`
@@ -29,18 +28,7 @@
 
 ## Example Calls
 
-List all open defects for a project:
-
-```json
-{
-  "name": "list_defects",
-  "arguments": {
-    "projectId": 37,
-    "status": "OPEN",
-    "size": 50
-  }
-}
-```
+To list all open defects for a project, read the `allure://projects/{projectId}/defects` resource (via `resources/read`, not `tools/call`) — there is no `list_defects` tool.
 
 Get a failure summary for a launch (all distinct defect patterns):
 

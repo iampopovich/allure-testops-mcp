@@ -46,7 +46,7 @@ const createTestResult = zodTool("create_test_result", "Create a new test result
 );
 
 const updateTestResult = zodTool("update_test_result",
-  "Update an existing test result. payload only needs the fields you want to change (e.g. { status: \"failed\" }) — the current test result is fetched and merged automatically before saving.",
+  "Update an existing test result. payload only needs the fields you want to change (e.g. { status: \"failed\" }) — the current test result is fetched and merged automatically before saving. KNOWN ISSUE: on some Allure TestOps Server versions, changing \"status\" this way does not persist once the test result has left certain workflow states — call get_test_result afterward to confirm.",
   z.object({ id: idSchema("Test result"), payload: coerceObject() }),
 );
 
@@ -60,7 +60,7 @@ const assignTestResult = zodTool("assign_test_result",
 );
 
 const resolveTestResult = zodTool("resolve_test_result",
-  "Resolve a test result. payload must include status.",
+  "Resolve a test result. payload must include status. KNOWN ISSUE: on some Allure TestOps Server versions, status changes via this endpoint (and via update_test_result) do not persist once a test result has left certain workflow states — call get_test_result afterward to confirm the status actually changed.",
   z.object({ id: idSchema("Test result"), payload: coerceObject() }),
 );
 

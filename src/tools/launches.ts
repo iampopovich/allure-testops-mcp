@@ -58,7 +58,7 @@ const getLaunchProgress = zodTool("get_launch_progress", "Get launch progress wi
 );
 
 const addTestCasesToLaunch = zodTool("add_test_cases_to_launch",
-  "Add test cases to a launch. payload.selection.leafsInclude must be an array of test case IDs, e.g. { selection: { projectId, leafsInclude: [123, 456], inverted: false } }.",
+  "Add test cases to a launch. payload.selection.leafsInclude must be an array of test case IDs, e.g. { selection: { projectId, leafsInclude: [123, 456], inverted: false } }. KNOWN ISSUE: some Allure TestOps Server versions return a 500 error on this endpoint even with a well-formed payload. If this happens, use create_test_result with testCaseId + launchId as a workaround to attach results to the launch directly.",
   z.object({
     id: idSchema("Launch"),
     payload: z.object({

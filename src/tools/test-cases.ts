@@ -17,17 +17,31 @@ function asArray(value: unknown): unknown[] | undefined {
   return value;
 }
 
+/**
+ * Bulk tag/link/custom-field tools take these fields at the top level, but callers
+ * frequently nest them inside `payload` (the convention used by most other tools in
+ * this server). Fall back to `payload[key]` so both calling conventions work.
+ */
+function bulkField(args: ToolObject, key: string): unknown {
+  if (args[key] !== undefined) return args[key];
+  const payload = args.payload;
+  if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+    return (payload as ToolObject)[key];
+  }
+  return undefined;
+}
+
 function getBulkIdList(
   args: ToolObject, singleKey: string, multipleKey: string, entityLabel: string,
 ): number[] {
   const ids: number[] = [];
-  const single = args[singleKey];
+  const single = bulkField(args, singleKey);
   if (single !== undefined) {
     if (typeof single !== "number" || Number.isNaN(single))
       throw new Error(`"${singleKey}" must be a number when provided.`);
     ids.push(single);
   }
-  const multiple = args[multipleKey];
+  const multiple = bulkField(args, multipleKey);
   if (multiple !== undefined) {
     const values = asArray(multiple);
     if (!values || values.some((item) => typeof item !== "number" || Number.isNaN(item)))
@@ -40,11 +54,13 @@ function getBulkIdList(
 
 function normalizeBulkTags(args: ToolObject): BulkTag[] {
   const items: unknown[] = [];
-  if (args.tag !== undefined) items.push(args.tag);
-  if (args.tags !== undefined) {
-    const tags = asArray(args.tags);
-    if (!tags) throw new Error("\"tags\" must be an array when provided.");
-    items.push(...tags);
+  const tag = bulkField(args, "tag");
+  if (tag !== undefined) items.push(tag);
+  const tags = bulkField(args, "tags");
+  if (tags !== undefined) {
+    const tagsArray = asArray(tags);
+    if (!tagsArray) throw new Error("\"tags\" must be an array when provided.");
+    items.push(...tagsArray);
   }
   if (items.length === 0) throw new Error("Either \"tag\" or \"tags\" must be provided with at least one tag.");
   return items.map((item, index) => {
@@ -102,11 +118,13 @@ async function validateCustomFieldValue(
 
 function normalizeBulkExternalLinks(args: ToolObject): BulkExternalLink[] {
   const items: unknown[] = [];
-  if (args.link !== undefined) items.push(args.link);
-  if (args.links !== undefined) {
-    const links = asArray(args.links);
-    if (!links) throw new Error("\"links\" must be an array when provided.");
-    items.push(...links);
+  const link = bulkField(args, "link");
+  if (link !== undefined) items.push(link);
+  const links = bulkField(args, "links");
+  if (links !== undefined) {
+    const linksArray = asArray(links);
+    if (!linksArray) throw new Error("\"links\" must be an array when provided.");
+    items.push(...linksArray);
   }
   if (items.length === 0) throw new Error("Either \"link\" or \"links\" must be provided with at least one external link.");
   return items.map((item, index) => {
@@ -210,7 +228,7 @@ const updateTestCase = zodTool("update_test_case",
 const deleteTestCase = zodTool("delete_test_case", "Delete a test case by ID.", z.object({ id: idSchema("Test case") }));
 
 const addTestCaseTagsBulk = zodTool("add_test_case_tags_bulk",
-  "Add one or multiple tags to one or multiple test cases using bulk API.",
+  "Add one or multiple tags to one or multiple test cases using bulk API. testCaseId/testCaseIds/tag/tags may be passed as top-level arguments or nested inside a \"payload\" object — both forms work.",
   z.object({
     projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(),
     testCaseId: coerceInt().optional().describe("Test case ID. Must be a number (integer), not a string."),
@@ -221,7 +239,7 @@ const addTestCaseTagsBulk = zodTool("add_test_case_tags_bulk",
 );
 
 const removeTestCaseTagsBulk = zodTool("remove_test_case_tags_bulk",
-  "Remove one or multiple tags from one or multiple test cases using bulk API.",
+  "Remove one or multiple tags from one or multiple test cases using bulk API. testCaseId/testCaseIds/tagId/tagIds may be passed as top-level arguments or nested inside a \"payload\" object — both forms work.",
   z.object({
     projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(),
     testCaseId: coerceInt().optional().describe("Test case ID."),
@@ -232,7 +250,7 @@ const removeTestCaseTagsBulk = zodTool("remove_test_case_tags_bulk",
 );
 
 const addTestCaseExternalLinksBulk = zodTool("add_test_case_external_links_bulk",
-  "Add one or multiple external links to one or multiple test cases using bulk API.",
+  "Add one or multiple external links to one or multiple test cases using bulk API. testCaseId/testCaseIds/link/links may be passed as top-level arguments or nested inside a \"payload\" object — both forms work.",
   z.object({
     projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(),
     testCaseId: coerceInt().optional(),

@@ -17,11 +17,10 @@ Each guide includes:
 - [Test Plans](./test-plans.md)
 - [Custom Fields](./custom-fields.md)
 - [Defects](./defects.md)
-- [Mutes](./mutes.md)
-- [Members](./members.md)
 - [Shared Steps](./shared-steps.md)
 - [Environments](./environments.md)
 - [Workflows](./workflows.md)
+- [Resources (read-only data)](./resources.md)
 - [System Prompt Template (Token-Saving)](./system-prompt-template.md)
 
 ## Project Scope Inputs

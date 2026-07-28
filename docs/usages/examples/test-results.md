@@ -34,7 +34,7 @@ Search across project:
   "name": "search_test_results",
   "arguments": {
     "projectId": 37,
-    "rql": "status == FAILED",
+    "rql": "status = \"failed\"",
     "page": 0,
     "size": 20
   }
