@@ -3,7 +3,7 @@ import * as api from "../api/test-plans.js";
 import type { ToolBundle } from "./types.js";
 import { z } from "zod";
 import { zodTool, idSchema, paginationSchema, projectIdSchema, projectNameSchema , coerceObject} from "./schema.js"
-import { resolveProjectId } from "./utils.js";
+import { ensureProjectIdInPayload, resolveProjectId } from "./utils.js";
 
 const getTestPlan = zodTool("get_test_plan",
   "Get a test plan by ID.",
@@ -43,7 +43,7 @@ export function createTestPlanTools(client: AllureApiClient): ToolBundle {
       get_test_plan: async (rawArgs) => api.getTestPlan(client, getTestPlan.parse(rawArgs).id),
       create_test_plan: async (rawArgs) => {
         const { payload } = createTestPlan.parse(rawArgs);
-        return api.createTestPlan(client, payload);
+        return api.createTestPlan(client, ensureProjectIdInPayload(payload, client));
       },
       update_test_plan: async (rawArgs) => {
         const { id, payload } = updateTestPlan.parse(rawArgs);

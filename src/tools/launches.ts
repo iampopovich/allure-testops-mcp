@@ -2,7 +2,7 @@ import type { AllureApiClient } from "../client.js";
 import * as api from "../api/launches.js";
 import type { ToolBundle } from "./types.js";
 import { z } from "zod";
-import { zodTool, idSchema, paginationSchema, projectIdSchema, projectNameSchema, sortSchema , coerceObject} from "./schema.js";
+import { zodTool, idSchema, paginationSchema, projectIdSchema, projectNameSchema, sortSchema, coerceArray, coerceInt, coerceObject } from "./schema.js";
 import { AQL_SYNTAX, ensureProjectIdInPayload, resolveProjectId } from "./utils.js";
 
 const searchLaunches = zodTool("search_launches",
@@ -57,8 +57,19 @@ const getLaunchProgress = zodTool("get_launch_progress", "Get launch progress wi
   z.object({ id: idSchema("Launch") }),
 );
 
-const addTestCasesToLaunch = zodTool("add_test_cases_to_launch", "Add test cases to a launch.",
-  z.object({ id: idSchema("Launch"), payload: coerceObject() }),
+const addTestCasesToLaunch = zodTool("add_test_cases_to_launch",
+  "Add test cases to a launch. payload.selection.leafsInclude must be an array of test case IDs, e.g. { selection: { projectId, leafsInclude: [123, 456], inverted: false } }.",
+  z.object({
+    id: idSchema("Launch"),
+    payload: z.object({
+      selection: z.object({
+        projectId: projectIdSchema.optional(),
+        leafsInclude: coerceArray(coerceInt()).optional(),
+        leafsExclude: coerceArray(coerceInt()).optional(),
+        inverted: z.boolean().optional(),
+      }).passthrough().optional(),
+    }).passthrough(),
+  }),
 );
 
 const addTestPlanToLaunch = zodTool("add_test_plan_to_launch", "Add a test plan to a launch.",

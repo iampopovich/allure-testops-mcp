@@ -405,7 +405,7 @@ export function createTestCaseTools(client: AllureApiClient): ToolBundle {
       },
       update_test_case_step: async (rawArgs: unknown) => {
         const { stepId, body, expectedResult } = updateTestCaseStep.parse(rawArgs);
-        return api.updateTestCaseStep(client, stepId, { body, expectedResult });
+        return api.updateTestCaseStep(client, stepId, { body, expectedResult }, expectedResult !== undefined);
       },
       update_test_case: async (rawArgs: unknown) => {
         const { id, payload } = updateTestCase.parse(rawArgs);
