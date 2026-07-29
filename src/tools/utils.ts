@@ -11,10 +11,12 @@ export type ToolArgs = Record<string, unknown>;
  */
 export const AQL_SYNTAX =
   "AQL (Allure Query Language) filter expression. " +
-  "Operators: = != ~= (contains) > < >= <= in [...] and or not. " +
+  "This tool has no 'query' field — the filter goes in 'rql'. For plain keyword/name search, use find_test_cases instead. " +
+  "Operators: = != ~= (contains) > < >= <= in [...] and or not, plus '= null' / 'is null' for empty fields. " +
   "IMPORTANT: 'not in' is written as 'not field in [...]', NOT 'field not in [...]'. " +
+  "IMPORTANT: 'and' has higher precedence than 'or' — parenthesize explicitly when mixing them, e.g. '(a = \"x\" or a = \"y\") and b = true'. " +
   "Dates use 13-digit Unix ms timestamps. " +
-  "Full syntax: https://docs.qameta.io/reference/aql/";
+  "Full syntax: https://docs.qameta.io/reference/aql/ — glossary: docs/usages/aql-reference.md";
 
 export function asObject(args: unknown): ToolArgs {
   if (!args || typeof args !== "object" || Array.isArray(args)) {

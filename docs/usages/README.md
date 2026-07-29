@@ -12,6 +12,10 @@ This directory contains end-user setup and usage guides for `allure-testops-mcp`
 
 - [Cursor, Claude Code, Claude Desktop](./integrations.md)
 
+## Query Syntax
+
+- [AQL Reference](./aql-reference.md)
+
 ## Prompt Examples
 
 - [Examples Index](./examples/README.md)
