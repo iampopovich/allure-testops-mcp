@@ -46,7 +46,7 @@ function parseOptionalProjectId(value: string | undefined): number | undefined {
 
 function parseMaxConcurrent(value: string | undefined): number {
   if (!value) {
-    return 5; // default: limit to 5 concurrent requests
+    return 1; // default: limit to 1 concurrent requests
   }
   const parsed = Number(value);
   if (Number.isNaN(parsed) || parsed < 0 || !Number.isInteger(parsed)) {
