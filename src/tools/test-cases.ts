@@ -202,7 +202,7 @@ const createTestCaseStep = zodTool("create_test_case_step",
 );
 
 const setTestCaseStepExpectedResult = zodTool("set_test_case_step_expected_result",
-  "Set the expected result on an existing step. Call this after create_test_case_step when an expected result is needed.\n\nWHEN TO USE:\n- User asks to add a step with expected result → use create_test_case_step with expectedResult instead (preferred)\n- User asks to set/update expected result on an already-existing step\n\nbody: pass the step's current body text. Omitting it may cause 400 step.onlyonedetail on some API versions.\nMultiple expected result lines: separate with ; or newlines.",
+  "Set the expected result on a step that has NO expected result yet. Call this after create_test_case_step when an expected result is needed.\n\nWHEN TO USE:\n- User asks to add a step with expected result → use create_test_case_step with expectedResult instead (preferred)\n- User asks to set expected result on an existing step that does NOT have one yet (verify via get_test_case_steps — the step has no expectedResultId / no wrapper children)\n\nWHEN NOT TO USE — this tool APPENDS, it does not replace:\nIf the step ALREADY has expected-result text, calling this tool again creates a NEW sibling leaf under the same wrapper instead of replacing the old one — you end up with duplicated expected-result lines on the same step. There is no delete_test_case_step in this toolset, so an accidentally created duplicate cannot be removed automatically; it must be cleaned up manually in the Allure UI. To change existing expected-result text, use update_test_case_step(leafId, { body: newText }) directly on the existing leaf's step id instead (see update_test_case_step's WRAPPER STEPS note).\n\nbody: pass the step's current body text. Omitting it may cause 400 step.onlyonedetail on some API versions.\nMultiple expected result lines: separate with ; or newlines.",
   z.object({
     stepId: coerceInt().describe("Step ID. Use createdStepId from create_test_case_step response."),
     testCaseId: idSchema("Test case"),
@@ -221,7 +221,7 @@ const updateTestCaseStep = zodTool("update_test_case_step",
 );
 
 const updateTestCase = zodTool("update_test_case",
-  "Update an existing test case metadata (name, description, precondition, tags, customFields, etc.). payload.customFields supports values like { customField: { id }, id, name }. DO NOT use this tool to add, edit, or delete steps — use create_test_case_step / update_test_case_step / delete_test_case_step instead.",
+  "Update an existing test case metadata (name, description, precondition, tags, customFields, etc.). payload.customFields supports values like { customField: { id }, id, name }. DO NOT use this tool to add or edit steps — use create_test_case_step / update_test_case_step instead. NOTE: there is no delete_test_case_step tool in this toolset — steps cannot be deleted programmatically; removing a step requires the Allure UI.",
   z.object({ id: idSchema("Test case"), payload: coerceObject() }),
 );
 
@@ -273,7 +273,7 @@ const getTestCaseScenario = zodTool("get_test_case_scenario", "Get scenario for 
 );
 
 const getTestCaseStepsTool = zodTool("get_test_case_steps",
-  "Get manual scenario steps for a test case. Returns a normalized scenario with root step and a flat map of all steps (scenarioSteps). Each step contains body, expectedResult, children IDs, and optional sharedStepId. IMPORTANT: the response includes a _meta section with expectedResultWrapperIds — these child nodes are Expected Result containers that CANNOT be edited directly via update_test_case_step. To update expected results, pass the `expectedResult` parameter on the parent step instead. Only steps listed in _meta.regularStepIds should be targeted by update_test_case_step.",
+  "Get manual scenario steps for a test case. Returns a normalized scenario with root step and a flat map of all steps (scenarioSteps). Each step contains body, expectedResult, children IDs, and optional sharedStepId. IMPORTANT: the response includes a _meta section with expectedResultWrapperIds — these are Expected Result container nodes. See _meta.note for the exact create-vs-edit workflow (whether to target the wrapper or its existing leaf child).\n\nEVENTUAL CONSISTENCY: right after create_test_case_step / update_test_case_step / set_test_case_step_expected_result, an immediate get_test_case_steps call MAY still return a stale snapshot missing the just-written leaf, due to replication/cache lag on the Allure API side — this is NOT necessarily an error. Don't treat a missing/unchanged leaf as proof the write failed; re-check with a fresh get_test_case_steps call a turn or two later (e.g. after another unrelated call) before concluding the write didn't take effect.",
   z.object({ id: idSchema("Test case") }),
 );
 
