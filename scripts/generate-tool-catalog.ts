@@ -7,6 +7,7 @@ import { createDashboardTools } from "../src/tools/dashboards.js";
 import { createDefectTools } from "../src/tools/defects.js";
 import { createEnvironmentTools } from "../src/tools/environments.js";
 import { createLaunchTools } from "../src/tools/launches.js";
+import { createReleaseTools } from "../src/tools/releases.js";
 import { createSharedStepTools } from "../src/tools/shared-steps.js";
 import { createTestCaseTools } from "../src/tools/test-cases.js";
 import { createTestPlanTools } from "../src/tools/test-plans.js";
@@ -39,6 +40,7 @@ function buildCatalog(): ToolCatalog {
     { name: "Launches", tools: createLaunchTools(noopClient as never).tools },
     { name: "Test Results", tools: createTestResultTools(noopClient as never).tools },
     { name: "Test Plans", tools: createTestPlanTools(noopClient as never).tools },
+    { name: "Releases", tools: createReleaseTools(noopClient as never).tools },
     { name: "Analytics", tools: createAnalyticTools(noopClient as never).tools },
     { name: "Dashboards", tools: createDashboardTools(noopClient as never).tools },
     { name: "Defects", tools: createDefectTools(noopClient as never).tools },

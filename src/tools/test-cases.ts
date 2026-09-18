@@ -238,6 +238,16 @@ const addTestCaseTagsBulk = zodTool("add_test_case_tags_bulk",
   }).passthrough(),
 );
 
+const restoreTestCasesBulk = zodTool("restore_test_cases_bulk",
+  "Restore one or multiple deleted test cases from the project trash (Allure TestOps 26.3+). " +
+  "For a single test case, restore_test_case is equivalent.",
+  z.object({
+    projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(),
+    testCaseId: coerceInt().optional().describe("Test case ID. Must be a number (integer), not a string."),
+    testCaseIds: coerceArray(coerceInt()).optional().describe("Test case IDs."),
+  }).passthrough(),
+);
+
 const removeTestCaseTagsBulk = zodTool("remove_test_case_tags_bulk",
   "Remove one or multiple tags from one or multiple test cases using bulk API. testCaseId/testCaseIds/tagId/tagIds may be passed as top-level arguments or nested inside a \"payload\" object — both forms work.",
   z.object({
@@ -354,6 +364,7 @@ export function createTestCaseTools(client: AllureApiClient): ToolBundle {
       updateTestCase.definition,
       deleteTestCase.definition,
       addTestCaseTagsBulk.definition,
+      restoreTestCasesBulk.definition,
       removeTestCaseTagsBulk.definition,
       addTestCaseExternalLinksBulk.definition,
       getTestCaseOverview.definition,
@@ -435,6 +446,12 @@ export function createTestCaseTools(client: AllureApiClient): ToolBundle {
         const projectId = await resolveProjectId(args, client);
         const testCaseIds = getBulkIdList(args, "testCaseId", "testCaseIds", "test case");
         return api.addTagsToTestCases(client, projectId, testCaseIds, normalizeBulkTags(args));
+      },
+      restore_test_cases_bulk: async (rawArgs: unknown) => {
+        const args = restoreTestCasesBulk.parse(rawArgs) as unknown as ToolObject;
+        const projectId = await resolveProjectId(args, client);
+        const testCaseIds = getBulkIdList(args, "testCaseId", "testCaseIds", "test case");
+        return api.restoreTestCases(client, projectId, testCaseIds);
       },
       remove_test_case_tags_bulk: async (rawArgs: unknown) => {
         const args = removeTestCaseTagsBulk.parse(rawArgs) as unknown as ToolObject;

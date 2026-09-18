@@ -4,6 +4,7 @@ import { createDashboardTools } from "./tools/dashboards.js";
 import { createDefectTools } from "./tools/defects.js";
 import { createEnvironmentTools } from "./tools/environments.js";
 import { createLaunchTools } from "./tools/launches.js";
+import { createReleaseTools } from "./tools/releases.js";
 import { createSharedStepTools } from "./tools/shared-steps.js";
 import { createTestCaseTools } from "./tools/test-cases.js";
 import { createTestPlanTools } from "./tools/test-plans.js";
@@ -26,6 +27,7 @@ export function buildToolRegistry(
     createLaunchTools(client),
     createTestResultTools(client),
     createTestPlanTools(client),
+    createReleaseTools(client),
     createAnalyticTools(client),
     createDashboardTools(client),
     createDefectTools(client),

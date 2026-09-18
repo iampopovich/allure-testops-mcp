@@ -23,6 +23,7 @@ const PATH_TTL: Array<[RegExp, number]> = [
   [/\/api\/testplan/,   2 * 60_000],  // test plan structure
   [/\/api\/sharedstep/, 2 * 60_000],  // shared steps
   [/\/api\/testcase/,   60_000],      // test cases — may be edited
+  [/\/api\/release/,    30_000],      // releases — statistics recalc as launches land
   [/\/api\/defect/,     30_000],      // defects — change as failures are triaged
   [/\/api\/testresult/, 30_000],      // results — agent polls status
   [/\/api\/widget/,     30_000],      // dashboard widgets

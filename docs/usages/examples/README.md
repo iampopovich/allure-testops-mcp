@@ -15,6 +15,7 @@ Each guide includes:
 - [Launches](./launches.md)
 - [Test Results](./test-results.md)
 - [Test Plans](./test-plans.md)
+- [Releases](./releases.md)
 - [Custom Fields](./custom-fields.md)
 - [Defects](./defects.md)
 - [Shared Steps](./shared-steps.md)

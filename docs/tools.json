@@ -1,56 +1,20 @@
 {
-  "generatedAt": "2026-04-04T18:35:38.235Z",
-  "totalTools": 100,
+  "generatedAt": "2026-09-18T18:23:41.320Z",
+  "totalTools": 114,
   "categories": [
     {
       "name": "Test Cases",
       "tools": [
         {
-          "name": "list_test_cases",
-          "description": "List test cases for a project.",
-          "inputSchema": {
-            "type": "object",
-            "properties": {
-              "projectId": {
-                "type": "number",
-                "description": "Project ID. Must be a number (integer), not a string."
-              },
-              "projectName": {
-                "type": "string",
-                "description": "Project name (alternative to projectId)."
-              },
-              "search": {
-                "type": "string"
-              },
-              "filterId": {
-                "type": "number",
-                "description": "Saved filter ID. Must be a number (integer), not a string."
-              },
-              "page": {
-                "type": "number",
-                "description": "Page number, 0-based. Must be a number (integer), not a string."
-              },
-              "size": {
-                "type": "number",
-                "description": "Page size. Must be a number (integer), not a string."
-              },
-              "sort": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        {
           "name": "search_test_cases",
-          "description": "Search test cases by AQL query.",
+          "description": "Search test cases by AQL (Allure Query Language) query. PREFER find_test_cases for broad multi-field search — it automatically searches name + Suite + Feature. Use this tool for precise, targeted AQL queries when you need custom field filters or complex logic.",
           "inputSchema": {
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
@@ -59,26 +23,141 @@
               },
               "rql": {
                 "type": "string",
-                "description": "AQL (Allure Query Language) filter expression. Operators: = != ~= (contains) > < >= <= in [...] and or not. IMPORTANT: 'not in' is written as 'not field in [...]', NOT 'field not in [...]'. Test case fields: id, name, tag, issue, role[\"R\"], member, cf[\"F\"], cfv, layer, status, workflow, testPlan, automation (boolean), muted, mutedDate, createdDate, createdBy, lastModifiedDate, lastModifiedBy. Dates use 13-digit Unix ms timestamps. Examples: name ~= \"login\" | automation = true | automation = false | status = \"Active\" | tag in [\"smoke\", \"regression\"] | not tag in [\"nightly\"] | cf[\"Epic\"] = \"Auth\" | name ~= \"checkout\" and muted = false | (createdBy = \"a\" or createdBy = \"b\") and automation = true"
+                "description": "AQL (Allure Query Language) filter expression. This tool has no 'query' field — the filter goes in 'rql'. For plain keyword/name search, use find_test_cases instead. Operators: = != ~= (contains) > < >= <= in [...] and or not, plus '= null' / 'is null' for empty fields. IMPORTANT: 'not in' is written as 'not field in [...]', NOT 'field not in [...]'. IMPORTANT: 'and' has higher precedence than 'or' — parenthesize explicitly when mixing them, e.g. '(a = \"x\" or a = \"y\") and b = true'. Dates use 13-digit Unix ms timestamps. Full syntax: https://docs.qameta.io/reference/aql/ — glossary: docs/usages/aql-reference.md Test case fields: id, name, tag, issue, role[\"R\"], member, cf[\"F\"], cfv, layer, status, workflow, testPlan, automation (boolean), muted, mutedDate, createdDate, createdBy, lastModifiedDate, lastModifiedBy. Custom field patterns: cf[\"Feature\"] = \"keyword\" | cf[\"Epic\"] = \"Auth\" | cf[\"Suite\"] = \"MySuite\". Examples: name ~= \"login\" | automation = true | automation = false | status = \"Active\" | tag in [\"smoke\", \"regression\"] | not tag in [\"nightly\"] | cf[\"Feature\"] = \"keyword\" and cf[\"Suite\"] = \"MySuite\" | name ~= \"checkout\" and muted = false | (createdBy = \"a\" or createdBy = \"b\") and automation = true"
               },
               "page": {
-                "type": "number",
-                "description": "Page number, 0-based. Must be a number (integer), not a string."
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "size": {
-                "type": "number",
-                "description": "Page size. Must be a number (integer), not a string."
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               },
               "sort": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
               "rql"
             ]
+          }
+        },
+        {
+          "name": "find_test_cases",
+          "description": "Broad search for test cases — use as the FIRST step before creating new test cases to check for duplicates. The \"query\" parameter searches test case name (contains match). Use \"feature\", \"suite\", or \"customFieldFilters\" to search by custom field values (exact match).\n\nWORKFLOW (general → specific):\n1. Broad search:   find_test_cases({ query: \"keyword\" }) — searches by test case name\n2. By custom field: find_test_cases({ feature: \"keyword\" }) — exact match on Feature custom field\n3. Combined:       find_test_cases({ query: \"login\", feature: \"Auth\", automated: true }) — name + filters\n4. Targeted AQL:   search_test_cases({ rql: 'cf[\"Feature\"] = \"keyword\" and automation = false' }) — precise query\n\nAt least one of the search/filter parameters must be provided.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Project ID. Must be a number (integer), not a string."
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "query": {
+                "description": "Search keyword — searches test case name (contains match). Use for broad name-based discovery. To search custom fields, use the \"feature\", \"suite\", or \"customFieldFilters\" parameters.",
+                "type": "string"
+              },
+              "name": {
+                "description": "Filter by test case name (contains match). Use to narrow results to a specific name pattern.",
+                "type": "string"
+              },
+              "suite": {
+                "description": "Filter by Suite custom field value (exact match). Use to narrow results to a specific suite. NOTE: the custom field must be named \"Suite\" in this project — use customFieldFilters if the name differs.",
+                "type": "string"
+              },
+              "feature": {
+                "description": "Filter by Feature custom field value (exact match). Use to narrow results to a specific feature. NOTE: the custom field must be named \"Feature\" in this project — use customFieldFilters if the name differs.",
+                "type": "string"
+              },
+              "tag": {
+                "description": "Filter by tag name (exact match).",
+                "type": "string"
+              },
+              "automated": {
+                "description": "Filter by automation status: true = automated tests only, false = manual tests only.",
+                "type": "boolean"
+              },
+              "status": {
+                "description": "Filter by test case status (exact match, e.g. 'Active', 'Draft', 'Deprecated').",
+                "type": "string"
+              },
+              "customFieldFilters": {
+                "description": "Additional custom field filters for granular targeting. Each filter adds an AND condition. Example: [{ fieldName: \"Epic\", value: \"Auth\" }].",
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "fieldName": {
+                          "type": "string",
+                          "description": "Custom field name, e.g. 'Suite', 'Feature', 'Epic'."
+                        },
+                        "value": {
+                          "type": "string",
+                          "description": "Value to match."
+                        },
+                        "exactMatch": {
+                          "description": "If true, use exact match (=); if false/omitted, use contains match (~=). Default: false (contains). NOTE: ~= on custom fields is not officially documented and may cause 400 errors on some Allure versions.",
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "fieldName",
+                        "value"
+                      ]
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "page": {
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "size": {
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "sort": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            }
           }
         },
         {
@@ -88,7 +167,10 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number"
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Test case ID. Must be a number (integer), not a string."
               }
             },
             "required": [
@@ -98,13 +180,21 @@
         },
         {
           "name": "create_test_case",
-          "description": "Create a new test case. payload.projectId defaults to ALLURE_PROJECT_ID env when omitted. payload.precondition (string) is the preconditions field — always use this for preconditions/prerequisites text, NOT payload.description. payload.description (string) is the general test case description — always populate this with a meaningful summary of what the test case verifies. payload.customFields supports values like { customField: { id }, id, name }. payload.steps is an optional array of step objects with { name (step text), expectedResult (optional expected result text) } — steps are created after the test case. When a step has multiple expected results, list them in expectedResult separated by semicolons (e.g. \"Result A; Result B\") or as a bullet list (lines starting with -, *, or a number).",
+          "description": "Create a new test case. payload.projectId defaults to ALLURE_PROJECT_ID env when omitted. payload.precondition (string) is the preconditions field — always use this for preconditions/prerequisites text, NOT payload.description. payload.description (string) is the general test case description — always populate this with a meaningful summary of what the test case verifies. payload.customFields supports values like { customField: { id }, id, name }. IMPORTANT: steps are NOT created via this tool. The Allure API does not support creating steps through the test-case payload — payload.steps is silently ignored. After creating the test case, use create_test_case_step to add each step individually. Example workflow: create_test_case → for each step call create_test_case_step.",
           "inputSchema": {
             "type": "object",
             "properties": {
               "payload": {
-                "type": "object",
-                "additionalProperties": true
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
@@ -113,22 +203,97 @@
           }
         },
         {
-          "name": "update_test_case_step",
-          "description": "Update a test case step by ID. Supports updating body text and/or expectedResult. If expectedResult is provided, the expected result node is created automatically if it does not exist yet.",
+          "name": "create_test_case_step",
+          "description": "Add a new step to a test case — works for both NEW and EXISTING test cases. This is the ONLY correct tool for adding steps. NEVER use update_test_case to add steps — it replaces the entire scenario and loses expected results.\n\nUSE THIS TOOL whenever the user asks to add a step. No need to read the scenario first — just call with testCaseId and body.\n\nexpectedResult is optional. When provided, the expected result is set on the new step automatically via the Allure API (body and expectedResult are passed in a single request). Multiple expected result lines: separate with ; or newlines.\n\nNOTE: when expectedResult is provided, the API response includes a created wrapper step whose body is initially a placeholder (e.g. Expected Result) — this is normal Allure API behavior, not a bug. The wrapper step gets an ID and can be edited later via update_test_case_step. The actual expectedResult text is accessible through get_test_case_steps.\n\nparentId creates a child step under the given parent (for nested structures). sharedStepId references an existing shared step instead of providing body text.\n\nCONCURRENCY WARNING: NEVER issue 2+ concurrent calls (in the same message/batch) against create_test_case_step / update_test_case_step / set_test_case_step_expected_result for the SAME testCaseId — the API has a race condition when writing to the same scenario tree in parallel, and one of the leaf texts can be silently lost. Steps for the same test case must be written ONE AT A TIME, sequentially. Calls targeting DIFFERENT testCaseIds are safe to parallelize.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "testCaseId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Test case ID. Must be a number (integer), not a string."
+              },
+              "body": {
+                "description": "Step body text. Required unless sharedStepId is provided.",
+                "type": "string"
+              },
+              "expectedResult": {
+                "description": "Expected result text for the new step. Separate multiple lines with ; or newlines.",
+                "type": "string"
+              },
+              "parentId": {
+                "description": "Parent step ID for nested steps.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "sharedStepId": {
+                "description": "Shared step ID to reference an existing shared step instead of providing body text.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "testCaseId"
+            ],
+            "additionalProperties": {}
+          }
+        },
+        {
+          "name": "set_test_case_step_expected_result",
+          "description": "Set the expected result on a step that has NO expected result yet. Call this after create_test_case_step when an expected result is needed.\n\nWHEN TO USE:\n- User asks to add a step with expected result → use create_test_case_step with expectedResult instead (preferred)\n- User asks to set expected result on an existing step that does NOT have one yet (verify via get_test_case_steps — the step has no expectedResultId / no wrapper children)\n\nWHEN NOT TO USE — this tool APPENDS, it does not replace:\nIf the step ALREADY has expected-result text, calling this tool again creates a NEW sibling leaf under the same wrapper instead of replacing the old one — you end up with duplicated expected-result lines on the same step. There is no delete_test_case_step in this toolset, so an accidentally created duplicate cannot be removed automatically; it must be cleaned up manually in the Allure UI. To change existing expected-result text, use update_test_case_step(leafId, { body: newText }) directly on the existing leaf's step id instead (see update_test_case_step's WRAPPER STEPS note).\n\nbody: pass the step's current body text. Omitting it may cause 400 step.onlyonedetail on some API versions.\nMultiple expected result lines: separate with ; or newlines.",
           "inputSchema": {
             "type": "object",
             "properties": {
               "stepId": {
-                "type": "number",
-                "description": "Step ID to update. Must be a number (integer), not a string."
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Step ID. Use createdStepId from create_test_case_step response."
+              },
+              "testCaseId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Test case ID. Must be a number (integer), not a string."
               },
               "body": {
-                "type": "string",
-                "description": "New step body text."
+                "description": "Step body text (current or unchanged). Required by the API.",
+                "type": "string"
               },
               "expectedResult": {
                 "type": "string",
-                "description": "Expected result text for this step."
+                "description": "Expected result text. Separate multiple lines with ; or newlines."
+              }
+            },
+            "required": [
+              "stepId",
+              "testCaseId",
+              "expectedResult"
+            ]
+          }
+        },
+        {
+          "name": "update_test_case_step",
+          "description": "Update a test case step by ID. Supports updating body text and/or expectedResult.\n\nWORKFLOW — read before using:\n1. Change ONLY step text:   { stepId, body: \"new text\" }. Omit expectedResult — existing expected results stay untouched.\n2. Change ONLY expected result: { stepId, expectedResult: \"A; B\" }. Omit body — step text stays as-is.\n3. Change BOTH:             { stepId, body: \"new text\", expectedResult: \"A; B\" }.\n\nCRITICAL — expectedResult is a FULL REPLACE, not an append.\nWhen you pass expectedResult, the API deletes ALL existing expected-result lines for that step and replaces them with what you provide. You MUST include EVERY expected-result line you want to keep, separated by semicolons (e.g. \"Check value; Verify status\") or newlines.\nIf you have 3 expected-result lines and only pass 1, the other 2 are GONE.\n\nWRAPPER STEPS — silent no-op risk.\nSteps marked _wrapper=true in get_test_case_steps output (or listed in _meta.expectedResultWrapperIds) are Expected Result container nodes. Passing expectedResult to update_test_case_step targeting a wrapper ONLY works the first time (when the wrapper has no children yet — it creates the leaf). If the wrapper already HAS a child (check its `children` array via get_test_case_steps), calling update_test_case_step(wrapperId, { expectedResult }) again returns 200 and bumps lastModifiedDate but the text is NOT changed — this is a silent no-op, not an error. In that case, call update_test_case_step(leafId, { body: newText }) directly on the child step id instead, and OMIT expectedResult entirely.\n\nWHAT TO AVOID:\n- Calling this tool with expectedResult, then calling it again — the second call overwrites the first. Update body and expectedResult together in ONE call.\n- Mixing update_test_case_step with update_test_case (full scenario replace) on the same step — pick one approach and stick with it.\n- Passing a partial expectedResult string — it BECOMES the entire expected result. Old lines are wiped.\n- Issuing 2+ concurrent calls (same message/batch) against create_test_case_step / update_test_case_step / set_test_case_step_expected_result for the SAME testCaseId — the API race-conditions when writing to the same scenario tree in parallel and can silently drop one of the leaf texts. Write steps for one test case sequentially; only different testCaseIds are safe to parallelize.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "stepId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Step ID to update. Must be a number (integer), not a string."
+              },
+              "body": {
+                "description": "New step body text.",
+                "type": "string"
+              },
+              "expectedResult": {
+                "description": "FULL expected result text — REPLACES ALL existing lines. Use semicolons or newlines for multiple lines. When omitted, existing expected results are preserved.",
+                "type": "string"
               }
             },
             "required": [
@@ -138,17 +303,27 @@
         },
         {
           "name": "update_test_case",
-          "description": "Update an existing test case. payload.customFields supports values like { customField: { id }, id, name }.",
+          "description": "Update an existing test case metadata (name, description, precondition, tags, customFields, etc.). payload.customFields supports values like { customField: { id }, id, name }. DO NOT use this tool to add or edit steps — use create_test_case_step / update_test_case_step instead. NOTE: there is no delete_test_case_step tool in this toolset — steps cannot be deleted programmatically; removing a step requires the Allure UI.",
           "inputSchema": {
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Test case ID. Must be a number (integer), not a string."
               },
               "payload": {
-                "type": "object",
-                "additionalProperties": true
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
@@ -164,7 +339,10 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number"
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Test case ID. Must be a number (integer), not a string."
               }
             },
             "required": [
@@ -174,12 +352,14 @@
         },
         {
           "name": "add_test_case_tags_bulk",
-          "description": "Add one or multiple tags to one or multiple test cases using bulk API.",
+          "description": "Add one or multiple tags to one or multiple test cases using bulk API. testCaseId/testCaseIds/tag/tags may be passed as top-level arguments or nested inside a \"payload\" object — both forms work.",
           "inputSchema": {
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
@@ -187,36 +367,117 @@
                 "description": "Project name (alternative to projectId)."
               },
               "testCaseId": {
-                "type": "number",
-                "description": "Test case ID. Must be a number (integer), not a string."
+                "description": "Test case ID. Must be a number (integer), not a string.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               },
               "testCaseIds": {
-                "type": "array",
-                "items": {
-                  "type": "number"
-                }
+                "description": "Test case IDs.",
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "tag": {
-                "type": "object",
-                "additionalProperties": true
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "tags": {
-                "type": "array",
-                "items": {
-                  "type": "object"
-                }
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {},
+                          "additionalProperties": {}
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
-            }
+            },
+            "additionalProperties": {}
+          }
+        },
+        {
+          "name": "restore_test_cases_bulk",
+          "description": "Restore one or multiple deleted test cases from the project trash (Allure TestOps 26.3+). For a single test case, restore_test_case is equivalent.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Project ID. Must be a number (integer), not a string."
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "testCaseId": {
+                "description": "Test case ID. Must be a number (integer), not a string.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "testCaseIds": {
+                "description": "Test case IDs.",
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": {}
           }
         },
         {
           "name": "remove_test_case_tags_bulk",
-          "description": "Remove one or multiple tags from one or multiple test cases using bulk API.",
+          "description": "Remove one or multiple tags from one or multiple test cases using bulk API. testCaseId/testCaseIds/tagId/tagIds may be passed as top-level arguments or nested inside a \"payload\" object — both forms work.",
           "inputSchema": {
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
@@ -224,36 +485,61 @@
                 "description": "Project name (alternative to projectId)."
               },
               "testCaseId": {
-                "type": "number",
-                "description": "Test case ID. Must be a number (integer), not a string."
+                "description": "Test case ID.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               },
               "testCaseIds": {
-                "type": "array",
-                "items": {
-                  "type": "number"
-                }
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "tagId": {
-                "type": "number",
-                "description": "Tag ID. Must be a number (integer), not a string."
+                "description": "Tag ID.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               },
               "tagIds": {
-                "type": "array",
-                "items": {
-                  "type": "number"
-                }
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
-            }
+            },
+            "additionalProperties": {}
           }
         },
         {
           "name": "add_test_case_external_links_bulk",
-          "description": "Add one or multiple external links to one or multiple test cases using bulk API.",
+          "description": "Add one or multiple external links to one or multiple test cases using bulk API. testCaseId/testCaseIds/link/links may be passed as top-level arguments or nested inside a \"payload\" object — both forms work.",
           "inputSchema": {
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
@@ -261,26 +547,61 @@
                 "description": "Project name (alternative to projectId)."
               },
               "testCaseId": {
-                "type": "number",
-                "description": "Test case ID. Must be a number (integer), not a string."
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               },
               "testCaseIds": {
-                "type": "array",
-                "items": {
-                  "type": "number"
-                }
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "link": {
-                "type": "object",
-                "additionalProperties": true
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "links": {
-                "type": "array",
-                "items": {
-                  "type": "object"
-                }
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {},
+                          "additionalProperties": {}
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
-            }
+            },
+            "additionalProperties": {}
           }
         },
         {
@@ -289,12 +610,15 @@
           "inputSchema": {
             "type": "object",
             "properties": {
-              "testCaseId": {
-                "type": "number"
+              "id": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Test case ID. Must be a number (integer), not a string."
               }
             },
             "required": [
-              "testCaseId"
+              "id"
             ]
           }
         },
@@ -305,22 +629,35 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Test case ID. Must be a number (integer), not a string."
               },
               "page": {
-                "type": "number",
-                "description": "Page number, 0-based. Must be a number (integer), not a string."
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "size": {
-                "type": "number",
-                "description": "Page size. Must be a number (integer), not a string."
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               },
               "sort": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
@@ -335,7 +672,9 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Test case ID. Must be a number (integer), not a string."
               }
             },
@@ -346,12 +685,14 @@
         },
         {
           "name": "get_test_case_steps",
-          "description": "Get manual scenario steps for a test case. Returns a normalized scenario with root step and a flat map of all steps (scenarioSteps), where each step contains body, expectedResult, children IDs, and optional sharedStepId.",
+          "description": "Get manual scenario steps for a test case. Returns a normalized scenario with root step and a flat map of all steps (scenarioSteps). Each step contains body, expectedResult, children IDs, and optional sharedStepId. IMPORTANT: the response includes a _meta section with expectedResultWrapperIds — these are Expected Result container nodes. See _meta.note for the exact create-vs-edit workflow (whether to target the wrapper or its existing leaf child).\n\nEVENTUAL CONSISTENCY: right after create_test_case_step / update_test_case_step / set_test_case_step_expected_result, an immediate get_test_case_steps call MAY still return a stale snapshot missing the just-written leaf, due to replication/cache lag on the Allure API side — this is NOT necessarily an error. Don't treat a missing/unchanged leaf as proof the write failed; re-check with a fresh get_test_case_steps call a turn or two later (e.g. after another unrelated call) before concluding the write didn't take effect.",
           "inputSchema": {
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Test case ID. Must be a number (integer), not a string."
               }
             },
@@ -366,12 +707,15 @@
           "inputSchema": {
             "type": "object",
             "properties": {
-              "testCaseId": {
-                "type": "number"
+              "id": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Test case ID. Must be a number (integer), not a string."
               }
             },
             "required": [
-              "testCaseId"
+              "id"
             ]
           }
         },
@@ -382,14 +726,32 @@
             "type": "object",
             "properties": {
               "testCaseId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Test case ID. Must be a number (integer), not a string."
               },
               "payload": {
-                "type": "array",
-                "items": {
-                  "type": "object"
-                }
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {},
+                          "additionalProperties": {}
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
@@ -404,12 +766,15 @@
           "inputSchema": {
             "type": "object",
             "properties": {
-              "testCaseId": {
-                "type": "number"
+              "id": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Test case ID. Must be a number (integer), not a string."
               }
             },
             "required": [
-              "testCaseId"
+              "id"
             ]
           }
         },
@@ -420,14 +785,32 @@
             "type": "object",
             "properties": {
               "testCaseId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Test case ID. Must be a number (integer), not a string."
               },
               "payload": {
-                "type": "array",
-                "items": {
-                  "type": "object"
-                }
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {},
+                          "additionalProperties": {}
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
@@ -443,46 +826,15 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number"
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Test case ID. Must be a number (integer), not a string."
               }
             },
             "required": [
               "id"
             ]
-          }
-        },
-        {
-          "name": "list_project_custom_fields",
-          "description": "List custom fields configured for a project.",
-          "inputSchema": {
-            "type": "object",
-            "properties": {
-              "projectId": {
-                "type": "number",
-                "description": "Project ID. Must be a number (integer), not a string."
-              },
-              "projectName": {
-                "type": "string",
-                "description": "Project name (alternative to projectId)."
-              },
-              "query": {
-                "type": "string"
-              },
-              "page": {
-                "type": "number",
-                "description": "Page number, 0-based. Must be a number (integer), not a string."
-              },
-              "size": {
-                "type": "number",
-                "description": "Page size. Must be a number (integer), not a string."
-              },
-              "sort": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
-            }
           }
         },
         {
@@ -492,7 +844,9 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
@@ -500,7 +854,9 @@
                 "description": "Project name (alternative to projectId)."
               },
               "customFieldId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Custom field ID. Must be a number (integer), not a string."
               },
               "query": {
@@ -513,23 +869,35 @@
                 "type": "string"
               },
               "page": {
-                "type": "number",
-                "description": "Page number, 0-based. Must be a number (integer), not a string."
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "size": {
-                "type": "number",
-                "description": "Page size. Must be a number (integer), not a string."
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               },
               "sort": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
               "customFieldId"
-            ]
+            ],
+            "additionalProperties": {}
           }
         },
         {
@@ -538,12 +906,16 @@
           "inputSchema": {
             "type": "object",
             "properties": {
-              "testCaseId": {
-                "type": "number",
+              "id": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Test case ID. Must be a number (integer), not a string."
               },
               "projectId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
@@ -552,22 +924,26 @@
               }
             },
             "required": [
-              "testCaseId"
+              "id"
             ]
           }
         },
         {
           "name": "set_test_case_custom_fields",
-          "description": "Add custom field values for a test case via bulk API. Supports grouped values [{ customField: { id }, values: [{ id|name }] }] and flat values [{ id|name, customField: { id } }].",
+          "description": "Add custom field values for a test case via bulk API. Supports grouped values [{ customField: { id }, values: [{ id|name }] }] and flat values [{ id|name, customField: { id } }].\n\nIMPORTANT — customField.id MUST be a NUMBER, never a name. Passing customField: { name: \"Feature\" } fails client-side with '\"payload[0].customField.id\" must be a number' — there is no name-to-id resolution for the field itself (values MAY accept name, but resolving to id first is safer and not guaranteed to work on every Allure version).\n\nThere is no dedicated \"list custom fields\" tool. To find a field's numeric id: call get_test_case_custom_fields on ANY already-populated test case in the same project — its response shows each customField's id alongside its name. System fields commonly have NEGATIVE ids (e.g. Feature = -2, Suite = -5) — these vary per Allure instance, do not hardcode them.\n\nTo find a VALUE's numeric id: call list_custom_field_values({ customFieldId, query: \"<value text>\" }).\n\nCorrect workflow: 1) get_test_case_custom_fields(anyPopulatedTestCaseId) → note customField ids. 2) list_custom_field_values({customFieldId, query}) → note value id. 3) set_test_case_custom_fields({testCaseId, payload: [{ customField: { id: -2 }, values: [{ id: 3170 }] }]}) — all numeric ids, resolved ahead of time.",
           "inputSchema": {
             "type": "object",
             "properties": {
               "testCaseId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Test case ID. Must be a number (integer), not a string."
               },
               "projectId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
@@ -575,10 +951,26 @@
                 "description": "Project name (alternative to projectId)."
               },
               "payload": {
-                "type": "array",
-                "items": {
-                  "type": "object"
-                }
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {},
+                          "additionalProperties": {}
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
@@ -593,13 +985,15 @@
           "inputSchema": {
             "type": "object",
             "properties": {
-              "testCaseId": {
-                "type": "number",
+              "id": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Test case ID. Must be a number (integer), not a string."
               }
             },
             "required": [
-              "testCaseId"
+              "id"
             ]
           }
         },
@@ -610,7 +1004,9 @@
             "type": "object",
             "properties": {
               "testCaseId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Test case ID. Must be a number (integer), not a string."
               },
               "filename": {
@@ -641,7 +1037,9 @@
             "type": "object",
             "properties": {
               "attachmentId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Attachment ID. Must be a number (integer), not a string."
               }
             },
@@ -657,7 +1055,9 @@
             "type": "object",
             "properties": {
               "attachmentId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Attachment ID. Must be a number (integer), not a string."
               }
             },
@@ -672,51 +1072,15 @@
       "name": "Launches",
       "tools": [
         {
-          "name": "list_launches",
-          "description": "List launches for a project.",
-          "inputSchema": {
-            "type": "object",
-            "properties": {
-              "projectId": {
-                "type": "number",
-                "description": "Project ID. Must be a number (integer), not a string."
-              },
-              "projectName": {
-                "type": "string",
-                "description": "Project name (alternative to projectId)."
-              },
-              "search": {
-                "type": "string"
-              },
-              "filterId": {
-                "type": "number",
-                "description": "Saved filter ID. Must be a number (integer), not a string."
-              },
-              "page": {
-                "type": "number",
-                "description": "Page number, 0-based. Must be a number (integer), not a string."
-              },
-              "size": {
-                "type": "number",
-                "description": "Page size. Must be a number (integer), not a string."
-              },
-              "sort": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        {
           "name": "search_launches",
           "description": "Search launches by AQL query.",
           "inputSchema": {
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
@@ -725,21 +1089,32 @@
               },
               "rql": {
                 "type": "string",
-                "description": "AQL (Allure Query Language) filter expression. Operators: = != ~= (contains) > < >= <= in [...] and or not. IMPORTANT: 'not in' is written as 'not field in [...]', NOT 'field not in [...]'. Launch fields: id, name, tag, issue, job, ev[\"VAR\"], evv, closed (boolean), createdDate, createdBy, lastModifiedDate, lastModifiedBy. Dates use 13-digit Unix ms timestamps. Examples: name ~= \"nightly\" | closed = false | closed = true | tag in [\"release\", \"pre-release\"] | job = \"jenkins_master\" | ev[\"OS\"] = \"Linux\" | not tag in [\"devbuild\"] | name ~= \"regression\" and closed = true"
+                "description": "AQL (Allure Query Language) filter expression. This tool has no 'query' field — the filter goes in 'rql'. For plain keyword/name search, use find_test_cases instead. Operators: = != ~= (contains) > < >= <= in [...] and or not, plus '= null' / 'is null' for empty fields. IMPORTANT: 'not in' is written as 'not field in [...]', NOT 'field not in [...]'. IMPORTANT: 'and' has higher precedence than 'or' — parenthesize explicitly when mixing them, e.g. '(a = \"x\" or a = \"y\") and b = true'. Dates use 13-digit Unix ms timestamps. Full syntax: https://docs.qameta.io/reference/aql/ — glossary: docs/usages/aql-reference.md Launch fields: id, name, tag, issue, job, ev[\"VAR\"], evv, closed (boolean), createdDate, createdBy, lastModifiedDate, lastModifiedBy. Examples: name ~= \"nightly\" | closed = false | closed = true | tag in [\"release\", \"pre-release\"] | job = \"jenkins_master\" | ev[\"OS\"] = \"Linux\" | not tag in [\"devbuild\"] | name ~= \"regression\" and closed = true"
               },
               "page": {
-                "type": "number",
-                "description": "Page number, 0-based. Must be a number (integer), not a string."
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "size": {
-                "type": "number",
-                "description": "Page size. Must be a number (integer), not a string."
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               },
               "sort": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
@@ -754,7 +1129,10 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number"
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Launch ID. Must be a number (integer), not a string."
               }
             },
             "required": [
@@ -764,13 +1142,21 @@
         },
         {
           "name": "create_launch",
-          "description": "Create a new launch. payload.projectId defaults to ALLURE_PROJECT_ID env when omitted.",
+          "description": "Create a new launch. payload fields: name (required), autoclose, external, tags, issues, links, releases [{ id }] to bind the launch to releases, gitContext { repository, commit, contextType, branch, pullRequest }. payload.projectId defaults to ALLURE_PROJECT_ID env when omitted.",
           "inputSchema": {
             "type": "object",
             "properties": {
               "payload": {
-                "type": "object",
-                "additionalProperties": true
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
@@ -785,12 +1171,22 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Launch ID. Must be a number (integer), not a string."
               },
               "payload": {
-                "type": "object",
-                "additionalProperties": true
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
@@ -806,7 +1202,10 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number"
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Launch ID. Must be a number (integer), not a string."
               }
             },
             "required": [
@@ -821,7 +1220,10 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number"
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Launch ID. Must be a number (integer), not a string."
               }
             },
             "required": [
@@ -836,7 +1238,10 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number"
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Launch ID. Must be a number (integer), not a string."
               }
             },
             "required": [
@@ -851,7 +1256,10 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number"
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Launch ID. Must be a number (integer), not a string."
               }
             },
             "required": [
@@ -866,7 +1274,10 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number"
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Launch ID. Must be a number (integer), not a string."
               }
             },
             "required": [
@@ -876,17 +1287,66 @@
         },
         {
           "name": "add_test_cases_to_launch",
-          "description": "Add test cases to a launch.",
+          "description": "Add test cases to a launch. payload.selection.leafsInclude must be an array of test case IDs, e.g. { selection: { projectId, leafsInclude: [123, 456], inverted: false } }. KNOWN ISSUE: some Allure TestOps Server versions return a 500 error on this endpoint even with a well-formed payload. If this happens, use create_test_result with testCaseId + launchId as a workaround to attach results to the launch directly.",
           "inputSchema": {
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Launch ID. Must be a number (integer), not a string."
               },
               "payload": {
                 "type": "object",
-                "additionalProperties": true
+                "properties": {
+                  "selection": {
+                    "type": "object",
+                    "properties": {
+                      "projectId": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991,
+                        "description": "Project ID. Must be a number (integer), not a string."
+                      },
+                      "leafsInclude": {
+                        "anyOf": [
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "leafsExclude": {
+                        "anyOf": [
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "inverted": {
+                        "type": "boolean"
+                      }
+                    },
+                    "additionalProperties": {}
+                  }
+                },
+                "additionalProperties": {}
               }
             },
             "required": [
@@ -897,17 +1357,27 @@
         },
         {
           "name": "add_test_plan_to_launch",
-          "description": "Add a test plan to a launch.",
+          "description": "Add a test plan to a launch. payload fields: testPlanId, envVarValueSets, releaseId to attach the resulting results to a release.",
           "inputSchema": {
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Launch ID. Must be a number (integer), not a string."
               },
               "payload": {
-                "type": "object",
-                "additionalProperties": true
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
@@ -923,48 +1393,66 @@
       "tools": [
         {
           "name": "list_test_results",
-          "description": "List test results for a launch.",
+          "description": "List test results for a launch. Supports filtering and pagination — prefer this over the resource when you need status filtering, a specific page, or a bounded result set.",
           "inputSchema": {
             "type": "object",
             "properties": {
-              "launchId": {
-                "type": "number"
+              "id": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Launch ID. Must be a number (integer), not a string."
               },
               "search": {
                 "type": "string"
               },
               "filterId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Saved filter ID. Must be a number (integer), not a string."
               },
               "page": {
-                "type": "number",
-                "description": "Page number, 0-based. Must be a number (integer), not a string."
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "size": {
-                "type": "number",
-                "description": "Page size. Must be a number (integer), not a string."
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               },
               "sort": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
-              "launchId"
+              "id"
             ]
           }
         },
         {
           "name": "search_test_results",
-          "description": "Search test results by AQL query.",
+          "description": "Search test results by AQL query. The 'id' field in returned results is an integer — pass it as a number (not a string) to get_test_result or get_test_result_retries.",
           "inputSchema": {
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
@@ -973,21 +1461,32 @@
               },
               "rql": {
                 "type": "string",
-                "description": "AQL (Allure Query Language) filter expression. Operators: = != ~= (contains) > < >= <= in [...] and or not. IMPORTANT: 'not in' is written as 'not field in [...]', NOT 'field not in [...]'. Test result fields: id, name, fullName, testCase, status, category, tag, issue, role[\"R\"], member, testedBy, cf[\"F\"], cfv, ev[\"VAR\"], evv, layer, muted (boolean), hidden (boolean), launch, createdDate, createdBy, lastModifiedDate, lastModifiedBy. Dates use 13-digit Unix ms timestamps. Examples: status = \"failed\" | status in [\"failed\", \"broken\"] | name ~= \"login\" | muted = false | hidden = false | launch = \"release-1.0\" | ev[\"OS\"] = \"Linux\" | not tag in [\"nightly\"] | status = \"failed\" and muted = false"
+                "description": "AQL (Allure Query Language) filter expression. This tool has no 'query' field — the filter goes in 'rql'. For plain keyword/name search, use find_test_cases instead. Operators: = != ~= (contains) > < >= <= in [...] and or not, plus '= null' / 'is null' for empty fields. IMPORTANT: 'not in' is written as 'not field in [...]', NOT 'field not in [...]'. IMPORTANT: 'and' has higher precedence than 'or' — parenthesize explicitly when mixing them, e.g. '(a = \"x\" or a = \"y\") and b = true'. Dates use 13-digit Unix ms timestamps. Full syntax: https://docs.qameta.io/reference/aql/ — glossary: docs/usages/aql-reference.md Test result fields: id, name, fullName, testCase, status, category, tag, issue, role[\"R\"], member, testedBy, cf[\"F\"], cfv, ev[\"VAR\"], evv, layer, muted (boolean), hidden (boolean), launch, createdDate, createdBy, lastModifiedDate, lastModifiedBy. Examples: status = \"failed\" | status in [\"failed\", \"broken\"] | name ~= \"login\" | muted = false | hidden = false | launch = \"release-1.0\" | ev[\"OS\"] = \"Linux\" | not tag in [\"nightly\"] | status = \"failed\" and muted = false"
               },
               "page": {
-                "type": "number",
-                "description": "Page number, 0-based. Must be a number (integer), not a string."
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "size": {
-                "type": "number",
-                "description": "Page size. Must be a number (integer), not a string."
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               },
               "sort": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
@@ -1002,7 +1501,10 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number"
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Test result ID. Must be an integer, not a string."
               }
             },
             "required": [
@@ -1017,8 +1519,16 @@
             "type": "object",
             "properties": {
               "payload": {
-                "type": "object",
-                "additionalProperties": true
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
@@ -1028,17 +1538,27 @@
         },
         {
           "name": "update_test_result",
-          "description": "Update an existing test result.",
+          "description": "Update an existing test result. payload only needs the fields you want to change (e.g. { status: \"failed\" }) — the current test result is fetched and merged automatically before saving. KNOWN ISSUE: on some Allure TestOps Server versions, changing \"status\" this way does not persist once the test result has left certain workflow states — call get_test_result afterward to confirm.",
           "inputSchema": {
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Test result ID. Must be a number (integer), not a string."
               },
               "payload": {
-                "type": "object",
-                "additionalProperties": true
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
@@ -1054,22 +1574,35 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Test result ID. Must be a number (integer), not a string."
               },
               "page": {
-                "type": "number",
-                "description": "Page number, 0-based. Must be a number (integer), not a string."
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "size": {
-                "type": "number",
-                "description": "Page size. Must be a number (integer), not a string."
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               },
               "sort": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
@@ -1084,12 +1617,22 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Test result ID. Must be a number (integer), not a string."
               },
               "payload": {
-                "type": "object",
-                "additionalProperties": true
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
@@ -1100,17 +1643,27 @@
         },
         {
           "name": "resolve_test_result",
-          "description": "Resolve a test result. payload must include status.",
+          "description": "Resolve a test result. payload must include status. KNOWN ISSUE: on some Allure TestOps Server versions, status changes via this endpoint (and via update_test_result) do not persist once a test result has left certain workflow states — call get_test_result afterward to confirm the status actually changed.",
           "inputSchema": {
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Test result ID. Must be a number (integer), not a string."
               },
               "payload": {
-                "type": "object",
-                "additionalProperties": true
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
@@ -1126,16 +1679,22 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Test result ID. Must be a number (integer), not a string."
               },
               "page": {
-                "type": "number",
-                "description": "Page number, 0-based."
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "size": {
-                "type": "number",
-                "description": "Page size."
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               }
             },
             "required": [
@@ -1149,21 +1708,27 @@
           "inputSchema": {
             "type": "object",
             "properties": {
-              "testResultId": {
-                "type": "number",
+              "id": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Test result ID. Must be a number (integer), not a string."
               },
               "page": {
-                "type": "number",
-                "description": "Page number, 0-based."
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "size": {
-                "type": "number",
-                "description": "Page size."
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               }
             },
             "required": [
-              "testResultId"
+              "id"
             ]
           }
         },
@@ -1174,8 +1739,10 @@
             "type": "object",
             "properties": {
               "attachmentId": {
-                "type": "number",
-                "description": "Attachment ID from list_test_result_attachments. Must be a number (integer), not a string."
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Attachment ID. Must be a number (integer), not a string."
               }
             },
             "required": [
@@ -1189,47 +1756,16 @@
       "name": "Test Plans",
       "tools": [
         {
-          "name": "list_test_plans",
-          "description": "List test plans for a project.",
-          "inputSchema": {
-            "type": "object",
-            "properties": {
-              "projectId": {
-                "type": "number",
-                "description": "Project ID. Must be a number (integer), not a string."
-              },
-              "projectName": {
-                "type": "string",
-                "description": "Project name (alternative to projectId)."
-              },
-              "search": {
-                "type": "string"
-              },
-              "page": {
-                "type": "number",
-                "description": "Page number, 0-based. Must be a number (integer), not a string."
-              },
-              "size": {
-                "type": "number",
-                "description": "Page size. Must be a number (integer), not a string."
-              },
-              "sort": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        {
           "name": "get_test_plan",
           "description": "Get a test plan by ID.",
           "inputSchema": {
             "type": "object",
             "properties": {
               "id": {
-                "type": "number"
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Test plan ID. Must be a number (integer), not a string."
               }
             },
             "required": [
@@ -1244,8 +1780,16 @@
             "type": "object",
             "properties": {
               "payload": {
-                "type": "object",
-                "additionalProperties": true
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
@@ -1260,12 +1804,22 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Test plan ID. Must be a number (integer), not a string."
               },
               "payload": {
-                "type": "object",
-                "additionalProperties": true
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
@@ -1281,7 +1835,10 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number"
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Test plan ID. Must be a number (integer), not a string."
               }
             },
             "required": [
@@ -1291,22 +1848,664 @@
         },
         {
           "name": "run_test_plan",
-          "description": "Run a test plan by ID.",
+          "description": "Run a test plan by ID. payload fields: launchName (required by the API), tags, issues, links, envVarValueSets, releaseId to bind the produced launch to a release.",
           "inputSchema": {
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Test plan ID. Must be a number (integer), not a string."
               },
               "payload": {
-                "type": "object",
-                "additionalProperties": true
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
               "id"
             ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Releases",
+      "tools": [
+        {
+          "name": "list_releases",
+          "description": "List releases of a project. A release groups launches and test cases around a delivery scope and carries a workflow status (Allure TestOps 26.3+).",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Project ID. Must be a number (integer), not a string."
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "query": {
+                "description": "Free-text filter over release names.",
+                "type": "string"
+              },
+              "page": {
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "size": {
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "sort": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "name": "get_release",
+          "description": "Get a release by ID, including its status, workflow and tags.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Release ID. Must be a number (integer), not a string."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "create_release",
+          "description": "Create a release. payload fields: name (required), dueDate (13-digit Unix ms timestamp), previousReleaseId, tags [{ name }]. projectId is added to the payload from projectId/projectName or ALLURE_PROJECT_ID.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Project ID. Must be a number (integer), not a string."
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "payload": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "payload"
+            ]
+          }
+        },
+        {
+          "name": "update_release",
+          "description": "Update a release. payload fields: name, dueDate, previousReleaseId, statusId, workflowId. Use list_release_statuses / list_release_workflows to resolve statusId and workflowId.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Release ID. Must be a number (integer), not a string."
+              },
+              "payload": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "payload"
+            ]
+          }
+        },
+        {
+          "name": "delete_release",
+          "description": "Delete a release by ID.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Release ID. Must be a number (integer), not a string."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "get_release_statistic",
+          "description": "Get aggregated test status counts for a release.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Release ID. Must be a number (integer), not a string."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "list_release_defects",
+          "description": "List defects detected within a release.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Release ID. Must be a number (integer), not a string."
+              },
+              "page": {
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "size": {
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "sort": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "list_release_muted_results",
+          "description": "List muted test results within a release.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Release ID. Must be a number (integer), not a string."
+              },
+              "page": {
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "size": {
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "sort": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "get_release_test_case_tree",
+          "description": "Browse the test case tree of a release: which test cases are in scope and their latest status.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Release ID. Must be a number (integer), not a string."
+              },
+              "treeId": {
+                "description": "Tree layout ID.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "path": {
+                "description": "Group IDs of the branch to expand.",
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "query": {
+                "description": "Free-text filter over leaf names.",
+                "type": "string"
+              },
+              "page": {
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "size": {
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "sort": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "name": "list_release_tags",
+          "description": "List tags attached to a release.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "releaseId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Release ID. Must be a number (integer), not a string."
+              }
+            },
+            "required": [
+              "releaseId"
+            ]
+          }
+        },
+        {
+          "name": "set_release_tags",
+          "description": "Replace the tag set of a release. Accepts tag names as strings or { id, name } objects. This REPLACES all existing tags — read list_release_tags first and send the merged list to append.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "releaseId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Release ID. Must be a number (integer), not a string."
+              },
+              "tags": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {},
+                          "additionalProperties": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Tags to set, e.g. [\"rc1\", \"hotfix\"] or [{ \"name\": \"rc1\" }]."
+              }
+            },
+            "required": [
+              "releaseId",
+              "tags"
+            ]
+          }
+        },
+        {
+          "name": "add_launch_to_release",
+          "description": "Attach a launch to a release so its results count towards the release statistics. Returns a task info object — recalculation runs asynchronously.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "releaseId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Release ID. Must be a number (integer), not a string."
+              },
+              "launchId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Launch ID. Must be a number (integer), not a string."
+              }
+            },
+            "required": [
+              "releaseId",
+              "launchId"
+            ]
+          }
+        },
+        {
+          "name": "remove_launch_from_release",
+          "description": "Detach a launch from a release.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "releaseId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Release ID. Must be a number (integer), not a string."
+              },
+              "launchId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Launch ID. Must be a number (integer), not a string."
+              }
+            },
+            "required": [
+              "releaseId",
+              "launchId"
+            ]
+          }
+        },
+        {
+          "name": "get_release_test_case_selection",
+          "description": "Get the rule that defines which test cases belong to a release (AQL and/or tree selection).",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "releaseId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Release ID. Must be a number (integer), not a string."
+              }
+            },
+            "required": [
+              "releaseId"
+            ]
+          }
+        },
+        {
+          "name": "update_release_test_case_selection",
+          "description": "Change the test case scope of a release. payload fields: testCaseAql (AQL over test cases) and/or treeSelection { leafsInclude, leafsExclude, groupsInclude, groupsExclude, path, inverted }. Applied asynchronously — the response is a task info object.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "releaseId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Release ID. Must be a number (integer), not a string."
+              },
+              "payload": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "releaseId",
+              "payload"
+            ]
+          }
+        },
+        {
+          "name": "create_release_from_test_cases",
+          "description": "Create a release and populate it from a test case selection in one call. release: { name, dueDate, previousReleaseId, tags }. selection: { leafsInclude, leafsExclude, groupsInclude, groupsExclude, treeId, filterId, search, path, inverted } — projectId and inverted=false are filled in automatically.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Project ID. Must be a number (integer), not a string."
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "release": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "selection": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "release"
+            ]
+          }
+        },
+        {
+          "name": "list_release_statuses",
+          "description": "List release statuses configured for a project. Use the returned ids as statusId in update_release.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Project ID. Must be a number (integer), not a string."
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "activeOnly": {
+                "description": "Return only active statuses.",
+                "type": "boolean"
+              },
+              "query": {
+                "description": "Free-text filter over status codes.",
+                "type": "string"
+              },
+              "page": {
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "size": {
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "sort": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "name": "list_release_workflows",
+          "description": "List release workflows configured for a project. Use the returned ids as workflowId in update_release.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Project ID. Must be a number (integer), not a string."
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "query": {
+                "description": "Free-text filter over workflow names.",
+                "type": "string"
+              },
+              "page": {
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "size": {
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "sort": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            }
           }
         }
       ]
@@ -1321,7 +2520,9 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
@@ -1329,28 +2530,34 @@
                 "description": "Project name (alternative to projectId)."
               },
               "tcRql": {
-                "type": "string",
-                "description": "RQL filter for test cases."
+                "description": "RQL filter for test cases.",
+                "type": "string"
               },
               "launchRql": {
-                "type": "string",
-                "description": "RQL filter for launches."
+                "description": "RQL filter for launches.",
+                "type": "string"
               },
               "from": {
-                "type": "number",
-                "description": "Start of time range (Unix timestamp ms). Must be a number, not a string."
+                "description": "Start of time range (Unix timestamp ms). Must be a number, not a string.",
+                "type": "number"
               },
               "to": {
-                "type": "number",
-                "description": "End of time range (Unix timestamp ms). Must be a number, not a string."
+                "description": "End of time range (Unix timestamp ms). Must be a number, not a string.",
+                "type": "number"
               },
               "offset": {
-                "type": "number",
-                "description": "Timezone offset in minutes. Must be a number, not a string."
+                "description": "Timezone offset in minutes. Must be a number, not a string.",
+                "type": "number"
               },
               "interval": {
+                "description": "Time interval for grouping. One of: \"hour\", \"day\", \"week\", \"month\".",
                 "type": "string",
-                "description": "Time interval for grouping. One of: \"hour\", \"day\", \"week\", \"month\"."
+                "enum": [
+                  "hour",
+                  "day",
+                  "week",
+                  "month"
+                ]
               }
             }
           }
@@ -1362,7 +2569,9 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
@@ -1370,8 +2579,8 @@
                 "description": "Project name (alternative to projectId)."
               },
               "tcRql": {
-                "type": "string",
-                "description": "RQL filter for test cases."
+                "description": "RQL filter for test cases.",
+                "type": "string"
               }
             }
           }
@@ -1383,7 +2592,9 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
@@ -1391,8 +2602,8 @@
                 "description": "Project name (alternative to projectId)."
               },
               "tcRql": {
-                "type": "string",
-                "description": "RQL filter for test cases."
+                "description": "RQL filter for test cases.",
+                "type": "string"
               }
             }
           }
@@ -1404,7 +2615,9 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
@@ -1412,24 +2625,24 @@
                 "description": "Project name (alternative to projectId)."
               },
               "tcRql": {
-                "type": "string",
-                "description": "RQL filter for test cases."
+                "description": "RQL filter for test cases.",
+                "type": "string"
               },
               "launchRql": {
-                "type": "string",
-                "description": "RQL filter for launches."
+                "description": "RQL filter for launches.",
+                "type": "string"
               },
               "from": {
-                "type": "number",
-                "description": "Start of time range (Unix timestamp ms). Must be a number, not a string."
+                "description": "Start of time range (Unix timestamp ms). Must be a number, not a string.",
+                "type": "number"
               },
               "to": {
-                "type": "number",
-                "description": "End of time range (Unix timestamp ms). Must be a number, not a string."
+                "description": "End of time range (Unix timestamp ms). Must be a number, not a string.",
+                "type": "number"
               },
               "buckets": {
-                "type": "number",
-                "description": "Number of histogram buckets (default: 10). Must be a number, not a string."
+                "description": "Number of histogram buckets (default: 10). Must be a number, not a string.",
+                "type": "number"
               }
             }
           }
@@ -1441,7 +2654,9 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
@@ -1449,16 +2664,22 @@
                 "description": "Project name (alternative to projectId)."
               },
               "from": {
-                "type": "number",
-                "description": "Start of time range (Unix timestamp ms). Must be a number, not a string."
+                "description": "Start of time range (Unix timestamp ms). Must be a number, not a string.",
+                "type": "number"
               },
               "to": {
-                "type": "number",
-                "description": "End of time range (Unix timestamp ms). Must be a number, not a string."
+                "description": "End of time range (Unix timestamp ms). Must be a number, not a string.",
+                "type": "number"
               },
               "interval": {
+                "description": "Time interval for grouping. One of: \"hour\", \"day\", \"week\", \"month\".",
                 "type": "string",
-                "description": "Time interval for grouping. One of: \"hour\", \"day\", \"week\", \"month\"."
+                "enum": [
+                  "hour",
+                  "day",
+                  "week",
+                  "month"
+                ]
               }
             }
           }
@@ -1470,7 +2691,9 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
@@ -1478,28 +2701,34 @@
                 "description": "Project name (alternative to projectId)."
               },
               "tcRql": {
-                "type": "string",
-                "description": "RQL filter for test cases."
+                "description": "RQL filter for test cases.",
+                "type": "string"
               },
               "launchRql": {
-                "type": "string",
-                "description": "RQL filter for launches."
+                "description": "RQL filter for launches.",
+                "type": "string"
               },
               "from": {
-                "type": "number",
-                "description": "Start of time range (Unix timestamp ms). Must be a number, not a string."
+                "description": "Start of time range (Unix timestamp ms). Must be a number, not a string.",
+                "type": "number"
               },
               "to": {
-                "type": "number",
-                "description": "End of time range (Unix timestamp ms). Must be a number, not a string."
+                "description": "End of time range (Unix timestamp ms). Must be a number, not a string.",
+                "type": "number"
               },
               "offset": {
-                "type": "number",
-                "description": "Timezone offset in minutes. Must be a number, not a string."
+                "description": "Timezone offset in minutes. Must be a number, not a string.",
+                "type": "number"
               },
               "interval": {
+                "description": "Time interval for grouping. One of: \"hour\", \"day\", \"week\", \"month\".",
                 "type": "string",
-                "description": "Time interval for grouping. One of: \"hour\", \"day\", \"week\", \"month\"."
+                "enum": [
+                  "hour",
+                  "day",
+                  "week",
+                  "month"
+                ]
               }
             }
           }
@@ -1511,7 +2740,9 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
@@ -1528,7 +2759,9 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
@@ -1536,28 +2769,34 @@
                 "description": "Project name (alternative to projectId)."
               },
               "tcRql": {
-                "type": "string",
-                "description": "RQL filter for test cases."
+                "description": "RQL filter for test cases.",
+                "type": "string"
               },
               "launchRql": {
-                "type": "string",
-                "description": "RQL filter for launches."
+                "description": "RQL filter for launches.",
+                "type": "string"
               },
               "from": {
-                "type": "number",
-                "description": "Start of time range (Unix timestamp ms). Must be a number, not a string."
+                "description": "Start of time range (Unix timestamp ms). Must be a number, not a string.",
+                "type": "number"
               },
               "to": {
-                "type": "number",
-                "description": "End of time range (Unix timestamp ms). Must be a number, not a string."
+                "description": "End of time range (Unix timestamp ms). Must be a number, not a string.",
+                "type": "number"
               },
               "offset": {
-                "type": "number",
-                "description": "Timezone offset in minutes. Must be a number, not a string."
+                "description": "Timezone offset in minutes. Must be a number, not a string.",
+                "type": "number"
               },
               "interval": {
+                "description": "Time interval for grouping. One of: \"hour\", \"day\", \"week\", \"month\".",
                 "type": "string",
-                "description": "Time interval for grouping. One of: \"hour\", \"day\", \"week\", \"month\"."
+                "enum": [
+                  "hour",
+                  "day",
+                  "week",
+                  "month"
+                ]
               }
             }
           }
@@ -1568,38 +2807,15 @@
       "name": "Dashboards",
       "tools": [
         {
-          "name": "list_dashboards",
-          "description": "List all dashboards for a project.",
-          "inputSchema": {
-            "type": "object",
-            "properties": {
-              "projectId": {
-                "type": "number",
-                "description": "Project ID. Must be a number (integer), not a string."
-              },
-              "projectName": {
-                "type": "string",
-                "description": "Project name (alternative to projectId)."
-              },
-              "page": {
-                "type": "number",
-                "description": "Page number, 0-based. Must be a number (integer), not a string."
-              },
-              "size": {
-                "type": "number",
-                "description": "Page size. Must be a number (integer), not a string."
-              }
-            }
-          }
-        },
-        {
           "name": "create_dashboard",
           "description": "Create a new dashboard in a project.",
           "inputSchema": {
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
@@ -1611,12 +2827,21 @@
                 "description": "Dashboard name."
               },
               "shared": {
-                "type": "boolean",
-                "description": "Whether the dashboard is shared with the project."
+                "description": "Whether the dashboard is shared with the project.",
+                "type": "boolean"
               },
               "payload": {
-                "type": "object",
-                "description": "Additional dashboard fields (e.g. description, widgets)."
+                "description": "Additional dashboard fields (e.g. description, widgets).",
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
@@ -1631,7 +2856,9 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Dashboard ID. Must be a number (integer), not a string."
               }
             },
@@ -1647,11 +2874,22 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Dashboard ID. Must be a number (integer), not a string."
               },
               "payload": {
-                "type": "object",
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
                 "description": "Fields to update (e.g. name, shared)."
               }
             },
@@ -1668,7 +2906,9 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Dashboard ID. Must be a number (integer), not a string."
               }
             },
@@ -1684,24 +2924,37 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Source dashboard ID. Must be a number (integer), not a string."
               },
               "name": {
-                "type": "string",
-                "description": "Name for the copied dashboard."
+                "description": "Name for the copied dashboard.",
+                "type": "string"
               },
               "projectId": {
-                "type": "number",
-                "description": "Target project ID (defaults to source project)."
+                "description": "Target project ID (defaults to source project).",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               },
               "projectName": {
-                "type": "string",
-                "description": "Target project name (alternative to projectId)."
+                "description": "Target project name (alternative to projectId).",
+                "type": "string"
               },
               "payload": {
-                "type": "object",
-                "description": "Additional copy options."
+                "description": "Additional copy options.",
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
@@ -1716,24 +2969,28 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Widget ID. Must be a number (integer), not a string."
               },
               "projectId": {
-                "type": "number",
-                "description": "Project ID for widget context. Must be a number (integer), not a string."
+                "description": "Project ID for widget context. Must be a number (integer), not a string.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               },
               "projectName": {
-                "type": "string",
-                "description": "Project name (alternative to projectId)."
+                "description": "Project name (alternative to projectId).",
+                "type": "string"
               },
               "from": {
-                "type": "number",
-                "description": "Start of time range (Unix timestamp ms). Must be a number, not a string."
+                "description": "Start of time range (Unix timestamp ms). Must be a number, not a string.",
+                "type": "number"
               },
               "to": {
-                "type": "number",
-                "description": "End of time range (Unix timestamp ms). Must be a number, not a string."
+                "description": "End of time range (Unix timestamp ms). Must be a number, not a string.",
+                "type": "number"
               }
             },
             "required": [
@@ -1747,46 +3004,15 @@
       "name": "Defects",
       "tools": [
         {
-          "name": "list_defects",
-          "description": "List defect records for a project. Defects group similar test result failures by root cause. Each defect has a name, status (open/closed), and optional matcher rules. Use this as the entry point for failure pattern analysis: 'what are the top open defects in this project right now?'",
-          "inputSchema": {
-            "type": "object",
-            "properties": {
-              "projectId": {
-                "type": "number",
-                "description": "Project ID. Must be a number (integer), not a string."
-              },
-              "projectName": {
-                "type": "string",
-                "description": "Project name (alternative to projectId)."
-              },
-              "status": {
-                "type": "string",
-                "description": "Filter by defect status. Values: OPEN, CLOSED. Omit to return all."
-              },
-              "name": {
-                "type": "string",
-                "description": "Filter by partial defect name."
-              },
-              "page": {
-                "type": "number",
-                "description": "Page number, 0-based."
-              },
-              "size": {
-                "type": "number",
-                "description": "Page size."
-              }
-            }
-          }
-        },
-        {
           "name": "get_defect",
           "description": "Get a defect by ID. Returns the defect name, status, description, and matcher configuration.",
           "inputSchema": {
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Defect ID. Must be a number (integer), not a string."
               }
             },
@@ -1802,8 +3028,16 @@
             "type": "object",
             "properties": {
               "payload": {
-                "type": "object",
-                "additionalProperties": true,
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
                 "description": "Required: name, projectId. Optional: description."
               }
             },
@@ -1819,12 +3053,22 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Defect ID. Must be a number (integer), not a string."
               },
               "payload": {
-                "type": "object",
-                "additionalProperties": true
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
@@ -1840,16 +3084,22 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Defect ID. Must be a number (integer), not a string."
               },
               "page": {
-                "type": "number",
-                "description": "Page number, 0-based."
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "size": {
-                "type": "number",
-                "description": "Page size."
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               }
             },
             "required": [
@@ -1864,16 +3114,22 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Defect ID. Must be a number (integer), not a string."
               },
               "page": {
-                "type": "number",
-                "description": "Page number, 0-based."
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "size": {
-                "type": "number",
-                "description": "Page size."
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               }
             },
             "required": [
@@ -1888,16 +3144,22 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Defect ID. Must be a number (integer), not a string."
               },
               "page": {
-                "type": "number",
-                "description": "Page number, 0-based."
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "size": {
-                "type": "number",
-                "description": "Page size."
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               }
             },
             "required": [
@@ -1912,16 +3174,22 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Launch ID. Must be a number (integer), not a string."
               },
               "page": {
-                "type": "number",
-                "description": "Page number, 0-based."
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "size": {
-                "type": "number",
-                "description": "Page size."
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               }
             },
             "required": [
@@ -1936,20 +3204,28 @@
             "type": "object",
             "properties": {
               "launchId": {
-                "type": "number",
-                "description": "Launch ID to scope the search. Must be a number (integer), not a string."
+                "description": "Launch ID to scope the search.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               },
               "defectId": {
-                "type": "number",
-                "description": "Defect ID to match against. Must be a number (integer), not a string."
+                "description": "Defect ID to match against.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               },
               "page": {
-                "type": "number",
-                "description": "Page number, 0-based."
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "size": {
-                "type": "number",
-                "description": "Page size."
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               }
             }
           }
@@ -1961,8 +3237,16 @@
             "type": "object",
             "properties": {
               "payload": {
-                "type": "object",
-                "additionalProperties": true,
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
                 "description": "Required: defectId (number), testResultIds (array of numbers)."
               }
             },
@@ -1978,8 +3262,16 @@
             "type": "object",
             "properties": {
               "payload": {
-                "type": "object",
-                "additionalProperties": true,
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
                 "description": "Required: ids (array of defect ID numbers)."
               }
             },
@@ -1995,8 +3287,16 @@
             "type": "object",
             "properties": {
               "payload": {
-                "type": "object",
-                "additionalProperties": true,
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
                 "description": "Required: ids (array of defect ID numbers)."
               }
             },
@@ -2012,12 +3312,22 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Defect ID. Must be a number (integer), not a string."
               },
               "payload": {
-                "type": "object",
-                "additionalProperties": true,
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
                 "description": "Required: url (string), name (string). Optional: type (string)."
               }
             },
@@ -2034,7 +3344,9 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Defect ID. Must be a number (integer), not a string."
               }
             },
@@ -2050,7 +3362,9 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Launch ID. Must be a number (integer), not a string."
               }
             },
@@ -2065,46 +3379,15 @@
       "name": "Shared Steps",
       "tools": [
         {
-          "name": "list_shared_steps",
-          "description": "List shared steps (reusable step library) for a project. Shared steps are referenced from test case scenarios via sharedStepId. Use this to discover the available shared step library before reading test case steps.",
-          "inputSchema": {
-            "type": "object",
-            "properties": {
-              "projectId": {
-                "type": "number",
-                "description": "Project ID. Must be a number (integer), not a string."
-              },
-              "projectName": {
-                "type": "string",
-                "description": "Project name (alternative to projectId)."
-              },
-              "search": {
-                "type": "string",
-                "description": "Text search filter."
-              },
-              "archived": {
-                "type": "boolean",
-                "description": "Filter by archived status. Omit to return active steps only."
-              },
-              "page": {
-                "type": "number",
-                "description": "Page number, 0-based. Must be a number (integer), not a string."
-              },
-              "size": {
-                "type": "number",
-                "description": "Page size. Must be a number (integer), not a string."
-              }
-            }
-          }
-        },
-        {
           "name": "get_shared_step",
           "description": "Get a shared step by ID. Returns metadata: name, project, archived status.",
           "inputSchema": {
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Shared step ID. Must be a number (integer), not a string."
               }
             },
@@ -2120,7 +3403,9 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Shared step ID. Must be a number (integer), not a string."
               }
             },
@@ -2136,16 +3421,22 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Shared step ID. Must be a number (integer), not a string."
               },
               "page": {
-                "type": "number",
-                "description": "Page number, 0-based. Must be a number (integer), not a string."
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "size": {
-                "type": "number",
-                "description": "Page size. Must be a number (integer), not a string."
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               }
             },
             "required": [
@@ -2160,8 +3451,16 @@
             "type": "object",
             "properties": {
               "payload": {
-                "type": "object",
-                "additionalProperties": true,
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
                 "description": "Shared step creation data. Required fields: name, projectId."
               }
             },
@@ -2177,12 +3476,22 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Shared step ID. Must be a number (integer), not a string."
               },
               "payload": {
-                "type": "object",
-                "additionalProperties": true
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "required": [
@@ -2198,7 +3507,9 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Shared step ID. Must be a number (integer), not a string."
               }
             },
@@ -2214,7 +3525,9 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Shared step ID. Must be a number (integer), not a string."
               }
             },
@@ -2229,30 +3542,73 @@
       "name": "Environments",
       "tools": [
         {
-          "name": "list_env_vars",
-          "description": "List all environment variable definitions (keys) available in the system. Environment variables track test configuration context: browser, OS, environment name, build number, etc. Use this to discover what ev[] keys are available before constructing AQL filters like ev[\"browser\"] = \"Chrome\" or ev[\"os\"] = \"Linux\" in search_test_results or search_launches.",
-          "inputSchema": {
-            "type": "object",
-            "properties": {}
-          }
-        },
-        {
           "name": "suggest_env_vars",
           "description": "Search environment variable definitions by name. Returns matching env var keys with their IDs. Use this to find the exact name of an env var key before querying values.",
           "inputSchema": {
             "type": "object",
             "properties": {
               "query": {
-                "type": "string",
-                "description": "Partial env var name to search for."
+                "description": "Partial env var name to search for.",
+                "type": "string"
               },
               "page": {
-                "type": "number",
-                "description": "Page number, 0-based. Must be a number (integer), not a string."
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "size": {
-                "type": "number",
-                "description": "Page size. Must be a number (integer), not a string."
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            }
+          }
+        },
+        {
+          "name": "suggest_env_var_values",
+          "description": "Search for recorded environment variable values by partial text. Optionally scope by envVarId, projectId, or launchId. Use this to autocomplete valid values for AQL ev[] filters before running a search.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "description": "Partial value text to search for.",
+                "type": "string"
+              },
+              "envVarId": {
+                "description": "Filter by specific env var key ID. Must be a number (integer), not a string.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "projectId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Project ID. Must be a number (integer), not a string."
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "launchId": {
+                "description": "Scope to a specific launch. Must be a number (integer), not a string.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "page": {
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "size": {
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               }
             }
           }
@@ -2264,7 +3620,9 @@
             "type": "object",
             "properties": {
               "projectId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Project ID. Must be a number (integer), not a string."
               },
               "projectName": {
@@ -2272,12 +3630,16 @@
                 "description": "Project name (alternative to projectId)."
               },
               "page": {
-                "type": "number",
-                "description": "Page number, 0-based. Must be a number (integer), not a string."
+                "description": "Page number, 0-based.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "size": {
-                "type": "number",
-                "description": "Page size. Must be a number (integer), not a string."
+                "description": "Page size.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               }
             }
           }
@@ -2289,7 +3651,9 @@
             "type": "object",
             "properties": {
               "envVarId": {
-                "type": "number",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Environment variable ID from list_env_vars. Must be a number (integer), not a string."
               }
             },
@@ -2299,55 +3663,20 @@
           }
         },
         {
-          "name": "suggest_env_var_values",
-          "description": "Search for recorded environment variable values by partial text. Optionally scope by envVarId, projectId, or launchId. Use this to autocomplete valid values for AQL ev[] filters before running a search.",
-          "inputSchema": {
-            "type": "object",
-            "properties": {
-              "query": {
-                "type": "string",
-                "description": "Partial value text to search for."
-              },
-              "envVarId": {
-                "type": "number",
-                "description": "Filter by specific env var key ID. Must be a number (integer), not a string."
-              },
-              "projectId": {
-                "type": "number",
-                "description": "Scope to a project. Must be a number (integer), not a string."
-              },
-              "projectName": {
-                "type": "string",
-                "description": "Project name (alternative to projectId)."
-              },
-              "launchId": {
-                "type": "number",
-                "description": "Scope to a specific launch. Must be a number (integer), not a string."
-              },
-              "page": {
-                "type": "number",
-                "description": "Page number, 0-based. Must be a number (integer), not a string."
-              },
-              "size": {
-                "type": "number",
-                "description": "Page size. Must be a number (integer), not a string."
-              }
-            }
-          }
-        },
-        {
           "name": "get_test_result_env_vars",
           "description": "Get the environment variable values recorded for a specific test result. Shows what configuration context (browser, OS, env name, build) this result ran against. Use this when investigating a failure to understand if the environment is a factor: e.g. 'does this only fail on Chrome 124 but not on Firefox?'",
           "inputSchema": {
             "type": "object",
             "properties": {
-              "testResultId": {
-                "type": "number",
+              "id": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
                 "description": "Test result ID. Must be a number (integer), not a string."
               }
             },
             "required": [
-              "testResultId"
+              "id"
             ]
           }
         }

@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { zodToJsonSchema } from "zod-to-json-schema";
 import type { McpToolDefinition } from "./types.js";
 
 /**
@@ -28,14 +27,18 @@ export function zodTool<S extends z.ZodTypeAny>(
   definition: McpToolDefinition;
   parse: (rawArgs: unknown) => z.infer<S>;
 } {
-  // zodToJsonSchema outputs a full JSON Schema that matches MCP's inputSchema shape
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const jsonSchema = zodToJsonSchema(schema as any, {
-    target: "openApi3",
-    $refStrategy: "none",
+  // Zod v4 ships its own JSON Schema converter. "io: input" is required so that
+  // coerced/transformed fields (coerceInt, coerceArray, coerceObject) are described
+  // by what a client may SEND, not by the parsed output type.
+  const jsonSchema = z.toJSONSchema(schema, {
+    io: "input",
+    unrepresentable: "any",
   }) as Record<string, unknown>;
 
-  // Ensure the top-level "type" is present (zodToJsonSchema may omit it in some edge cases)
+  // MCP inputSchema carries no $schema dialect marker.
+  delete jsonSchema.$schema;
+
+  // Ensure the top-level "type" is present (the converter may omit it in edge cases)
   if (!jsonSchema.type) {
     jsonSchema.type = "object";
   }

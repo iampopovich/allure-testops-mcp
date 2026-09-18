@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project adheres to Semantic Versioning.
 
+## [1.6.0] - 2026-09-18
+
+### Added
+
+- **Release management tools (Allure TestOps 26.3+).** New `src/api/releases.ts` / `src/tools/releases.ts` bundle covering the `/api/release` surface introduced in 26.3.1.1: `list_releases`, `get_release`, `create_release`, `update_release`, `delete_release`, `get_release_statistic`, `list_release_defects`, `list_release_muted_results`, `get_release_test_case_tree`, `list_release_tags`, `set_release_tags`, `add_launch_to_release`, `remove_launch_from_release`, `get_release_test_case_selection`, `update_release_test_case_selection`, `create_release_from_test_cases`, `list_release_statuses`, `list_release_workflows`.
+- **`restore_test_cases_bulk`** — restores several deleted test cases at once through the new `POST /api/testcase/bulk/restore` endpoint.
+
+### Fixed
+
+- **Every tool advertised an empty `inputSchema`.** `zodTool` converted schemas with `zod-to-json-schema@3`, which cannot read Zod v4 schemas and silently returned `{ "type": "object" }` — so since the Zod migration MCP clients received no parameter names, types or `required` lists for any of the 114 tools. `zodTool` now uses Zod v4's built-in `z.toJSONSchema()` with `io: "input"` (so coerced/JSON-string inputs are described by what a client may send) and drops the now-unused `zod-to-json-schema` dependency.
+
+### Changed
+
+- **`supportedApiVersion` bumped to `26.3.1.1`** and the tracked spec in `docs/versions/allure_api_docs.json` updated (36 new endpoints, none removed, 91 new schemas).
+- **`create_launch`** description documents the new `releases` and `gitContext` fields of `LaunchCreateDto`.
+- **`run_test_plan`** and **`add_test_plan_to_launch`** descriptions document the new `releaseId` field; the `run_test_plan` example now uses the real DTO field `launchName` instead of `name`.
+- **Response cache** gained a 30s TTL bucket for `/api/release` paths, matching how quickly release statistics are recalculated.
+- `scripts/compare-api-versions.py` knows about the `releases` module.
+
+### Verified
+
+- **No breaking changes for existing tools.** An operation-level diff of the 26.2.2.3 → 26.3.1.1 specs shows that every endpoint this server calls kept its parameters, request bodies and response schemas; the remaining differences are generated `operationId` renumbering. The endpoints whose signatures did change (`/api/account/me`, `/api/upload`, `/api/upload/file`, `/api/member/suggest`, `/api/status`, `/api/project`) are not used here.
+- Deprecations noted for future work, none of them consumed by current tools: `GET /api/launch/{id}/tester` (superseded by `/api/v2/launch/{id}/tester`), `TestResultDto.testedBy` (superseded by `testedByUser`), `TestResultTreeLeafDtoV2.assignee` (superseded by `assigneeUser`).
+- Not implemented yet from 26.3: coverage (`/api/coverage`, `/api/launch/{id}/coverage`), git repositories and launch git context, project labels, upload usage reporting.
+
 ## [1.5.0] - 2026-07-28
 
 ### Changed

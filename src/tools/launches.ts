@@ -29,7 +29,9 @@ const getLaunch = zodTool("get_launch", "Get a launch by ID.",
 );
 
 const createLaunch = zodTool("create_launch",
-  "Create a new launch. payload.projectId defaults to ALLURE_PROJECT_ID env when omitted.",
+  "Create a new launch. payload fields: name (required), autoclose, external, tags, issues, links, " +
+  "releases [{ id }] to bind the launch to releases, gitContext { repository, commit, contextType, branch, pullRequest }. " +
+  "payload.projectId defaults to ALLURE_PROJECT_ID env when omitted.",
   z.object({ payload: coerceObject() }),
 );
 
@@ -72,7 +74,9 @@ const addTestCasesToLaunch = zodTool("add_test_cases_to_launch",
   }),
 );
 
-const addTestPlanToLaunch = zodTool("add_test_plan_to_launch", "Add a test plan to a launch.",
+const addTestPlanToLaunch = zodTool("add_test_plan_to_launch",
+  "Add a test plan to a launch. payload fields: testPlanId, envVarValueSets, " +
+  "releaseId to attach the resulting results to a release.",
   z.object({ id: idSchema("Launch"), payload: coerceObject() }),
 );
 

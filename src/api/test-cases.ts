@@ -295,6 +295,21 @@ export function setTestCaseCustomFields(
   });
 }
 
+export function restoreTestCases(
+  client: AllureApiClient,
+  projectId: number,
+  testCaseIds: number[],
+): Promise<unknown> {
+  return client.post("/api/testcase/bulk/restore", {
+    selection: {
+      projectId,
+      deleted: true,
+      leafsInclude: testCaseIds,
+      inverted: false,
+    },
+  });
+}
+
 export function addTagsToTestCases(
   client: AllureApiClient,
   projectId: number,

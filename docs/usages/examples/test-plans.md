@@ -43,7 +43,8 @@ Run:
   "arguments": {
     "id": 782,
     "payload": {
-      "name": "Smoke Launch - 2026-03-03"
+      "launchName": "Smoke Launch - 2026-03-03",
+      "releaseId": 12
     }
   }
 }

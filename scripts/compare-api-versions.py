@@ -32,6 +32,7 @@ MODULE_MAP = {
     "defects":      ("src/api/defects.ts",      "src/tools/defects.ts"),
     "environments": ("src/api/environments.ts", "src/tools/environments.ts"),
     "launches":     ("src/api/launches.ts",     "src/tools/launches.ts"),
+    "releases":     ("src/api/releases.ts",     "src/tools/releases.ts"),
     "shared-steps": ("src/api/shared-steps.ts", "src/tools/shared-steps.ts"),
     "test-cases":   ("src/api/test-cases.ts",   "src/tools/test-cases.ts"),
     "test-plans":   ("src/api/test-plans.ts",   "src/tools/test-plans.ts"),

@@ -26,7 +26,8 @@ const deleteTestPlan = zodTool("delete_test_plan",
 );
 
 const runTestPlan = zodTool("run_test_plan",
-  "Run a test plan by ID.",
+  "Run a test plan by ID. payload fields: launchName (required by the API), tags, issues, links, " +
+  "envVarValueSets, releaseId to bind the produced launch to a release.",
   z.object({ id: idSchema("Test plan"), payload: coerceObject().optional() }),
 );
 
