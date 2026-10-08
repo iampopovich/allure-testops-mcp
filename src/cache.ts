@@ -4,12 +4,14 @@ export interface CacheStore {
   get(key: string): object | undefined;
   set(key: string, value: object, ttlMs: number): void;
   invalidateByPrefix(prefix: string): void;
+  invalidateWhere(predicate: (key: string) => boolean): void;
 }
 
 export class NullCacheStore implements CacheStore {
   get(_key: string): object | undefined { return undefined; }
   set(_key: string, _value: object, _ttlMs: number): void {}
   invalidateByPrefix(_prefix: string): void {}
+  invalidateWhere(_predicate: (key: string) => boolean): void {}
 }
 
 export class LruCacheStore implements CacheStore {
@@ -28,8 +30,13 @@ export class LruCacheStore implements CacheStore {
   }
 
   invalidateByPrefix(prefix: string): void {
-    for (const key of this.lru.keys()) {
-      if (key.startsWith(prefix)) {
+    this.invalidateWhere((key) => key.startsWith(prefix));
+  }
+
+  invalidateWhere(predicate: (key: string) => boolean): void {
+    // Snapshot keys first — deleting while iterating the live LRU iterator is unsafe.
+    for (const key of [...this.lru.keys()]) {
+      if (predicate(key)) {
         this.lru.delete(key);
       }
     }

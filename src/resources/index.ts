@@ -20,44 +20,48 @@ export const RESOURCES = [
     description: "All environment variable keys tracked in Allure TestOps.",
     mimeType: "application/json",
   },
+];
+
+/** Parameterised resources — advertised via resources/templates/list, read via readResource(). */
+export const RESOURCE_TEMPLATES = [
   {
-    uri: "allure://projects/{projectId}/launches",
+    uriTemplate: "allure://projects/{projectId}/launches",
     name: "Project Launches",
     description: "Launches for a given project. Replace {projectId} with a numeric project ID.",
     mimeType: "application/json",
   },
   {
-    uri: "allure://projects/{projectId}/test-plans",
+    uriTemplate: "allure://projects/{projectId}/test-plans",
     name: "Project Test Plans",
     description: "Test plans for a given project. Replace {projectId} with a numeric project ID.",
     mimeType: "application/json",
   },
   {
-    uri: "allure://projects/{projectId}/dashboards",
+    uriTemplate: "allure://projects/{projectId}/dashboards",
     name: "Project Dashboards",
     description: "Dashboards for a given project. Replace {projectId} with a numeric project ID.",
     mimeType: "application/json",
   },
   {
-    uri: "allure://projects/{projectId}/test-cases",
+    uriTemplate: "allure://projects/{projectId}/test-cases",
     name: "Project Test Cases",
     description: "First page of test cases for a given project (quick listing). For filtered or paginated access use the search_test_cases tool.",
     mimeType: "application/json",
   },
   {
-    uri: "allure://projects/{projectId}/defects",
+    uriTemplate: "allure://projects/{projectId}/defects",
     name: "Project Defects",
     description: "First page of defect records for a given project (quick listing). For status/name filtering use the get_defect tool or query directly.",
     mimeType: "application/json",
   },
   {
-    uri: "allure://projects/{projectId}/shared-steps",
+    uriTemplate: "allure://projects/{projectId}/shared-steps",
     name: "Project Shared Steps",
     description: "First page of active shared steps for a given project (quick listing).",
     mimeType: "application/json",
   },
   {
-    uri: "allure://projects/{projectId}/custom-fields",
+    uriTemplate: "allure://projects/{projectId}/custom-fields",
     name: "Project Custom Fields",
     description: "First page of custom fields configured for a given project (quick listing). For value lookup use the list_custom_field_values tool.",
     mimeType: "application/json",

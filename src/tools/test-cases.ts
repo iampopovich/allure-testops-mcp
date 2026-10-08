@@ -31,20 +31,28 @@ function bulkField(args: ToolObject, key: string): unknown {
   return undefined;
 }
 
+/** Accepts integers and integer strings — values nested inside `payload` bypass Zod coercion. */
+function toId(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isInteger(value)) return value;
+  if (typeof value === "string" && /^-?\d+$/.test(value.trim())) return Number(value.trim());
+  return undefined;
+}
+
 function getBulkIdList(
   args: ToolObject, singleKey: string, multipleKey: string, entityLabel: string,
 ): number[] {
   const ids: number[] = [];
   const single = bulkField(args, singleKey);
   if (single !== undefined) {
-    if (typeof single !== "number" || Number.isNaN(single))
+    const id = toId(single);
+    if (id === undefined)
       throw new Error(`"${singleKey}" must be a number when provided.`);
-    ids.push(single);
+    ids.push(id);
   }
   const multiple = bulkField(args, multipleKey);
   if (multiple !== undefined) {
-    const values = asArray(multiple);
-    if (!values || values.some((item) => typeof item !== "number" || Number.isNaN(item)))
+    const values = asArray(multiple)?.map(toId);
+    if (!values || values.some((item) => item === undefined))
       throw new Error(`"${multipleKey}" must be an array of numbers when provided.`);
     ids.push(...(values as number[]));
   }
@@ -283,7 +291,7 @@ const getTestCaseScenario = zodTool("get_test_case_scenario", "Get scenario for 
 );
 
 const getTestCaseStepsTool = zodTool("get_test_case_steps",
-  "Get manual scenario steps for a test case. Returns a normalized scenario with root step and a flat map of all steps (scenarioSteps). Each step contains body, expectedResult, children IDs, and optional sharedStepId. IMPORTANT: the response includes a _meta section with expectedResultWrapperIds — these are Expected Result container nodes. See _meta.note for the exact create-vs-edit workflow (whether to target the wrapper or its existing leaf child).\n\nEVENTUAL CONSISTENCY: right after create_test_case_step / update_test_case_step / set_test_case_step_expected_result, an immediate get_test_case_steps call MAY still return a stale snapshot missing the just-written leaf, due to replication/cache lag on the Allure API side — this is NOT necessarily an error. Don't treat a missing/unchanged leaf as proof the write failed; re-check with a fresh get_test_case_steps call a turn or two later (e.g. after another unrelated call) before concluding the write didn't take effect.",
+  "Get manual scenario steps for a test case. Returns a normalized scenario with root step and a flat map of all steps (scenarioSteps). Each step contains body, expectedResult, children IDs, and optional sharedStepId. IMPORTANT: the response includes a _meta section with expectedResultWrapperIds — these are Expected Result container nodes. See _meta.note for the exact create-vs-edit workflow (whether to target the wrapper or its existing leaf child).\n\nThe server's response cache is cleared on every write, so a step written via create_test_case_step / update_test_case_step / set_test_case_step_expected_result is visible to the next get_test_case_steps call.",
   z.object({ id: idSchema("Test case") }),
 );
 

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-18T18:23:41.320Z",
+  "generatedAt": "2026-10-08T20:46:23.527Z",
   "totalTools": 114,
   "categories": [
     {
@@ -54,6 +54,10 @@
             "required": [
               "rql"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -158,6 +162,10 @@
                 ]
               }
             }
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -176,6 +184,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -200,6 +212,11 @@
             "required": [
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -239,6 +256,11 @@
               "testCaseId"
             ],
             "additionalProperties": {}
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -273,6 +295,10 @@
               "testCaseId",
               "expectedResult"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -299,6 +325,10 @@
             "required": [
               "stepId"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -330,6 +360,10 @@
               "id",
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -348,6 +382,11 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -424,6 +463,11 @@
               }
             },
             "additionalProperties": {}
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -466,6 +510,11 @@
               }
             },
             "additionalProperties": {}
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -528,6 +577,11 @@
               }
             },
             "additionalProperties": {}
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -602,6 +656,11 @@
               }
             },
             "additionalProperties": {}
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -620,6 +679,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -663,6 +726,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -681,11 +748,15 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
           "name": "get_test_case_steps",
-          "description": "Get manual scenario steps for a test case. Returns a normalized scenario with root step and a flat map of all steps (scenarioSteps). Each step contains body, expectedResult, children IDs, and optional sharedStepId. IMPORTANT: the response includes a _meta section with expectedResultWrapperIds — these are Expected Result container nodes. See _meta.note for the exact create-vs-edit workflow (whether to target the wrapper or its existing leaf child).\n\nEVENTUAL CONSISTENCY: right after create_test_case_step / update_test_case_step / set_test_case_step_expected_result, an immediate get_test_case_steps call MAY still return a stale snapshot missing the just-written leaf, due to replication/cache lag on the Allure API side — this is NOT necessarily an error. Don't treat a missing/unchanged leaf as proof the write failed; re-check with a fresh get_test_case_steps call a turn or two later (e.g. after another unrelated call) before concluding the write didn't take effect.",
+          "description": "Get manual scenario steps for a test case. Returns a normalized scenario with root step and a flat map of all steps (scenarioSteps). Each step contains body, expectedResult, children IDs, and optional sharedStepId. IMPORTANT: the response includes a _meta section with expectedResultWrapperIds — these are Expected Result container nodes. See _meta.note for the exact create-vs-edit workflow (whether to target the wrapper or its existing leaf child).\n\nThe server's response cache is cleared on every write, so a step written via create_test_case_step / update_test_case_step / set_test_case_step_expected_result is visible to the next get_test_case_steps call.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -699,6 +770,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -717,6 +792,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -758,6 +837,10 @@
               "testCaseId",
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -776,6 +859,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -817,6 +904,10 @@
               "testCaseId",
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -835,6 +926,11 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -898,6 +994,10 @@
               "customFieldId"
             ],
             "additionalProperties": {}
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -926,6 +1026,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -977,6 +1081,10 @@
               "testCaseId",
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -995,6 +1103,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -1028,6 +1140,11 @@
               "contentType",
               "contentBase64"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -1046,6 +1163,11 @@
             "required": [
               "attachmentId"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -1064,6 +1186,10 @@
             "required": [
               "attachmentId"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         }
       ]
@@ -1120,6 +1246,10 @@
             "required": [
               "rql"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -1138,6 +1268,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -1162,6 +1296,11 @@
             "required": [
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -1193,6 +1332,10 @@
               "id",
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -1211,6 +1354,11 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -1229,6 +1377,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -1247,6 +1399,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -1265,6 +1421,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -1283,6 +1443,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -1353,6 +1517,11 @@
               "id",
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -1384,6 +1553,11 @@
               "id",
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "openWorldHint": true
           }
         }
       ]
@@ -1441,6 +1615,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -1492,6 +1670,10 @@
             "required": [
               "rql"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -1510,6 +1692,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -1534,6 +1720,11 @@
             "required": [
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -1565,6 +1756,10 @@
               "id",
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -1608,6 +1803,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -1639,6 +1838,10 @@
               "id",
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -1670,6 +1873,10 @@
               "id",
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -1700,6 +1907,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -1730,6 +1941,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -1748,6 +1963,10 @@
             "required": [
               "attachmentId"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         }
       ]
@@ -1771,6 +1990,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -1795,6 +2018,11 @@
             "required": [
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -1826,6 +2054,10 @@
               "id",
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -1844,6 +2076,11 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -1874,6 +2111,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         }
       ]
@@ -1927,6 +2168,10 @@
                 ]
               }
             }
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -1945,6 +2190,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -1979,6 +2228,11 @@
             "required": [
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -2010,6 +2264,10 @@
               "id",
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -2028,6 +2286,11 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -2046,6 +2309,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -2089,6 +2356,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -2132,6 +2403,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -2201,6 +2476,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -2219,6 +2498,10 @@
             "required": [
               "releaseId"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -2261,6 +2544,10 @@
               "releaseId",
               "tags"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -2286,6 +2573,11 @@
               "releaseId",
               "launchId"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -2311,6 +2603,11 @@
               "releaseId",
               "launchId"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -2329,6 +2626,10 @@
             "required": [
               "releaseId"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -2360,6 +2661,10 @@
               "releaseId",
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -2406,6 +2711,11 @@
             "required": [
               "release"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -2458,6 +2768,10 @@
                 ]
               }
             }
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -2506,6 +2820,10 @@
                 ]
               }
             }
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         }
       ]
@@ -2560,6 +2878,10 @@
                 ]
               }
             }
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -2583,6 +2905,10 @@
                 "type": "string"
               }
             }
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -2606,6 +2932,10 @@
                 "type": "string"
               }
             }
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -2645,6 +2975,10 @@
                 "type": "number"
               }
             }
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -2682,6 +3016,10 @@
                 ]
               }
             }
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -2731,6 +3069,10 @@
                 ]
               }
             }
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -2750,6 +3092,10 @@
                 "description": "Project name (alternative to projectId)."
               }
             }
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -2799,6 +3145,10 @@
                 ]
               }
             }
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         }
       ]
@@ -2847,6 +3197,11 @@
             "required": [
               "name"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -2865,6 +3220,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -2897,6 +3256,10 @@
               "id",
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -2915,6 +3278,11 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -2960,6 +3328,11 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -2996,6 +3369,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         }
       ]
@@ -3019,6 +3396,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -3044,6 +3425,11 @@
             "required": [
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -3075,6 +3461,10 @@
               "id",
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -3105,6 +3495,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -3135,6 +3529,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -3165,6 +3563,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -3195,6 +3597,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -3228,6 +3634,10 @@
                 "maximum": 9007199254740991
               }
             }
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -3253,6 +3663,11 @@
             "required": [
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -3278,6 +3693,10 @@
             "required": [
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -3303,6 +3722,10 @@
             "required": [
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -3335,6 +3758,11 @@
               "id",
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -3353,6 +3781,11 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -3371,6 +3804,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         }
       ]
@@ -3394,6 +3831,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -3412,6 +3853,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -3442,6 +3887,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -3467,6 +3916,11 @@
             "required": [
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -3498,6 +3952,10 @@
               "id",
               "payload"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -3516,6 +3974,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         },
         {
@@ -3534,6 +3996,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true
           }
         }
       ]
@@ -3564,6 +4030,10 @@
                 "maximum": 9007199254740991
               }
             }
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -3611,6 +4081,10 @@
                 "maximum": 9007199254740991
               }
             }
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -3642,6 +4116,10 @@
                 "maximum": 9007199254740991
               }
             }
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -3660,6 +4138,10 @@
             "required": [
               "envVarId"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         },
         {
@@ -3678,6 +4160,10 @@
             "required": [
               "id"
             ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": true
           }
         }
       ]

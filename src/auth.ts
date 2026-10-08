@@ -9,6 +9,7 @@ export interface TokenManagerOptions {
   baseUrl: string;
   apiToken: string;
   refreshSkewSeconds?: number;
+  requestTimeoutMs?: number;
 }
 
 import { logger } from "./logger.js";
@@ -17,6 +18,7 @@ export class TokenManager {
   private readonly baseUrl: string;
   private readonly apiToken: string;
   private readonly refreshSkewMs: number;
+  private readonly requestTimeoutMs: number;
   private cachedAccessToken: string | null = null;
   private expiresAtMs = 0;
   private refreshInFlight: Promise<string> | null = null;
@@ -25,6 +27,7 @@ export class TokenManager {
     this.baseUrl = options.baseUrl.replace(/\/+$/, "");
     this.apiToken = options.apiToken;
     this.refreshSkewMs = (options.refreshSkewSeconds ?? 60) * 1000;
+    this.requestTimeoutMs = options.requestTimeoutMs ?? 30000;
   }
 
   async getAccessToken(): Promise<string> {
@@ -43,6 +46,18 @@ export class TokenManager {
     }
 
     return this.refreshInFlight;
+  }
+
+  /**
+   * Drop the cached JWT if it is still the one that was rejected, so the next
+   * getAccessToken() performs a fresh exchange. A token already replaced by a
+   * concurrent refresh is left alone.
+   */
+  invalidate(rejectedToken: string): void {
+    if (this.cachedAccessToken === rejectedToken) {
+      this.cachedAccessToken = null;
+      this.expiresAtMs = 0;
+    }
   }
 
   private hasValidCachedToken(): boolean {
@@ -65,6 +80,8 @@ export class TokenManager {
         Accept: "application/json",
       },
       body: form,
+      // Without a timeout a hung exchange would block every tool call indefinitely.
+      signal: AbortSignal.timeout(this.requestTimeoutMs),
     });
 
     if (!response.ok) {

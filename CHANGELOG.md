@@ -4,6 +4,42 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project adheres to Semantic Versioning.
 
+## [Unreleased]
+
+## [1.7.0] - 2026-10-09
+
+### Fixed
+
+- **Stale reads after writes from the server's own cache.** Write invalidation only stripped the path up to its first numeric segment, so writes to `/api/testcase/step[/{id}]` and `/api/v2/test-case/bulk/*` never evicted `/api/testcase/{id}/step|tag|cfv`, and those reads stayed stale for up to 60s. This was behind the "eventual consistency" note in `get_test_case_steps`, which has been corrected. Every write (including failed writes and multipart uploads) now clears the response cache except write-safe reference data (`/api/project/suggest`, release statuses and workflows). A GET that overlaps a write is no longer cached, and cached values are cloned so callers cannot mutate them.
+- **Token exchange had no timeout.** A hung `/api/uaa/oauth/token` call blocked every tool call. It now uses the same 30s timeout as API requests.
+- **No recovery from a revoked or early-expired JWT.** A 401 now triggers one token refresh and retry.
+- **Request timeouts were not retried.** `AbortSignal.timeout` errors (`TimeoutError`) and undici error codes are now recognised as retryable for GET.
+- **A malformed JSON-string `payload` was silently replaced with `{}`.** For example, `update_test_case` would send an empty PATCH and report success. It is now rejected with a validation error.
+- Bulk test-case tools accept integer strings for IDs nested inside `payload`.
+- The 10s TTL for test steps and scenarios never applied, because its pattern (`/api/scenario`) matched no real path.
+
+### Changed
+
+- **429 responses are retried** for every method (honouring `Retry-After`, capped at 10s). 502/503/504 are still retried only for GET.
+- The concurrency permit is released during retry back-off, so with `ALLURE_MAX_CONCURRENT=1` one retrying request no longer blocks all others.
+- **Tool annotations.** Every tool now advertises `readOnlyHint` / `destructiveHint` / `openWorldHint`, derived from its verb (`get_`/`list_`/`search_`/`find_`/`suggest_` are read-only; `delete_`/`remove_`/`unlink_` are destructive).
+- **Resource templates.** The parameterised `allure://projects/{projectId}/...` URIs are now advertised via `resources/templates/list` instead of `resources/list`. Reading them works as before.
+- Tool and resource responses are compact JSON instead of 2-space-indented JSON, which saves roughly 20–30% of response tokens.
+- **`supportedApiVersion` bumped to `26.3.1.2`.**
+
+### Added
+
+- `tests/unit/client.unit.test.ts`: 25 unit tests covering the HTTP client and token manager (cache invalidation, 401/429/5xx/timeout retries, back-off permit release), plus tool annotations and `coerceObject`.
+
+### Verified
+
+- **No breaking changes for existing tools in 26.3.1.2.** An operation-level diff of the 26.3.1.1 → 26.3.1.2 specs shows no added, removed or changed endpoints (852 operations). Schema changes:
+  - `LicenseStage` was removed; `LicenseInfoDto` gained `trial` and `readOnlyAt`; the `LicenseType` enum values were renamed.
+  - `TestResultGroupNode.groups` and `ExtFormFieldList.fields` were added.
+  - Step DTOs gained explicit `oneOf` typing for `steps`.
+
+  None of these schemas are consumed by this server. The 26.3.1.2 spec is tracked on the `bump/version` branch (`076bb1a`).
+
 ## [1.6.0] - 2026-09-18
 
 ### Added

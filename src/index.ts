@@ -14,13 +14,14 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
   ListResourcesRequestSchema,
+  ListResourceTemplatesRequestSchema,
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { TokenManager } from "./auth.js";
 import { AllureApiClient } from "./client.js";
 import { buildToolRegistry, requiredEnv } from "./server-bootstrap.js";
 import { LruCacheStore } from "./cache.js";
-import { RESOURCES, readResource } from "./resources/index.js";
+import { RESOURCES, RESOURCE_TEMPLATES, readResource } from "./resources/index.js";
 import { logger } from "./logger.js";
 
 function formatToolResult(result: unknown): string {
@@ -30,7 +31,8 @@ function formatToolResult(result: unknown): string {
   if (typeof result === "string") {
     return result;
   }
-  return JSON.stringify(result, null, 2);
+  // Compact JSON: indentation adds ~20-30% tokens to every response with no value for the model.
+  return JSON.stringify(result);
 }
 
 function parseOptionalProjectId(value: string | undefined): number | undefined {
@@ -75,6 +77,8 @@ async function main(): Promise<void> {
 
   server.setRequestHandler(ListResourcesRequestSchema, async () => ({ resources: RESOURCES }));
 
+  server.setRequestHandler(ListResourceTemplatesRequestSchema, async () => ({ resourceTemplates: RESOURCE_TEMPLATES }));
+
   server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
     const uri = request.params.uri;
     try {
@@ -84,7 +88,7 @@ async function main(): Promise<void> {
           {
             uri,
             mimeType: "application/json",
-            text: JSON.stringify(data, null, 2),
+            text: JSON.stringify(data),
           },
         ],
       };

@@ -1,5 +1,22 @@
 import { z } from "zod";
-import type { McpToolDefinition } from "./types.js";
+import type { McpToolAnnotations, McpToolDefinition } from "./types.js";
+
+const READ_ONLY_PREFIXES = ["get_", "list_", "search_", "find_", "suggest_"];
+const DESTRUCTIVE_PREFIXES = ["delete_", "remove_", "unlink_"];
+const ADDITIVE_PREFIXES = ["create_", "add_", "link_", "copy_", "upload_", "restore_"];
+
+/**
+ * Behaviour hints derived from the tool-name verb. Tools whose verb is not listed
+ * (update_, set_, close_, run_, ...) get only readOnlyHint=false, so clients fall
+ * back to the spec default of treating them as potentially destructive.
+ */
+export function inferToolAnnotations(name: string): McpToolAnnotations {
+  const has = (prefixes: string[]) => prefixes.some((prefix) => name.startsWith(prefix));
+  if (has(READ_ONLY_PREFIXES)) return { readOnlyHint: true, openWorldHint: true };
+  if (has(DESTRUCTIVE_PREFIXES)) return { readOnlyHint: false, destructiveHint: true, openWorldHint: true };
+  if (has(ADDITIVE_PREFIXES)) return { readOnlyHint: false, destructiveHint: false, openWorldHint: true };
+  return { readOnlyHint: false, openWorldHint: true };
+}
 
 /**
  * Creates a Zod-backed tool definition: a JSON Schema for the MCP
@@ -48,6 +65,7 @@ export function zodTool<S extends z.ZodTypeAny>(
       name,
       description,
       inputSchema: jsonSchema as McpToolDefinition["inputSchema"],
+      annotations: inferToolAnnotations(name),
     },
     parse: (rawArgs: unknown) => schema.parse(rawArgs) as z.infer<S>,
   };
@@ -87,8 +105,14 @@ export const sortSchema = coerceArray(z.string()).optional();
 export function coerceObject() {
   return z.union([
     z.object({}).passthrough(),
-    z.string().transform((s) => {
-      try { return JSON.parse(s); } catch { return {}; }
+    z.string().transform((s, ctx) => {
+      try {
+        return JSON.parse(s) as unknown;
+      } catch {
+        // Silently falling back to {} would turn a malformed payload into an empty write that "succeeds".
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Expected an object or a JSON-encoded object string." });
+        return z.NEVER;
+      }
     }).pipe(z.object({}).passthrough()),
   ]);
 }
