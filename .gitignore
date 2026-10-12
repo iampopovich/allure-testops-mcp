@@ -5,3 +5,6 @@ dist/
 .DS_Store
 .idea/
 .vscode/
+
+# Skill package build artifact
+skills/*.zip
