@@ -6,6 +6,8 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-10-29
+
 Tools now send exactly what the Allure UI sends, based on a recorded UI-flow study and the OpenAPI schema 26.3.1.2 (`docs/research/ui-flows-network-journal.md`).
 
 ### Added
