@@ -2,7 +2,7 @@ import type { AllureApiClient } from "../client.js";
 import * as api from "../api/analytic.js";
 import type { ToolBundle } from "./types.js";
 import { z } from "zod";
-import { zodTool, paginationSchema, projectIdSchema, projectNameSchema } from "./schema.js";
+import { zodTool, projectIdSchema, projectNameSchema } from "./schema.js";
 import { resolveProjectId } from "./utils.js";
 
 const rangeFields = {
@@ -21,7 +21,7 @@ const intervalField = {
 };
 
 const offsetField = {
-  offset: z.coerce.number().optional().describe("Timezone offset in minutes. Must be a number, not a string."),
+  offset: z.coerce.number().int().min(-12).max(14).optional().describe("Timezone offset in HOURS (e.g. 3 for UTC+3, -5 for UTC-5). Minutes are rejected by the API (e.g. -180 → 400)."),
 };
 
 const getAutomationChart = zodTool("get_automation_chart",

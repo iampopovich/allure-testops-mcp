@@ -44,9 +44,9 @@ const getRelease = zodTool("get_release",
 );
 
 const createRelease = zodTool("create_release",
-  "Create a release. payload fields: name (required), dueDate (13-digit Unix ms timestamp), " +
-  "previousReleaseId, tags [{ name }]. projectId is added to the payload from projectId/projectName " +
-  "or ALLURE_PROJECT_ID.",
+  "Create a release (status Draft, default workflow). payload fields: name (required), dueDate (13-digit Unix ms timestamp), " +
+  "previousReleaseId, tags [{ name }]. projectId is not part of the documented ReleaseCreateDto, but the server needs it to place the release — " +
+  "this tool adds it from projectId/projectName or ALLURE_PROJECT_ID. To fill the release with test cases use update_release_test_case_selection or create_release_from_test_cases; to attach runs use add_launch_to_release.",
   z.object({
     projectId: projectIdSchema.optional(),
     projectName: projectNameSchema.optional(),
@@ -80,7 +80,8 @@ const listReleaseMutedResults = zodTool("list_release_muted_results",
 );
 
 const getReleaseTestCaseTree = zodTool("get_release_test_case_tree",
-  "Browse the test case tree of a release: which test cases are in scope and their latest status.",
+  "Browse the test case tree of a release: which test cases are in scope and their latest status. " +
+  "sort defaults to [\"id,asc\"] — the server's own default sort field is rejected (400 'unsupported sort field \"name\"').",
   z.object({
     id: idSchema("Release"),
     treeId: coerceInt().optional().describe("Tree layout ID."),
@@ -118,7 +119,8 @@ const removeLaunchFromRelease = zodTool("remove_launch_from_release",
 );
 
 const getReleaseTestCaseSelection = zodTool("get_release_test_case_selection",
-  "Get the rule that defines which test cases belong to a release (AQL and/or tree selection).",
+  "Get the rule that defines which test cases belong to a release (AQL and/or tree selection). " +
+  "A release that never had a selection returns 404 'ReleaseTestCaseSelection not found' — that is the normal empty state, set one with update_release_test_case_selection.",
   z.object({ releaseId: idSchema("Release") }),
 );
 
@@ -216,7 +218,7 @@ export function createReleaseTools(client: AllureApiClient): ToolBundle {
       },
       get_release_test_case_tree: async (rawArgs) => {
         const { id, ...query } = getReleaseTestCaseTree.parse(rawArgs);
-        return api.getReleaseTestCaseTree(client, id, query);
+        return api.getReleaseTestCaseTree(client, id, { ...query, sort: query.sort ?? ["id,asc"] });
       },
       list_release_tags: async (rawArgs) =>
         api.listReleaseTags(client, listReleaseTags.parse(rawArgs).releaseId),

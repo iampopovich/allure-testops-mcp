@@ -73,13 +73,6 @@ describeIntegration("launch tools integration", () => {
     expect(pickId(launch)).toBe(launchId);
   });
 
-  it("list_launches", async () => {
-    const list = await callTool("list_launches", { projectId, size: 100 });
-    const content = asArrayContent(list);
-    const found = content.some((item) => pickId(item) === launchId);
-    expect(found).toBe(true);
-  });
-
   it("search_launches", async () => {
     const search = await callTool("search_launches", {
       projectId,
@@ -159,12 +152,16 @@ describeIntegration("launch tools integration", () => {
     expect(pickId(reopened)).toBe(launchId);
   });
 
-  it("delete_launch then verify by list_launches", async () => {
+  it("delete_launch then verify by search_launches", async () => {
     await callTool("delete_launch", { id: launchId as number });
     const deletedId = launchId;
     launchId = undefined;
 
-    const list = await callTool("list_launches", { projectId, size: 100 });
+    const list = await callTool("search_launches", {
+      projectId,
+      rql: `name = "${createdLaunchName}"`,
+      size: 20,
+    });
     const found = asArrayContent(list).some((item) => pickId(item) === deletedId);
     expect(found).toBe(false);
   });

@@ -70,9 +70,7 @@ describe("createTestResultTools", () => {
 
   it("search_test_results requires rql", async () => {
     const bundle = createTestResultTools(client as never);
-    await expect(bundle.handlers.search_test_results({ projectId: 1 })).rejects.toThrow(
-      '"rql" must be a non-empty string.',
-    );
+    await expect(bundle.handlers.search_test_results({ projectId: 1 })).rejects.toThrow(/rql/);
   });
 
   it("search_test_results resolves project from default project id", async () => {
@@ -91,13 +89,9 @@ describe("createTestResultTools", () => {
   it("get/create/update handlers validate required fields", async () => {
     const bundle = createTestResultTools(client as never);
 
-    await expect(bundle.handlers.get_test_result({})).rejects.toThrow('"id" must be a number.');
-    await expect(bundle.handlers.create_test_result({ payload: [] })).rejects.toThrow(
-      '"payload" must be an object.',
-    );
-    await expect(bundle.handlers.update_test_result({ id: 1, payload: [] })).rejects.toThrow(
-      '"payload" must be an object.',
-    );
+    await expect(bundle.handlers.get_test_result({})).rejects.toThrow(/id/);
+    await expect(bundle.handlers.create_test_result({ payload: [] })).rejects.toThrow(/object/);
+    await expect(bundle.handlers.update_test_result({ id: 1, payload: [] })).rejects.toThrow(/object/);
   });
 
   it("history, assign and resolve handlers call API with expected args", async () => {

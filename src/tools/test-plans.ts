@@ -2,8 +2,8 @@ import type { AllureApiClient } from "../client.js";
 import * as api from "../api/test-plans.js";
 import type { ToolBundle } from "./types.js";
 import { z } from "zod";
-import { zodTool, idSchema, paginationSchema, projectIdSchema, projectNameSchema , coerceObject} from "./schema.js"
-import { ensureProjectIdInPayload, resolveProjectId } from "./utils.js";
+import { zodTool, idSchema, coerceObject } from "./schema.js";
+import { ensureProjectIdInPayload } from "./utils.js";
 
 const getTestPlan = zodTool("get_test_plan",
   "Get a test plan by ID.",
@@ -11,12 +11,17 @@ const getTestPlan = zodTool("get_test_plan",
 );
 
 const createTestPlan = zodTool("create_test_plan",
-  "Create a new test plan. payload.projectId defaults to ALLURE_PROJECT_ID env when omitted.",
+  "Create a test plan (a saved set of test cases to run together). payload: name (required), projectId (defaults to ALLURE_PROJECT_ID), " +
+  "baseRql (AQL filter over test cases, e.g. 'tag = \"smoke\"'), treeSelection { inverted, leafsInclude, leafsExclude, groupsInclude, groupsExclude, path }, treeId.\n" +
+  "Selection semantics: baseRql + treeSelection {inverted:true} with empty lists = every test case matching baseRql (what the UI sends); " +
+  "treeSelection {inverted:false, leafsInclude:[ids]} = exactly those test cases; with inverted:true, leafsInclude lists EXCLUDED test cases.\n" +
+  "WARNING: { name } alone (no baseRql, no treeSelection) puts EVERY test case of the project into the plan.\n" +
+  "The plan is a snapshot: test cases created later that match baseRql are added only after a sync (UI: Sync test cases). Run it with run_test_plan. See MCP resource allure://guides/user-flows.",
   z.object({ payload: coerceObject() }),
 );
 
 const updateTestPlan = zodTool("update_test_plan",
-  "Update an existing test plan.",
+  "Partially update a test plan: name, baseRql, treeSelection, treeId (same semantics as create_test_plan; with inverted:true, leafsInclude lists EXCLUDED test cases). The test case count is recalculated after the update.",
   z.object({ id: idSchema("Test plan"), payload: coerceObject() }),
 );
 

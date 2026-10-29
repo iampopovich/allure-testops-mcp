@@ -6,8 +6,29 @@ import * as testCasesApi from "../api/test-cases.js";
 import * as defectsApi from "../api/defects.js";
 import * as sharedStepsApi from "../api/shared-steps.js";
 import * as environmentsApi from "../api/environments.js";
+import { AQL_SYNTAX } from "../tools/utils.js";
+import { USER_FLOWS_GUIDE } from "./docs/user-flows.js";
+
+/** Static markdown guides bundled with the server (no API call). */
+const GUIDES: Record<string, string> = {
+  "allure://guides/user-flows": USER_FLOWS_GUIDE,
+  "allure://guides/aql": `# Allure Query Language (AQL)\n\n${AQL_SYNTAX}\n\nSee also allure://guides/user-flows section 1.\n`,
+};
 
 export const RESOURCES = [
+  {
+    uri: "allure://guides/user-flows",
+    name: "Allure TestOps user flows (UI path → tools → API)",
+    description: "Reference of every Allure TestOps user flow as the UI performs it: which MCP tool reproduces each step, " +
+      "the exact order of calls, scenario/expected-result model, reference ids and known traps. Read it before multi-step work on test cases, runs, plans or defects.",
+    mimeType: "text/markdown",
+  },
+  {
+    uri: "allure://guides/aql",
+    name: "AQL syntax",
+    description: "Allure Query Language syntax used by search_test_cases, search_launches, search_test_results and test plan baseRql.",
+    mimeType: "text/markdown",
+  },
   {
     uri: "allure://projects",
     name: "All Projects",
@@ -67,6 +88,16 @@ export const RESOURCE_TEMPLATES = [
     mimeType: "application/json",
   },
 ];
+
+/** Reads a resource and serializes it: guides as markdown, API-backed resources as JSON. */
+export async function readResourceContent(
+  client: AllureApiClient,
+  uri: string,
+): Promise<{ mimeType: string; text: string }> {
+  const guide = GUIDES[uri];
+  if (guide !== undefined) return { mimeType: "text/markdown", text: guide };
+  return { mimeType: "application/json", text: JSON.stringify(await readResource(client, uri)) };
+}
 
 export async function readResource(client: AllureApiClient, uri: string): Promise<unknown> {
   if (uri === "allure://projects") {

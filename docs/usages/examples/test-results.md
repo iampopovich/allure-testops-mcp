@@ -63,8 +63,20 @@ Resolve:
   "arguments": {
     "id": 456789,
     "payload": {
-      "status": "MUTED"
+      "status": "failed",
+      "message": "Timeout waiting for login"
     }
+  }
+}
+```
+
+The run steps of a manual result are kept automatically. To record per-step statuses pass `payload.execution = { status, steps }` with `steps[i].status` set. A result that is already resolved cannot change its status (rerun it in the UI first).
+
+```json
+{
+  "name": "get_test_result",
+  "arguments": {
+    "id": 456789
   }
 }
 ```

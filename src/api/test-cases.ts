@@ -159,8 +159,13 @@ export function getTestCaseHistory(
   return client.get(`/api/testcase/${id}/history`, query);
 }
 
-export function getTestCaseScenario(client: AllureApiClient, id: number): Promise<unknown> {
-  return client.get(`/api/testcase/${id}/scenario`);
+/**
+ * Legacy alias. `GET /api/testcase/{id}/scenario` is deprecated in API 26.3.x and always
+ * returns `{"steps":[]}` for scenarios built in the step editor, so read the normalized
+ * step tree instead.
+ */
+export function getTestCaseScenario(client: AllureApiClient, id: number): Promise<TestCaseStepsResponse> {
+  return getTestCaseSteps(client, id);
 }
 
 export function getTestCaseSteps(client: AllureApiClient, id: number): Promise<TestCaseStepsResponse> {
@@ -195,27 +200,159 @@ export function restoreTestCase(client: AllureApiClient, id: number): Promise<un
   return client.post(`/api/testcase/${id}/restore`);
 }
 
-export function createTestCaseStep(
-  client: AllureApiClient,
-  payload: Record<string, unknown>,
-  withExpectedResult?: boolean,
-): Promise<CreateStepResponse> {
-  return client.post("/api/testcase/step", payload, withExpectedResult ? { withExpectedResult: true } : undefined);
+/** Splits "A; B" or multi-line text into expected-result lines (one ER leaf per line). */
+export function splitExpectedResultLines(text: string): string[] {
+  return text.split(/;|\r?\n/).map((line) => line.trim()).filter((line) => line.length > 0);
 }
 
-export function updateTestCaseStep(
+type StepPosition = { afterId?: number; beforeId?: number };
+
+function positionQuery(position: StepPosition): QueryParams | undefined {
+  const query: QueryParams = {};
+  if (position.afterId !== undefined) query.afterId = position.afterId;
+  if (position.beforeId !== undefined) query.beforeId = position.beforeId;
+  return Object.keys(query).length > 0 ? query : undefined;
+}
+
+/**
+ * Appends one ER leaf per line under an expected-result container, keeping the order
+ * (each next line goes after the previous one, as the UI does).
+ */
+async function appendExpectedResultLines(
   client: AllureApiClient,
-  stepId: number,
+  testCaseId: number,
+  wrapperId: number,
+  lines: string[],
+  afterId?: number,
+): Promise<CreateStepResponse | undefined> {
+  let last: CreateStepResponse | undefined;
+  let previous = afterId;
+  for (const line of lines) {
+    last = await client.post<CreateStepResponse>(
+      "/api/testcase/step",
+      { testCaseId, parentId: wrapperId, body: line },
+      positionQuery({ afterId: previous }),
+    );
+    previous = last.createdStepId;
+  }
+  return last;
+}
+
+/**
+ * Creates a step the way the UI does. The step DTO has no `expectedResult` field, so an
+ * expected result is created as a container (`expectedResultId: -1` + `withExpectedResult=true`)
+ * and then one child leaf per line.
+ */
+export async function createTestCaseStep(
+  client: AllureApiClient,
   payload: Record<string, unknown>,
-  withExpectedResult?: boolean,
-): Promise<unknown> {
-  return client.patch(
-    `/api/testcase/step/${stepId}`,
-    payload,
-    withExpectedResult ? { withExpectedResult: true } : undefined,
+  options: StepPosition & { expectedResult?: string } = {},
+): Promise<CreateStepResponse & { expectedResultId?: number }> {
+  const lines = options.expectedResult !== undefined ? splitExpectedResultLines(options.expectedResult) : [];
+  const query = positionQuery(options);
+  if (lines.length === 0) {
+    return client.post("/api/testcase/step", payload, query);
+  }
+
+  const created = await client.post<CreateStepResponse>(
+    "/api/testcase/step",
+    { ...payload, expectedResultId: -1 },
+    { ...query, withExpectedResult: true },
   );
+  const stepId = created.createdStepId;
+  const wrapperId = typeof stepId === "number"
+    ? created.scenario?.scenarioSteps?.[String(stepId)]?.expectedResultId
+    : undefined;
+  if (typeof stepId !== "number" || typeof wrapperId !== "number") {
+    throw new Error("Step was created but the expected result container was not returned by the API.");
+  }
+  const last = await appendExpectedResultLines(client, payload.testCaseId as number, wrapperId, lines);
+  return { createdStepId: stepId, expectedResultId: wrapperId, scenario: last?.scenario ?? created.scenario };
 }
 
+export function deleteTestCaseStep(client: AllureApiClient, stepId: number): Promise<unknown> {
+  return client.delete(`/api/testcase/step/${stepId}`);
+}
+
+function findStep(scenario: TestCaseStepsResponse, stepId: number, testCaseId: number) {
+  const steps = scenario.scenarioSteps ?? {};
+  const step = steps[String(stepId)];
+  if (!step) {
+    throw new Error(`Step ${stepId} was not found in test case ${testCaseId}. Check both IDs with get_test_case_steps.`);
+  }
+  const isWrapper = Object.values(steps).some((s) => s.expectedResultId === stepId);
+  return { step, isWrapper };
+}
+
+/**
+ * Updates a step without losing its expected result.
+ *
+ * `PATCH /step/{id}` with `withExpectedResult=false` (or omitted) is how the UI converts a step
+ * WITH an expected result into a plain one, so the current `expectedResultId` must always be
+ * sent back with `withExpectedResult=true` when the step has an ER.
+ * `expectedResult` is a full replace: old ER lines are deleted, new ones are appended.
+ * An empty `expectedResult` ("") removes the expected result from the step.
+ */
+export async function updateTestCaseStep(
+  client: AllureApiClient,
+  testCaseId: number,
+  stepId: number,
+  changes: { body?: string; expectedResult?: string },
+): Promise<unknown> {
+  const scenario = await getTestCaseSteps(client, testCaseId);
+  const { step, isWrapper } = findStep(scenario, stepId, testCaseId);
+  const steps = scenario.scenarioSteps ?? {};
+
+  if (isWrapper) {
+    if (changes.expectedResult === undefined) {
+      throw new Error(`Step ${stepId} is an "Expected Result" container. Edit its child line via update_test_case_step(childId, { body }) or pass expectedResult to replace all lines.`);
+    }
+    for (const childId of step.children ?? []) await deleteTestCaseStep(client, childId);
+    const lines = splitExpectedResultLines(changes.expectedResult);
+    await appendExpectedResultLines(client, testCaseId, stepId, lines);
+    return getTestCaseSteps(client, testCaseId);
+  }
+
+  const body = changes.body ?? step.body ?? "";
+  const currentWrapper = step.expectedResultId;
+
+  if (changes.expectedResult === undefined) {
+    // Text-only edit: keep the existing expected result untouched.
+    return currentWrapper !== undefined
+      ? client.patch(`/api/testcase/step/${stepId}`, { body, expectedResultId: currentWrapper }, { withExpectedResult: true })
+      : client.patch(`/api/testcase/step/${stepId}`, { body }, { withExpectedResult: false });
+  }
+
+  const lines = splitExpectedResultLines(changes.expectedResult);
+  if (lines.length === 0) {
+    // Explicitly clear the expected result ("Convert to step" in the UI).
+    return client.patch(`/api/testcase/step/${stepId}`, { body }, { withExpectedResult: false });
+  }
+
+  let wrapperId = currentWrapper;
+  if (wrapperId === undefined) {
+    const patched = await client.patch<SetExpectedResultResponse>(
+      `/api/testcase/step/${stepId}`, { body, expectedResultId: -1 }, { withExpectedResult: true },
+    );
+    wrapperId = patched.scenarioSteps?.[String(stepId)]?.expectedResultId;
+    if (typeof wrapperId !== "number") {
+      throw new Error(`Expected result container was not created for step ${stepId}.`);
+    }
+  } else {
+    if (changes.body !== undefined) {
+      await client.patch(`/api/testcase/step/${stepId}`, { body, expectedResultId: wrapperId }, { withExpectedResult: true });
+    }
+    for (const childId of steps[String(wrapperId)]?.children ?? []) await deleteTestCaseStep(client, childId);
+  }
+  await appendExpectedResultLines(client, testCaseId, wrapperId, lines);
+  return getTestCaseSteps(client, testCaseId);
+}
+
+/**
+ * Appends expected-result lines to a step, creating the container if the step has none.
+ * The PATCH needs the step body (the API rejects a body-less PATCH with `step.onlyonedetail`),
+ * so the current body is read from the scenario when not supplied.
+ */
 export async function setStepExpectedResult(
   client: AllureApiClient,
   stepId: number,
@@ -223,28 +360,34 @@ export async function setStepExpectedResult(
   expectedResult: string,
   body?: string,
 ): Promise<unknown> {
-  // Step 1: PATCH the step to create the expected result header node.
-  // withExpectedResult=true triggers header creation; the API ignores the text value here.
-  const payload: Record<string, unknown> = { expectedResult: " " };
-  if (body !== undefined) payload.body = body;
-  const patchResult = (await client.patch(
-    `/api/testcase/step/${stepId}`,
-    payload,
-    { withExpectedResult: true },
-  )) as SetExpectedResultResponse;
+  const lines = splitExpectedResultLines(expectedResult);
+  if (lines.length === 0) throw new Error("\"expectedResult\" must contain at least one non-empty line.");
 
-  const wrapperId = patchResult.scenarioSteps?.[String(stepId)]?.expectedResultId;
-  if (typeof wrapperId !== "number") {
-    throw new Error(`Expected result wrapper not found in response for step ${stepId}`);
+  const scenario = await getTestCaseSteps(client, testCaseId);
+  const { step, isWrapper } = findStep(scenario, stepId, testCaseId);
+  if (isWrapper) {
+    const existing = step.children ?? [];
+    await appendExpectedResultLines(client, testCaseId, stepId, lines, existing[existing.length - 1]);
+    return getTestCaseSteps(client, testCaseId);
   }
 
-  // Step 2: Create a child step under the header with the actual text.
-  // The expected result text lives in child nodes of the header — not in the header's own body.
-  return client.post("/api/testcase/step", {
-    testCaseId,
-    parentId: wrapperId,
-    body: expectedResult,
-  });
+  let wrapperId = step.expectedResultId;
+  if (wrapperId === undefined) {
+    const patched = await client.patch<SetExpectedResultResponse>(
+      `/api/testcase/step/${stepId}`,
+      { body: body ?? step.body ?? "", expectedResultId: -1 },
+      { withExpectedResult: true },
+    );
+    wrapperId = patched.scenarioSteps?.[String(stepId)]?.expectedResultId;
+    if (typeof wrapperId !== "number") {
+      throw new Error(`Expected result wrapper not found in response for step ${stepId}`);
+    }
+  } else if (body !== undefined) {
+    await client.patch(`/api/testcase/step/${stepId}`, { body, expectedResultId: wrapperId }, { withExpectedResult: true });
+  }
+  const existing = scenario.scenarioSteps?.[String(wrapperId)]?.children ?? [];
+  await appendExpectedResultLines(client, testCaseId, wrapperId, lines, existing[existing.length - 1]);
+  return getTestCaseSteps(client, testCaseId);
 }
 
 

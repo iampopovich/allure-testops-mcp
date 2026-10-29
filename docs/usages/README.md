@@ -12,6 +12,10 @@ This directory contains end-user setup and usage guides for `allure-testops-mcp`
 
 - [Cursor, Claude Code, Claude Desktop](./integrations.md)
 
+## User flows (UI path → tools → API)
+
+- [Allure TestOps user flows](./user-flows.md) — also served by the server as MCP resource `allure://guides/user-flows`
+
 ## Query Syntax
 
 - [AQL Reference](./aql-reference.md)

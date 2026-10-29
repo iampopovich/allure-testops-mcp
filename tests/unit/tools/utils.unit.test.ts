@@ -24,17 +24,19 @@ describe("tool utils", () => {
     expect(asObject({ id: 1 })).toEqual({ id: 1 });
   });
 
-  it("getRequiredNumber validates presence and numeric value", () => {
+  it("getRequiredNumber validates presence and numeric value (numeric strings are coerced)", () => {
     expect(getRequiredNumber({ id: 5 }, "id")).toBe(5);
+    expect(getRequiredNumber({ id: "5" }, "id")).toBe(5);
     expect(() => getRequiredNumber({}, "id")).toThrow('"id" must be a number.');
-    expect(() => getRequiredNumber({ id: "5" }, "id")).toThrow('"id" must be a number.');
+    expect(() => getRequiredNumber({ id: "abc" }, "id")).toThrow('"id" must be a number.');
     expect(() => getRequiredNumber({ id: Number.NaN }, "id")).toThrow('"id" must be a number.');
   });
 
-  it("getOptionalNumber validates type when provided", () => {
+  it("getOptionalNumber validates type when provided (numeric strings are coerced)", () => {
     expect(getOptionalNumber({}, "size")).toBeUndefined();
     expect(getOptionalNumber({ size: 10 }, "size")).toBe(10);
-    expect(() => getOptionalNumber({ size: "10" }, "size")).toThrow(
+    expect(getOptionalNumber({ size: "10" }, "size")).toBe(10);
+    expect(() => getOptionalNumber({ size: "ten" }, "size")).toThrow(
       '"size" must be a number when provided.',
     );
   });

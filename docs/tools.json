@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-08T20:46:23.527Z",
-  "totalTools": 114,
+  "generatedAt": "2026-10-29T03:36:17.924Z",
+  "totalTools": 115,
   "categories": [
     {
       "name": "Test Cases",
@@ -192,7 +192,7 @@
         },
         {
           "name": "create_test_case",
-          "description": "Create a new test case. payload.projectId defaults to ALLURE_PROJECT_ID env when omitted. payload.precondition (string) is the preconditions field — always use this for preconditions/prerequisites text, NOT payload.description. payload.description (string) is the general test case description — always populate this with a meaningful summary of what the test case verifies. payload.customFields supports values like { customField: { id }, id, name }. IMPORTANT: steps are NOT created via this tool. The Allure API does not support creating steps through the test-case payload — payload.steps is silently ignored. After creating the test case, use create_test_case_step to add each step individually. Example workflow: create_test_case → for each step call create_test_case_step.",
+          "description": "Create a new test case (metadata only). The scenario is added afterwards, step by step.\n\npayload fields: name (required); projectId (defaults to ALLURE_PROJECT_ID); description (what the case verifies — always fill it); precondition (preconditions text — NOT description); expectedResult (ONE overall expected result of the whole case — this is NOT the per-step expected result); statusId together with workflowId (statusId alone → 400 'workflow and status are required'; default workflow 'Default Manual' = -1, statuses -1 Draft, -2 Review, -3 Active, -4 Outdated); testLayerId (-1 Unit Tests, -2 UI Tests, -3 API Tests by default); tags [{id}|{name}] (a name creates the tag); links [{name, url}]; customFields [{customField:{id}, id|name}]; automated.\n\nDO NOT pass scenario/steps: the API accepts payload.scenario but stores only empty step nodes (text '<empty>', no expected results, no shared steps). Workflow: create_test_case → for each step, sequentially, create_test_case_step({testCaseId, body, expectedResult}) → verify with get_test_case_steps. Precondition / test-case expected result are shown in the UI only when the project enables those sections (project property testcase.sections.*.enabled); the API stores them either way. See MCP resource allure://guides/user-flows for the full UI-equivalent flow.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -221,7 +221,7 @@
         },
         {
           "name": "create_test_case_step",
-          "description": "Add a new step to a test case — works for both NEW and EXISTING test cases. This is the ONLY correct tool for adding steps. NEVER use update_test_case to add steps — it replaces the entire scenario and loses expected results.\n\nUSE THIS TOOL whenever the user asks to add a step. No need to read the scenario first — just call with testCaseId and body.\n\nexpectedResult is optional. When provided, the expected result is set on the new step automatically via the Allure API (body and expectedResult are passed in a single request). Multiple expected result lines: separate with ; or newlines.\n\nNOTE: when expectedResult is provided, the API response includes a created wrapper step whose body is initially a placeholder (e.g. Expected Result) — this is normal Allure API behavior, not a bug. The wrapper step gets an ID and can be edited later via update_test_case_step. The actual expectedResult text is accessible through get_test_case_steps.\n\nparentId creates a child step under the given parent (for nested structures). sharedStepId references an existing shared step instead of providing body text.\n\nCONCURRENCY WARNING: NEVER issue 2+ concurrent calls (in the same message/batch) against create_test_case_step / update_test_case_step / set_test_case_step_expected_result for the SAME testCaseId — the API has a race condition when writing to the same scenario tree in parallel, and one of the leaf texts can be silently lost. Steps for the same test case must be written ONE AT A TIME, sequentially. Calls targeting DIFFERENT testCaseIds are safe to parallelize.",
+          "description": "Add a step to a test case (new or existing) — the only correct way to build a scenario. Equivalent to pressing Enter / 'Step with expected result' in the UI scenario editor.\n\n- body: step text (required unless sharedStepId is given).\n- expectedResult (optional): one expected-result line per ';' or newline. The tool creates the step with an Expected Result container and then one child line per entry, so get_test_case_steps shows them under step.expectedResultId.\n- parentId: create a nested sub-step under that step.\n- sharedStepId: insert a shared step instead of body text.\n- afterId / beforeId (optional): position among siblings; without them the step is appended at the end.\n\nThe response contains createdStepId (the step) and expectedResultId (its ER container, when expectedResult was given). To add expected results to an existing step use set_test_case_step_expected_result; to change text use update_test_case_step. CONCURRENCY: write steps of ONE test case sequentially (never 2+ step-writing calls for the same testCaseId in one batch) — parallel writes to the same scenario tree can silently drop a line. Different testCaseIds are safe to parallelize. See MCP resource allure://guides/user-flows for the full UI-equivalent flow.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -236,7 +236,7 @@
                 "type": "string"
               },
               "expectedResult": {
-                "description": "Expected result text for the new step. Separate multiple lines with ; or newlines.",
+                "description": "Expected result for the new step. Multiple lines: separate with ; or newlines — each becomes its own ER line.",
                 "type": "string"
               },
               "parentId": {
@@ -247,6 +247,18 @@
               },
               "sharedStepId": {
                 "description": "Shared step ID to reference an existing shared step instead of providing body text.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "afterId": {
+                "description": "Insert the new step right after this sibling step ID.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "beforeId": {
+                "description": "Insert the new step right before this sibling step ID.",
                 "type": "integer",
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991
@@ -265,7 +277,7 @@
         },
         {
           "name": "set_test_case_step_expected_result",
-          "description": "Set the expected result on a step that has NO expected result yet. Call this after create_test_case_step when an expected result is needed.\n\nWHEN TO USE:\n- User asks to add a step with expected result → use create_test_case_step with expectedResult instead (preferred)\n- User asks to set expected result on an existing step that does NOT have one yet (verify via get_test_case_steps — the step has no expectedResultId / no wrapper children)\n\nWHEN NOT TO USE — this tool APPENDS, it does not replace:\nIf the step ALREADY has expected-result text, calling this tool again creates a NEW sibling leaf under the same wrapper instead of replacing the old one — you end up with duplicated expected-result lines on the same step. There is no delete_test_case_step in this toolset, so an accidentally created duplicate cannot be removed automatically; it must be cleaned up manually in the Allure UI. To change existing expected-result text, use update_test_case_step(leafId, { body: newText }) directly on the existing leaf's step id instead (see update_test_case_step's WRAPPER STEPS note).\n\nbody: pass the step's current body text. Omitting it may cause 400 step.onlyonedetail on some API versions.\nMultiple expected result lines: separate with ; or newlines.",
+          "description": "APPEND expected-result lines to an existing step. If the step has no expected result yet, the Expected Result container is created first (the UI's 'Convert to → Step with expected result'); existing lines are kept and the new ones are added after them.\n\nstepId may be the step itself or its Expected Result container. body is optional — the current step text is used when omitted.\nTo REPLACE all expected-result lines use update_test_case_step({testCaseId, stepId, expectedResult}). To add a step together with its expected result use create_test_case_step({..., expectedResult}). Multiple lines: separate with ; or newlines. CONCURRENCY: write steps of ONE test case sequentially (never 2+ step-writing calls for the same testCaseId in one batch) — parallel writes to the same scenario tree can silently drop a line. Different testCaseIds are safe to parallelize.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -273,7 +285,7 @@
                 "type": "integer",
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991,
-                "description": "Step ID. Use createdStepId from create_test_case_step response."
+                "description": "Step ID (or its Expected Result container ID)."
               },
               "testCaseId": {
                 "type": "integer",
@@ -282,12 +294,12 @@
                 "description": "Test case ID. Must be a number (integer), not a string."
               },
               "body": {
-                "description": "Step body text (current or unchanged). Required by the API.",
+                "description": "Optional new step text; the current text is kept when omitted.",
                 "type": "string"
               },
               "expectedResult": {
                 "type": "string",
-                "description": "Expected result text. Separate multiple lines with ; or newlines."
+                "description": "Expected result text to append. Separate multiple lines with ; or newlines."
               }
             },
             "required": [
@@ -303,10 +315,16 @@
         },
         {
           "name": "update_test_case_step",
-          "description": "Update a test case step by ID. Supports updating body text and/or expectedResult.\n\nWORKFLOW — read before using:\n1. Change ONLY step text:   { stepId, body: \"new text\" }. Omit expectedResult — existing expected results stay untouched.\n2. Change ONLY expected result: { stepId, expectedResult: \"A; B\" }. Omit body — step text stays as-is.\n3. Change BOTH:             { stepId, body: \"new text\", expectedResult: \"A; B\" }.\n\nCRITICAL — expectedResult is a FULL REPLACE, not an append.\nWhen you pass expectedResult, the API deletes ALL existing expected-result lines for that step and replaces them with what you provide. You MUST include EVERY expected-result line you want to keep, separated by semicolons (e.g. \"Check value; Verify status\") or newlines.\nIf you have 3 expected-result lines and only pass 1, the other 2 are GONE.\n\nWRAPPER STEPS — silent no-op risk.\nSteps marked _wrapper=true in get_test_case_steps output (or listed in _meta.expectedResultWrapperIds) are Expected Result container nodes. Passing expectedResult to update_test_case_step targeting a wrapper ONLY works the first time (when the wrapper has no children yet — it creates the leaf). If the wrapper already HAS a child (check its `children` array via get_test_case_steps), calling update_test_case_step(wrapperId, { expectedResult }) again returns 200 and bumps lastModifiedDate but the text is NOT changed — this is a silent no-op, not an error. In that case, call update_test_case_step(leafId, { body: newText }) directly on the child step id instead, and OMIT expectedResult entirely.\n\nWHAT TO AVOID:\n- Calling this tool with expectedResult, then calling it again — the second call overwrites the first. Update body and expectedResult together in ONE call.\n- Mixing update_test_case_step with update_test_case (full scenario replace) on the same step — pick one approach and stick with it.\n- Passing a partial expectedResult string — it BECOMES the entire expected result. Old lines are wiped.\n- Issuing 2+ concurrent calls (same message/batch) against create_test_case_step / update_test_case_step / set_test_case_step_expected_result for the SAME testCaseId — the API race-conditions when writing to the same scenario tree in parallel and can silently drop one of the leaf texts. Write steps for one test case sequentially; only different testCaseIds are safe to parallelize.",
+          "description": "Update a step's text and/or REPLACE its expected result, without losing data. The tool reads the scenario first (that is why testCaseId is required) and sends exactly what the UI sends.\n\n1. Text only — {testCaseId, stepId, body}: the existing expected result is preserved.\n2. Replace expected result — {testCaseId, stepId, expectedResult: \"A; B\"}: ALL current ER lines are deleted and replaced by these lines (include every line you want to keep). The container is created if the step had none.\n3. Both — pass body and expectedResult in ONE call.\n4. Remove the expected result — expectedResult: \"\" (UI 'Convert to → Step').\n5. Edit one ER line — {testCaseId, stepId: <line id from the container's children>, body}.\n6. stepId may also be an Expected Result container: then expectedResult replaces its lines.\n\nRead IDs with get_test_case_steps (step.expectedResultId → container; container.children → lines). CONCURRENCY: write steps of ONE test case sequentially (never 2+ step-writing calls for the same testCaseId in one batch) — parallel writes to the same scenario tree can silently drop a line. Different testCaseIds are safe to parallelize.",
           "inputSchema": {
             "type": "object",
             "properties": {
+              "testCaseId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Test case ID. Must be a number (integer), not a string."
+              },
               "stepId": {
                 "type": "integer",
                 "minimum": -9007199254740991,
@@ -314,15 +332,16 @@
                 "description": "Step ID to update. Must be a number (integer), not a string."
               },
               "body": {
-                "description": "New step body text.",
+                "description": "New step text. Omit to keep the current text.",
                 "type": "string"
               },
               "expectedResult": {
-                "description": "FULL expected result text — REPLACES ALL existing lines. Use semicolons or newlines for multiple lines. When omitted, existing expected results are preserved.",
+                "description": "FULL replacement of the expected result (lines separated by ; or newlines). \"\" removes it. Omit to keep the current expected result.",
                 "type": "string"
               }
             },
             "required": [
+              "testCaseId",
               "stepId"
             ]
           },
@@ -332,8 +351,31 @@
           }
         },
         {
+          "name": "delete_test_case_step",
+          "description": "Delete a scenario step (UI: step menu → Delete). Deletion cascades: the step's expected result and nested sub-steps are deleted too and cannot be restored. Can also delete a single expected-result line (pass the line's id from the container's children). Returns the updated scenario.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "stepId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Step (or expected-result line) ID to delete."
+              }
+            },
+            "required": [
+              "stepId"
+            ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "openWorldHint": true
+          }
+        },
+        {
           "name": "update_test_case",
-          "description": "Update an existing test case metadata (name, description, precondition, tags, customFields, etc.). payload.customFields supports values like { customField: { id }, id, name }. DO NOT use this tool to add or edit steps — use create_test_case_step / update_test_case_step instead. NOTE: there is no delete_test_case_step tool in this toolset — steps cannot be deleted programmatically; removing a step requires the Allure UI.",
+          "description": "Partially update test case metadata (only the fields you pass are changed): name, description, precondition, expectedResult (test-case level, not per-step), statusId (+ workflowId), testLayerId, automated, links, tags, customFields.\n\nFULL REPLACE fields: links, tags and customFields replace the whole list — pass every item you want to keep (for incremental tag changes use add_test_case_tags_bulk / remove_test_case_tags_bulk; for custom fields use set_test_case_custom_fields).\nNEVER pass scenario: the API replaces the WHOLE scenario with empty step nodes (all step texts and expected results are lost). Edit steps with create_test_case_step / update_test_case_step / delete_test_case_step.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -472,7 +514,7 @@
         },
         {
           "name": "restore_test_cases_bulk",
-          "description": "Restore one or multiple deleted test cases from the project trash (Allure TestOps 26.3+). For a single test case, restore_test_case is equivalent.",
+          "description": "Restore one or multiple test cases from the project trash (soft-deleted via delete_test_case). Only trashed test cases can be restored — a non-deleted ID makes the API answer 400 'can-not-restore-not-deleted-test-case'. For a single test case, restore_test_case is equivalent.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -734,7 +776,7 @@
         },
         {
           "name": "get_test_case_scenario",
-          "description": "Get scenario for a test case.",
+          "description": "Alias of get_test_case_steps (kept for compatibility). The legacy endpoint GET /api/testcase/{id}/scenario is deprecated and returns an empty list for editor-built scenarios, so this tool reads the normalized step tree instead. Prefer get_test_case_steps.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -756,7 +798,7 @@
         },
         {
           "name": "get_test_case_steps",
-          "description": "Get manual scenario steps for a test case. Returns a normalized scenario with root step and a flat map of all steps (scenarioSteps). Each step contains body, expectedResult, children IDs, and optional sharedStepId. IMPORTANT: the response includes a _meta section with expectedResultWrapperIds — these are Expected Result container nodes. See _meta.note for the exact create-vs-edit workflow (whether to target the wrapper or its existing leaf child).\n\nThe server's response cache is cleared on every write, so a step written via create_test_case_step / update_test_case_step / set_test_case_step_expected_result is visible to the next get_test_case_steps call.",
+          "description": "Read the manual scenario of a test case (the same tree the UI renders). Response: root.children = ordered top-level step IDs; scenarioSteps = flat map id → step. A step has body, optional children (nested sub-steps), optional sharedStepId (inserted shared step — read its content with get_shared_step_steps), optional attachmentId (attachment node), and optional expectedResultId → the Expected Result CONTAINER node; the container's children are the expected-result lines. _meta.expectedResultWrapperIds lists all containers; _meta.regularStepIds lists the rest. Use these IDs with update_test_case_step / set_test_case_step_expected_result / delete_test_case_step. The response cache is cleared on every write. See MCP resource allure://guides/user-flows for the full UI-equivalent flow.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -800,7 +842,7 @@
         },
         {
           "name": "set_test_case_tags",
-          "description": "Set tags for a test case.",
+          "description": "REPLACE the full tag list of a test case. payload: [{id}] or [{name}] — a name that does not exist yet creates the tag. Tags not in the payload are removed; [] clears all tags. To add or remove tags without touching the others use add_test_case_tags_bulk / remove_test_case_tags_bulk.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -867,7 +909,7 @@
         },
         {
           "name": "set_test_case_issues",
-          "description": "Set linked issues for a test case.",
+          "description": "REPLACE the issue links of a test case. payload: [{integrationId, name}] where integrationId is an issue-tracker integration connected to the project and name is the issue key (e.g. \"JIRA-123\"). Issues only exist through an integration: without integrationId the API returns 200 with an empty list and stores nothing — this tool therefore rejects items without integrationId and verifies the result. [] clears all issues.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -1034,7 +1076,7 @@
         },
         {
           "name": "set_test_case_custom_fields",
-          "description": "Add custom field values for a test case via bulk API. Supports grouped values [{ customField: { id }, values: [{ id|name }] }] and flat values [{ id|name, customField: { id } }].\n\nIMPORTANT — customField.id MUST be a NUMBER, never a name. Passing customField: { name: \"Feature\" } fails client-side with '\"payload[0].customField.id\" must be a number' — there is no name-to-id resolution for the field itself (values MAY accept name, but resolving to id first is safer and not guaranteed to work on every Allure version).\n\nThere is no dedicated \"list custom fields\" tool. To find a field's numeric id: call get_test_case_custom_fields on ANY already-populated test case in the same project — its response shows each customField's id alongside its name. System fields commonly have NEGATIVE ids (e.g. Feature = -2, Suite = -5) — these vary per Allure instance, do not hardcode them.\n\nTo find a VALUE's numeric id: call list_custom_field_values({ customFieldId, query: \"<value text>\" }).\n\nCorrect workflow: 1) get_test_case_custom_fields(anyPopulatedTestCaseId) → note customField ids. 2) list_custom_field_values({customFieldId, query}) → note value id. 3) set_test_case_custom_fields({testCaseId, payload: [{ customField: { id: -2 }, values: [{ id: 3170 }] }]}) — all numeric ids, resolved ahead of time.",
+          "description": "ADD custom field values to a test case (append — existing values stay; adding a value that is already set is a no-op). Supports grouped values [{ customField: { id }, values: [{ id|name }] }] and flat values [{ id|name, customField: { id } }].\n\ncustomField.id MUST be a NUMBER. A value may be given by id or by name — a name that does not exist yet is created as a new value of that field.\nBuilt-in system fields have negative ids: -1 Epic, -2 Feature, -3 Story, -4 Component, -5 Suite. For other fields, read the id from get_test_case_custom_fields (any test case of the project lists every field with its id) and value ids from list_custom_field_values({ customFieldId, query }).\n\nThis tool cannot REMOVE a value (no remove tool yet — in the UI it is the bulk action Remove metadata → Custom field values).",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -1729,7 +1771,7 @@
         },
         {
           "name": "update_test_result",
-          "description": "Update an existing test result. payload only needs the fields you want to change (e.g. { status: \"failed\" }) — the current test result is fetched and merged automatically before saving. KNOWN ISSUE: on some Allure TestOps Server versions, changing \"status\" this way does not persist once the test result has left certain workflow states — call get_test_result afterward to confirm.",
+          "description": "Update fields of a test result. payload needs only the fields to change; the current result is fetched and merged before the PATCH (the API requires the full object). Effective PATCH fields: tags, links (verified), members, customFields, testLayerId. name / description / precondition of a result linked to a test case are taken from the test case and are NOT changed by PATCH — edit the test case (update_test_case) instead. status / message / trace / categoryId are NOT part of the PATCH contract — when present they are applied through resolve (same as resolve_test_result, run steps preserved). A result that is already resolved cannot get a new status: rerun it in the UI (Rerun manually) to get a fresh in-progress result.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -1846,7 +1888,7 @@
         },
         {
           "name": "resolve_test_result",
-          "description": "Resolve a test result. payload must include status. KNOWN ISSUE: on some Allure TestOps Server versions, status changes via this endpoint (and via update_test_result) do not persist once a test result has left certain workflow states — call get_test_result afterward to confirm the status actually changed.",
+          "description": "Finish a manual test result — the UI's Passed / Failed buttons. payload: status (required: passed, failed, broken, skipped, unknown), message (failure reason), trace, categoryId, start/stop/duration (ms), execution.\n\nRun steps: if payload.execution is omitted, the current execution (steps of the run) is read and sent back unchanged, so nothing is lost. To record per-step statuses, read the execution yourself (the steps array returned by the API for this result), set steps[i].status (and nested steps / expectedResultSteps), and pass payload.execution = {status, steps}.\n\nOnly results that are still in progress can be resolved. For an already resolved result the API answers 202 but keeps the old status — rerun the test (UI: Rerun manually) and resolve the new result. Typical manual run: create_launch → add_test_cases_to_launch → list_test_results → assign_test_result → resolve_test_result → close_launch. See MCP resource allure://guides/user-flows.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -1998,7 +2040,7 @@
         },
         {
           "name": "create_test_plan",
-          "description": "Create a new test plan. payload.projectId defaults to ALLURE_PROJECT_ID env when omitted.",
+          "description": "Create a test plan (a saved set of test cases to run together). payload: name (required), projectId (defaults to ALLURE_PROJECT_ID), baseRql (AQL filter over test cases, e.g. 'tag = \"smoke\"'), treeSelection { inverted, leafsInclude, leafsExclude, groupsInclude, groupsExclude, path }, treeId.\nSelection semantics: baseRql + treeSelection {inverted:true} with empty lists = every test case matching baseRql (what the UI sends); treeSelection {inverted:false, leafsInclude:[ids]} = exactly those test cases; with inverted:true, leafsInclude lists EXCLUDED test cases.\nWARNING: { name } alone (no baseRql, no treeSelection) puts EVERY test case of the project into the plan.\nThe plan is a snapshot: test cases created later that match baseRql are added only after a sync (UI: Sync test cases). Run it with run_test_plan. See MCP resource allure://guides/user-flows.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -2027,7 +2069,7 @@
         },
         {
           "name": "update_test_plan",
-          "description": "Update an existing test plan.",
+          "description": "Partially update a test plan: name, baseRql, treeSelection, treeId (same semantics as create_test_plan; with inverted:true, leafsInclude lists EXCLUDED test cases). The test case count is recalculated after the update.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -2198,7 +2240,7 @@
         },
         {
           "name": "create_release",
-          "description": "Create a release. payload fields: name (required), dueDate (13-digit Unix ms timestamp), previousReleaseId, tags [{ name }]. projectId is added to the payload from projectId/projectName or ALLURE_PROJECT_ID.",
+          "description": "Create a release (status Draft, default workflow). payload fields: name (required), dueDate (13-digit Unix ms timestamp), previousReleaseId, tags [{ name }]. projectId is not part of the documented ReleaseCreateDto, but the server needs it to place the release — this tool adds it from projectId/projectName or ALLURE_PROJECT_ID. To fill the release with test cases use update_release_test_case_selection or create_release_from_test_cases; to attach runs use add_launch_to_release.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -2411,7 +2453,7 @@
         },
         {
           "name": "get_release_test_case_tree",
-          "description": "Browse the test case tree of a release: which test cases are in scope and their latest status.",
+          "description": "Browse the test case tree of a release: which test cases are in scope and their latest status. sort defaults to [\"id,asc\"] — the server's own default sort field is rejected (400 'unsupported sort field \"name\"').",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -2612,7 +2654,7 @@
         },
         {
           "name": "get_release_test_case_selection",
-          "description": "Get the rule that defines which test cases belong to a release (AQL and/or tree selection).",
+          "description": "Get the rule that defines which test cases belong to a release (AQL and/or tree selection). A release that never had a selection returns 404 'ReleaseTestCaseSelection not found' — that is the normal empty state, set one with update_release_test_case_selection.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -2864,8 +2906,10 @@
                 "type": "number"
               },
               "offset": {
-                "description": "Timezone offset in minutes. Must be a number, not a string.",
-                "type": "number"
+                "description": "Timezone offset in HOURS (e.g. 3 for UTC+3, -5 for UTC-5). Minutes are rejected by the API (e.g. -180 → 400).",
+                "type": "integer",
+                "minimum": -12,
+                "maximum": 14
               },
               "interval": {
                 "description": "Time interval for grouping. One of: \"hour\", \"day\", \"week\", \"month\".",
@@ -3055,8 +3099,10 @@
                 "type": "number"
               },
               "offset": {
-                "description": "Timezone offset in minutes. Must be a number, not a string.",
-                "type": "number"
+                "description": "Timezone offset in HOURS (e.g. 3 for UTC+3, -5 for UTC-5). Minutes are rejected by the API (e.g. -180 → 400).",
+                "type": "integer",
+                "minimum": -12,
+                "maximum": 14
               },
               "interval": {
                 "description": "Time interval for grouping. One of: \"hour\", \"day\", \"week\", \"month\".",
@@ -3131,8 +3177,10 @@
                 "type": "number"
               },
               "offset": {
-                "description": "Timezone offset in minutes. Must be a number, not a string.",
-                "type": "number"
+                "description": "Timezone offset in HOURS (e.g. 3 for UTC+3, -5 for UTC-5). Minutes are rejected by the API (e.g. -180 → 400).",
+                "type": "integer",
+                "minimum": -12,
+                "maximum": 14
               },
               "interval": {
                 "description": "Time interval for grouping. One of: \"hour\", \"day\", \"week\", \"month\".",
@@ -3158,7 +3206,7 @@
       "tools": [
         {
           "name": "create_dashboard",
-          "description": "Create a new dashboard in a project.",
+          "description": "Create a new dashboard in a project. Pass payload.templateId to get ready-made widgets (templateId -1 = the 'Automation' template from the UI); without it the dashboard is empty.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -3287,7 +3335,7 @@
         },
         {
           "name": "copy_dashboard",
-          "description": "Copy an existing dashboard to the same or another project.",
+          "description": "Copy an existing dashboard (with its widgets) to the same or another project. preserveWidgetAql (default true) keeps the widgets' AQL filters in the copy.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -3310,6 +3358,10 @@
               "projectName": {
                 "description": "Target project name (alternative to projectId).",
                 "type": "string"
+              },
+              "preserveWidgetAql": {
+                "description": "Keep widget AQL filters in the copy (default true).",
+                "type": "boolean"
               },
               "payload": {
                 "description": "Additional copy options.",
@@ -3337,7 +3389,7 @@
         },
         {
           "name": "get_widget_data",
-          "description": "Get data for a specific dashboard widget.",
+          "description": "Get the data of a dashboard widget for a date range (the same request the dashboard page makes). Range: dateFrom / dateTo as YYYY-MM-DD (inclusive); without them the server uses its default period (last 14 days). from / to (Unix ms) are still accepted and converted to dates. offset = timezone offset in HOURS (e.g. 3 or -3). page/size apply to list widgets.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -3347,23 +3399,39 @@
                 "maximum": 9007199254740991,
                 "description": "Widget ID. Must be a number (integer), not a string."
               },
-              "projectId": {
-                "description": "Project ID for widget context. Must be a number (integer), not a string.",
+              "dateFrom": {
+                "description": "Start date, YYYY-MM-DD.",
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              },
+              "dateTo": {
+                "description": "End date, YYYY-MM-DD.",
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              },
+              "from": {
+                "description": "Alternative to dateFrom: start as Unix timestamp ms (converted to a UTC date).",
+                "type": "number"
+              },
+              "to": {
+                "description": "Alternative to dateTo: end as Unix timestamp ms (converted to a UTC date).",
+                "type": "number"
+              },
+              "offset": {
+                "description": "Timezone offset in hours, e.g. 3 for UTC+3.",
                 "type": "integer",
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991
               },
-              "projectName": {
-                "description": "Project name (alternative to projectId).",
-                "type": "string"
+              "page": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               },
-              "from": {
-                "description": "Start of time range (Unix timestamp ms). Must be a number, not a string.",
-                "type": "number"
-              },
-              "to": {
-                "description": "End of time range (Unix timestamp ms). Must be a number, not a string.",
-                "type": "number"
+              "size": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               }
             },
             "required": [
@@ -3382,7 +3450,7 @@
       "tools": [
         {
           "name": "get_defect",
-          "description": "Get a defect by ID. Returns the defect name, status, description, and matcher configuration.",
+          "description": "Get a defect by ID. Returns the defect name, description and closed flag. Its automation rules (matchers) are separate: use find_similar_failures({launchId, defectId}) to apply them to a launch.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -3404,7 +3472,7 @@
         },
         {
           "name": "create_defect",
-          "description": "Create a new defect record to group a novel failure pattern. payload must include: name (string), projectId (number). Optional: description (string).",
+          "description": "Create a defect that groups a failure pattern. payload: name (required), projectId (required), description (markdown), matcher (optional automation rule, the UI's 'Create automation rule'): { name (required), messageRegex, traceRegex } — results whose error message / stack trace match are auto-linked by apply_defect_matchers. linkIssue (optional, needs an issue-tracker integration): { integrationId, name }.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -3419,7 +3487,7 @@
                     "type": "string"
                   }
                 ],
-                "description": "Required: name, projectId. Optional: description."
+                "description": "Required: name, projectId. Optional: description, matcher {name, messageRegex, traceRegex}, linkIssue {integrationId, name}."
               }
             },
             "required": [
@@ -3434,7 +3502,7 @@
         },
         {
           "name": "update_defect",
-          "description": "Update defect name, description, or status.",
+          "description": "Partially update a defect: name, description, closed. Close one defect: { closed: true }; reopen: { closed: false } (the same request the UI's Close/Reopen menu sends). For several defects use bulk_close_defects / bulk_reopen_defects.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -3605,18 +3673,26 @@
         },
         {
           "name": "find_similar_failures",
-          "description": "Find test results that match a defect pattern within a launch. Use this to detect flaky tests and group failures by root cause: pass launchId to scope the search, optionally pass a defectId to check match against a specific defect. Returns test results that are candidates for linking to the defect.",
+          "description": "Find test results in a launch whose error message and/or stack trace match a regex — the same matching defect automation rules use. launchId is required. Give messageRegex and/or traceRegex directly, or give defectId to reuse that defect's automation rules (its first matcher with a regex is used). Returns matching results (id, name, message, status) — candidates for link_defect_to_test_results.",
           "inputSchema": {
             "type": "object",
             "properties": {
               "launchId": {
-                "description": "Launch ID to scope the search.",
                 "type": "integer",
                 "minimum": -9007199254740991,
-                "maximum": 9007199254740991
+                "maximum": 9007199254740991,
+                "description": "Launch ID to search in (required by the API)."
+              },
+              "messageRegex": {
+                "description": "Java regex matched against the failure message, e.g. \".*Timeout.*\".",
+                "type": "string"
+              },
+              "traceRegex": {
+                "description": "Java regex matched against the stack trace.",
+                "type": "string"
               },
               "defectId": {
-                "description": "Defect ID to match against.",
+                "description": "Take the regex from this defect's automation rule when messageRegex/traceRegex are not given.",
                 "type": "integer",
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991
@@ -3633,7 +3709,10 @@
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991
               }
-            }
+            },
+            "required": [
+              "launchId"
+            ]
           },
           "annotations": {
             "readOnlyHint": true,
@@ -3642,11 +3721,50 @@
         },
         {
           "name": "link_defect_to_test_results",
-          "description": "Link one or multiple test results to a defect record (bulk API). payload must include: defectId (number) and testResultIds (array of numbers).",
+          "description": "Link test results of ONE launch to a defect (UI: Link defect). Arguments: defectId, testResultIds, launchId (the launch the results belong to — required by the API), projectId/projectName (optional). The values may also be nested in `payload` (older calling convention).",
           "inputSchema": {
             "type": "object",
             "properties": {
+              "defectId": {
+                "description": "Defect ID.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "testResultIds": {
+                "description": "Test result IDs (all from the same launch).",
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "launchId": {
+                "description": "Launch ID the test results belong to.",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "projectId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Project ID. Must be a number (integer), not a string."
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
               "payload": {
+                "description": "Legacy: { defectId, testResultIds, launchId }.",
                 "anyOf": [
                   {
                     "type": "object",
@@ -3656,13 +3774,9 @@
                   {
                     "type": "string"
                   }
-                ],
-                "description": "Required: defectId (number), testResultIds (array of numbers)."
+                ]
               }
-            },
-            "required": [
-              "payload"
-            ]
+            }
           },
           "annotations": {
             "readOnlyHint": false,
@@ -3672,11 +3786,38 @@
         },
         {
           "name": "bulk_close_defects",
-          "description": "Close multiple defects at once — mark them as resolved after a fix is confirmed. payload must include: ids (array of defect IDs).",
+          "description": "Close several defects at once (UI: Defects → select → Bulk actions → Close). Arguments: ids (defect IDs), projectId/projectName (optional, defaults to the configured project). For a single defect update_defect({id, payload:{closed:true}}) is equivalent.",
           "inputSchema": {
             "type": "object",
             "properties": {
+              "ids": {
+                "description": "Defect IDs to close.",
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "projectId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Project ID. Must be a number (integer), not a string."
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
               "payload": {
+                "description": "Legacy: { ids }.",
                 "anyOf": [
                   {
                     "type": "object",
@@ -3686,13 +3827,9 @@
                   {
                     "type": "string"
                   }
-                ],
-                "description": "Required: ids (array of defect ID numbers)."
+                ]
               }
-            },
-            "required": [
-              "payload"
-            ]
+            }
           },
           "annotations": {
             "readOnlyHint": false,
@@ -3701,11 +3838,38 @@
         },
         {
           "name": "bulk_reopen_defects",
-          "description": "Reopen multiple closed defects — use when a regression is detected after a fix was marked complete. payload must include: ids (array of defect IDs).",
+          "description": "Reopen several closed defects at once (UI: Bulk actions → Reopen). Arguments: ids (defect IDs), projectId/projectName (optional).",
           "inputSchema": {
             "type": "object",
             "properties": {
+              "ids": {
+                "description": "Defect IDs to reopen.",
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "projectId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Project ID. Must be a number (integer), not a string."
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
               "payload": {
+                "description": "Legacy: { ids }.",
                 "anyOf": [
                   {
                     "type": "object",
@@ -3715,13 +3879,9 @@
                   {
                     "type": "string"
                   }
-                ],
-                "description": "Required: ids (array of defect ID numbers)."
+                ]
               }
-            },
-            "required": [
-              "payload"
-            ]
+            }
           },
           "annotations": {
             "readOnlyHint": false,
@@ -3730,7 +3890,7 @@
         },
         {
           "name": "link_issue_to_defect",
-          "description": "Link an external issue (Jira, GitHub, etc.) to a defect record. payload must include: url (string) and name (string). Use this to associate a tracker ticket with a failure pattern.",
+          "description": "Link a tracker issue to a defect. payload: { integrationId (required — an issue-tracker integration connected to the project), name (required — issue key, e.g. \"JIRA-123\") }. Without an integration the API answers 409 'integrationId must not be null'.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -3751,7 +3911,7 @@
                     "type": "string"
                   }
                 ],
-                "description": "Required: url (string), name (string). Optional: type (string)."
+                "description": "Required: integrationId (number), name (issue key)."
               }
             },
             "required": [
@@ -3895,7 +4055,7 @@
         },
         {
           "name": "create_shared_step",
-          "description": "Create a new shared step in a project. payload must include at minimum: name (string) and projectId (number). Use this to extract repeated test steps into a reusable library.",
+          "description": "Create a new, EMPTY shared step in a project. payload: name (required), projectId (required). This toolset cannot add steps inside a shared step yet (the UI does it in the shared step editor) — create the content in the UI, then reuse it in test cases with create_test_case_step({testCaseId, sharedStepId}). Read its content with get_shared_step_steps and its usage with get_shared_step_usage.",
           "inputSchema": {
             "type": "object",
             "properties": {

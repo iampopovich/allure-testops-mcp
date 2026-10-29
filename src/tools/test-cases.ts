@@ -193,43 +193,85 @@ const findTestCases = zodTool("find_test_cases",
 
 const getTestCase = zodTool("get_test_case", "Get a test case by ID.", z.object({ id: idSchema("Test case") }));
 
+const USER_FLOWS_HINT = "See MCP resource allure://guides/user-flows for the full UI-equivalent flow.";
+const CONCURRENCY_NOTE = "CONCURRENCY: write steps of ONE test case sequentially (never 2+ step-writing calls for the same testCaseId in one batch) — parallel writes to the same scenario tree can silently drop a line. Different testCaseIds are safe to parallelize.";
+
 const createTestCase = zodTool("create_test_case",
-  "Create a new test case. payload.projectId defaults to ALLURE_PROJECT_ID env when omitted. payload.precondition (string) is the preconditions field — always use this for preconditions/prerequisites text, NOT payload.description. payload.description (string) is the general test case description — always populate this with a meaningful summary of what the test case verifies. payload.customFields supports values like { customField: { id }, id, name }. IMPORTANT: steps are NOT created via this tool. The Allure API does not support creating steps through the test-case payload — payload.steps is silently ignored. After creating the test case, use create_test_case_step to add each step individually. Example workflow: create_test_case → for each step call create_test_case_step.",
+  "Create a new test case (metadata only). The scenario is added afterwards, step by step.\n\n" +
+  "payload fields: name (required); projectId (defaults to ALLURE_PROJECT_ID); description (what the case verifies — always fill it); " +
+  "precondition (preconditions text — NOT description); expectedResult (ONE overall expected result of the whole case — this is NOT the per-step expected result); " +
+  "statusId together with workflowId (statusId alone → 400 'workflow and status are required'; default workflow 'Default Manual' = -1, statuses -1 Draft, -2 Review, -3 Active, -4 Outdated); " +
+  "testLayerId (-1 Unit Tests, -2 UI Tests, -3 API Tests by default); tags [{id}|{name}] (a name creates the tag); links [{name, url}]; " +
+  "customFields [{customField:{id}, id|name}]; automated.\n\n" +
+  "DO NOT pass scenario/steps: the API accepts payload.scenario but stores only empty step nodes (text '<empty>', no expected results, no shared steps). " +
+  "Workflow: create_test_case → for each step, sequentially, create_test_case_step({testCaseId, body, expectedResult}) → verify with get_test_case_steps. " +
+  "Precondition / test-case expected result are shown in the UI only when the project enables those sections (project property testcase.sections.*.enabled); the API stores them either way. " +
+  USER_FLOWS_HINT,
   z.object({ payload: coerceObject() }),
 );
 
 const createTestCaseStep = zodTool("create_test_case_step",
-  "Add a new step to a test case — works for both NEW and EXISTING test cases. This is the ONLY correct tool for adding steps. NEVER use update_test_case to add steps — it replaces the entire scenario and loses expected results.\n\nUSE THIS TOOL whenever the user asks to add a step. No need to read the scenario first — just call with testCaseId and body.\n\nexpectedResult is optional. When provided, the expected result is set on the new step automatically via the Allure API (body and expectedResult are passed in a single request). Multiple expected result lines: separate with ; or newlines.\n\nNOTE: when expectedResult is provided, the API response includes a created wrapper step whose body is initially a placeholder (e.g. Expected Result) — this is normal Allure API behavior, not a bug. The wrapper step gets an ID and can be edited later via update_test_case_step. The actual expectedResult text is accessible through get_test_case_steps.\n\nparentId creates a child step under the given parent (for nested structures). sharedStepId references an existing shared step instead of providing body text.\n\nCONCURRENCY WARNING: NEVER issue 2+ concurrent calls (in the same message/batch) against create_test_case_step / update_test_case_step / set_test_case_step_expected_result for the SAME testCaseId — the API has a race condition when writing to the same scenario tree in parallel, and one of the leaf texts can be silently lost. Steps for the same test case must be written ONE AT A TIME, sequentially. Calls targeting DIFFERENT testCaseIds are safe to parallelize.",
+  "Add a step to a test case (new or existing) — the only correct way to build a scenario. Equivalent to pressing Enter / 'Step with expected result' in the UI scenario editor.\n\n" +
+  "- body: step text (required unless sharedStepId is given).\n" +
+  "- expectedResult (optional): one expected-result line per ';' or newline. The tool creates the step with an Expected Result container and then one child line per entry, so get_test_case_steps shows them under step.expectedResultId.\n" +
+  "- parentId: create a nested sub-step under that step.\n" +
+  "- sharedStepId: insert a shared step instead of body text.\n" +
+  "- afterId / beforeId (optional): position among siblings; without them the step is appended at the end.\n\n" +
+  "The response contains createdStepId (the step) and expectedResultId (its ER container, when expectedResult was given). " +
+  "To add expected results to an existing step use set_test_case_step_expected_result; to change text use update_test_case_step. " +
+  CONCURRENCY_NOTE + " " + USER_FLOWS_HINT,
   z.object({
     testCaseId: idSchema("Test case"),
     body: z.string().optional().describe("Step body text. Required unless sharedStepId is provided."),
-    expectedResult: z.string().optional().describe("Expected result text for the new step. Separate multiple lines with ; or newlines."),
+    expectedResult: z.string().optional().describe("Expected result for the new step. Multiple lines: separate with ; or newlines — each becomes its own ER line."),
     parentId: coerceInt().optional().describe("Parent step ID for nested steps."),
     sharedStepId: coerceInt().optional().describe("Shared step ID to reference an existing shared step instead of providing body text."),
+    afterId: coerceInt().optional().describe("Insert the new step right after this sibling step ID."),
+    beforeId: coerceInt().optional().describe("Insert the new step right before this sibling step ID."),
   }).passthrough(),
 );
 
 const setTestCaseStepExpectedResult = zodTool("set_test_case_step_expected_result",
-  "Set the expected result on a step that has NO expected result yet. Call this after create_test_case_step when an expected result is needed.\n\nWHEN TO USE:\n- User asks to add a step with expected result → use create_test_case_step with expectedResult instead (preferred)\n- User asks to set expected result on an existing step that does NOT have one yet (verify via get_test_case_steps — the step has no expectedResultId / no wrapper children)\n\nWHEN NOT TO USE — this tool APPENDS, it does not replace:\nIf the step ALREADY has expected-result text, calling this tool again creates a NEW sibling leaf under the same wrapper instead of replacing the old one — you end up with duplicated expected-result lines on the same step. There is no delete_test_case_step in this toolset, so an accidentally created duplicate cannot be removed automatically; it must be cleaned up manually in the Allure UI. To change existing expected-result text, use update_test_case_step(leafId, { body: newText }) directly on the existing leaf's step id instead (see update_test_case_step's WRAPPER STEPS note).\n\nbody: pass the step's current body text. Omitting it may cause 400 step.onlyonedetail on some API versions.\nMultiple expected result lines: separate with ; or newlines.",
+  "APPEND expected-result lines to an existing step. If the step has no expected result yet, the Expected Result container is created first (the UI's 'Convert to → Step with expected result'); existing lines are kept and the new ones are added after them.\n\n" +
+  "stepId may be the step itself or its Expected Result container. body is optional — the current step text is used when omitted.\n" +
+  "To REPLACE all expected-result lines use update_test_case_step({testCaseId, stepId, expectedResult}). To add a step together with its expected result use create_test_case_step({..., expectedResult}). " +
+  "Multiple lines: separate with ; or newlines. " + CONCURRENCY_NOTE,
   z.object({
-    stepId: coerceInt().describe("Step ID. Use createdStepId from create_test_case_step response."),
+    stepId: coerceInt().describe("Step ID (or its Expected Result container ID)."),
     testCaseId: idSchema("Test case"),
-    body: z.string().optional().describe("Step body text (current or unchanged). Required by the API."),
-    expectedResult: z.string().describe("Expected result text. Separate multiple lines with ; or newlines."),
+    body: z.string().optional().describe("Optional new step text; the current text is kept when omitted."),
+    expectedResult: z.string().describe("Expected result text to append. Separate multiple lines with ; or newlines."),
   }),
 );
 
 const updateTestCaseStep = zodTool("update_test_case_step",
-  "Update a test case step by ID. Supports updating body text and/or expectedResult.\n\nWORKFLOW — read before using:\n1. Change ONLY step text:   { stepId, body: \"new text\" }. Omit expectedResult — existing expected results stay untouched.\n2. Change ONLY expected result: { stepId, expectedResult: \"A; B\" }. Omit body — step text stays as-is.\n3. Change BOTH:             { stepId, body: \"new text\", expectedResult: \"A; B\" }.\n\nCRITICAL — expectedResult is a FULL REPLACE, not an append.\nWhen you pass expectedResult, the API deletes ALL existing expected-result lines for that step and replaces them with what you provide. You MUST include EVERY expected-result line you want to keep, separated by semicolons (e.g. \"Check value; Verify status\") or newlines.\nIf you have 3 expected-result lines and only pass 1, the other 2 are GONE.\n\nWRAPPER STEPS — silent no-op risk.\nSteps marked _wrapper=true in get_test_case_steps output (or listed in _meta.expectedResultWrapperIds) are Expected Result container nodes. Passing expectedResult to update_test_case_step targeting a wrapper ONLY works the first time (when the wrapper has no children yet — it creates the leaf). If the wrapper already HAS a child (check its `children` array via get_test_case_steps), calling update_test_case_step(wrapperId, { expectedResult }) again returns 200 and bumps lastModifiedDate but the text is NOT changed — this is a silent no-op, not an error. In that case, call update_test_case_step(leafId, { body: newText }) directly on the child step id instead, and OMIT expectedResult entirely.\n\nWHAT TO AVOID:\n- Calling this tool with expectedResult, then calling it again — the second call overwrites the first. Update body and expectedResult together in ONE call.\n- Mixing update_test_case_step with update_test_case (full scenario replace) on the same step — pick one approach and stick with it.\n- Passing a partial expectedResult string — it BECOMES the entire expected result. Old lines are wiped.\n- Issuing 2+ concurrent calls (same message/batch) against create_test_case_step / update_test_case_step / set_test_case_step_expected_result for the SAME testCaseId — the API race-conditions when writing to the same scenario tree in parallel and can silently drop one of the leaf texts. Write steps for one test case sequentially; only different testCaseIds are safe to parallelize.",
+  "Update a step's text and/or REPLACE its expected result, without losing data. The tool reads the scenario first (that is why testCaseId is required) and sends exactly what the UI sends.\n\n" +
+  "1. Text only — {testCaseId, stepId, body}: the existing expected result is preserved.\n" +
+  "2. Replace expected result — {testCaseId, stepId, expectedResult: \"A; B\"}: ALL current ER lines are deleted and replaced by these lines (include every line you want to keep). The container is created if the step had none.\n" +
+  "3. Both — pass body and expectedResult in ONE call.\n" +
+  "4. Remove the expected result — expectedResult: \"\" (UI 'Convert to → Step').\n" +
+  "5. Edit one ER line — {testCaseId, stepId: <line id from the container's children>, body}.\n" +
+  "6. stepId may also be an Expected Result container: then expectedResult replaces its lines.\n\n" +
+  "Read IDs with get_test_case_steps (step.expectedResultId → container; container.children → lines). " + CONCURRENCY_NOTE,
   z.object({
+    testCaseId: idSchema("Test case"),
     stepId: coerceInt().describe("Step ID to update. Must be a number (integer), not a string."),
-    body: z.string().optional().describe("New step body text."),
-    expectedResult: z.string().optional().describe("FULL expected result text — REPLACES ALL existing lines. Use semicolons or newlines for multiple lines. When omitted, existing expected results are preserved."),
+    body: z.string().optional().describe("New step text. Omit to keep the current text."),
+    expectedResult: z.string().optional().describe("FULL replacement of the expected result (lines separated by ; or newlines). \"\" removes it. Omit to keep the current expected result."),
   }),
 );
 
+const deleteTestCaseStep = zodTool("delete_test_case_step",
+  "Delete a scenario step (UI: step menu → Delete). Deletion cascades: the step's expected result and nested sub-steps are deleted too and cannot be restored. " +
+  "Can also delete a single expected-result line (pass the line's id from the container's children). Returns the updated scenario.",
+  z.object({ stepId: coerceInt().describe("Step (or expected-result line) ID to delete.") }),
+);
+
 const updateTestCase = zodTool("update_test_case",
-  "Update an existing test case metadata (name, description, precondition, tags, customFields, etc.). payload.customFields supports values like { customField: { id }, id, name }. DO NOT use this tool to add or edit steps — use create_test_case_step / update_test_case_step instead. NOTE: there is no delete_test_case_step tool in this toolset — steps cannot be deleted programmatically; removing a step requires the Allure UI.",
+  "Partially update test case metadata (only the fields you pass are changed): name, description, precondition, expectedResult (test-case level, not per-step), " +
+  "statusId (+ workflowId), testLayerId, automated, links, tags, customFields.\n\n" +
+  "FULL REPLACE fields: links, tags and customFields replace the whole list — pass every item you want to keep (for incremental tag changes use add_test_case_tags_bulk / remove_test_case_tags_bulk; for custom fields use set_test_case_custom_fields).\n" +
+  "NEVER pass scenario: the API replaces the WHOLE scenario with empty step nodes (all step texts and expected results are lost). Edit steps with create_test_case_step / update_test_case_step / delete_test_case_step.",
   z.object({ id: idSchema("Test case"), payload: coerceObject() }),
 );
 
@@ -247,7 +289,8 @@ const addTestCaseTagsBulk = zodTool("add_test_case_tags_bulk",
 );
 
 const restoreTestCasesBulk = zodTool("restore_test_cases_bulk",
-  "Restore one or multiple deleted test cases from the project trash (Allure TestOps 26.3+). " +
+  "Restore one or multiple test cases from the project trash (soft-deleted via delete_test_case). " +
+  "Only trashed test cases can be restored — a non-deleted ID makes the API answer 400 'can-not-restore-not-deleted-test-case'. " +
   "For a single test case, restore_test_case is equivalent.",
   z.object({
     projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(),
@@ -286,12 +329,18 @@ const getTestCaseHistory = zodTool("get_test_case_history", "Get test case run h
   z.object({ id: idSchema("Test case"), ...paginationSchema, sort: sortSchema }),
 );
 
-const getTestCaseScenario = zodTool("get_test_case_scenario", "Get scenario for a test case.",
+const getTestCaseScenario = zodTool("get_test_case_scenario",
+  "Alias of get_test_case_steps (kept for compatibility). The legacy endpoint GET /api/testcase/{id}/scenario is deprecated and returns an empty list for editor-built scenarios, so this tool reads the normalized step tree instead. Prefer get_test_case_steps.",
   z.object({ id: idSchema("Test case") }),
 );
 
 const getTestCaseStepsTool = zodTool("get_test_case_steps",
-  "Get manual scenario steps for a test case. Returns a normalized scenario with root step and a flat map of all steps (scenarioSteps). Each step contains body, expectedResult, children IDs, and optional sharedStepId. IMPORTANT: the response includes a _meta section with expectedResultWrapperIds — these are Expected Result container nodes. See _meta.note for the exact create-vs-edit workflow (whether to target the wrapper or its existing leaf child).\n\nThe server's response cache is cleared on every write, so a step written via create_test_case_step / update_test_case_step / set_test_case_step_expected_result is visible to the next get_test_case_steps call.",
+  "Read the manual scenario of a test case (the same tree the UI renders). Response: root.children = ordered top-level step IDs; scenarioSteps = flat map id → step. " +
+  "A step has body, optional children (nested sub-steps), optional sharedStepId (inserted shared step — read its content with get_shared_step_steps), optional attachmentId (attachment node), " +
+  "and optional expectedResultId → the Expected Result CONTAINER node; the container's children are the expected-result lines. " +
+  "_meta.expectedResultWrapperIds lists all containers; _meta.regularStepIds lists the rest. " +
+  "Use these IDs with update_test_case_step / set_test_case_step_expected_result / delete_test_case_step. The response cache is cleared on every write. " +
+  USER_FLOWS_HINT,
   z.object({ id: idSchema("Test case") }),
 );
 
@@ -299,7 +348,9 @@ const getTestCaseTags = zodTool("get_test_case_tags", "Get tags assigned to a te
   z.object({ id: idSchema("Test case") }),
 );
 
-const setTestCaseTags = zodTool("set_test_case_tags", "Set tags for a test case.",
+const setTestCaseTags = zodTool("set_test_case_tags",
+  "REPLACE the full tag list of a test case. payload: [{id}] or [{name}] — a name that does not exist yet creates the tag. " +
+  "Tags not in the payload are removed; [] clears all tags. To add or remove tags without touching the others use add_test_case_tags_bulk / remove_test_case_tags_bulk.",
   z.object({ testCaseId: idSchema("Test case"), payload: coerceArray(coerceObject()) }),
 );
 
@@ -307,7 +358,9 @@ const getTestCaseIssues = zodTool("get_test_case_issues", "Get linked issues for
   z.object({ id: idSchema("Test case") }),
 );
 
-const setTestCaseIssues = zodTool("set_test_case_issues", "Set linked issues for a test case.",
+const setTestCaseIssues = zodTool("set_test_case_issues",
+  "REPLACE the issue links of a test case. payload: [{integrationId, name}] where integrationId is an issue-tracker integration connected to the project and name is the issue key (e.g. \"JIRA-123\"). " +
+  "Issues only exist through an integration: without integrationId the API returns 200 with an empty list and stores nothing — this tool therefore rejects items without integrationId and verifies the result. [] clears all issues.",
   z.object({ testCaseId: idSchema("Test case"), payload: coerceArray(coerceObject()) }),
 );
 
@@ -329,7 +382,10 @@ const getTestCaseCustomFields = zodTool("get_test_case_custom_fields", "Get cust
 );
 
 const setTestCaseCustomFields = zodTool("set_test_case_custom_fields",
-  "Add custom field values for a test case via bulk API. Supports grouped values [{ customField: { id }, values: [{ id|name }] }] and flat values [{ id|name, customField: { id } }].\n\nIMPORTANT — customField.id MUST be a NUMBER, never a name. Passing customField: { name: \"Feature\" } fails client-side with '\"payload[0].customField.id\" must be a number' — there is no name-to-id resolution for the field itself (values MAY accept name, but resolving to id first is safer and not guaranteed to work on every Allure version).\n\nThere is no dedicated \"list custom fields\" tool. To find a field's numeric id: call get_test_case_custom_fields on ANY already-populated test case in the same project — its response shows each customField's id alongside its name. System fields commonly have NEGATIVE ids (e.g. Feature = -2, Suite = -5) — these vary per Allure instance, do not hardcode them.\n\nTo find a VALUE's numeric id: call list_custom_field_values({ customFieldId, query: \"<value text>\" }).\n\nCorrect workflow: 1) get_test_case_custom_fields(anyPopulatedTestCaseId) → note customField ids. 2) list_custom_field_values({customFieldId, query}) → note value id. 3) set_test_case_custom_fields({testCaseId, payload: [{ customField: { id: -2 }, values: [{ id: 3170 }] }]}) — all numeric ids, resolved ahead of time.",
+  "ADD custom field values to a test case (append — existing values stay; adding a value that is already set is a no-op). Supports grouped values [{ customField: { id }, values: [{ id|name }] }] and flat values [{ id|name, customField: { id } }].\n\n" +
+  "customField.id MUST be a NUMBER. A value may be given by id or by name — a name that does not exist yet is created as a new value of that field.\n" +
+  "Built-in system fields have negative ids: -1 Epic, -2 Feature, -3 Story, -4 Component, -5 Suite. For other fields, read the id from get_test_case_custom_fields (any test case of the project lists every field with its id) and value ids from list_custom_field_values({ customFieldId, query }).\n\n" +
+  "This tool cannot REMOVE a value (no remove tool yet — in the UI it is the bulk action Remove metadata → Custom field values).",
   z.object({ testCaseId: idSchema("Test case"), projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(), payload: coerceArray(coerceObject()) }),
 );
 
@@ -369,6 +425,7 @@ export function createTestCaseTools(client: AllureApiClient): ToolBundle {
       createTestCaseStep.definition,
       setTestCaseStepExpectedResult.definition,
       updateTestCaseStep.definition,
+      deleteTestCaseStep.definition,
       updateTestCase.definition,
       deleteTestCase.definition,
       addTestCaseTagsBulk.definition,
@@ -434,16 +491,24 @@ export function createTestCaseTools(client: AllureApiClient): ToolBundle {
         if (args.expectedResult !== undefined) payload.expectedResult = args.expectedResult;
         if (args.parentId !== undefined) payload.parentId = args.parentId;
         if (args.sharedStepId !== undefined) payload.sharedStepId = args.sharedStepId;
-        return api.createTestCaseStep(client, payload, args.expectedResult !== undefined);
+        if (payload.body === undefined && payload.sharedStepId === undefined)
+          throw new Error("Either \"body\" or \"sharedStepId\" must be provided.");
+        return api.createTestCaseStep(client, payload, {
+          expectedResult: args.expectedResult, afterId: args.afterId, beforeId: args.beforeId,
+        });
       },
       set_test_case_step_expected_result: async (rawArgs: unknown) => {
         const { stepId, testCaseId, expectedResult, body } = setTestCaseStepExpectedResult.parse(rawArgs);
         return api.setStepExpectedResult(client, stepId, testCaseId, expectedResult, body);
       },
       update_test_case_step: async (rawArgs: unknown) => {
-        const { stepId, body, expectedResult } = updateTestCaseStep.parse(rawArgs);
-        return api.updateTestCaseStep(client, stepId, { body, expectedResult }, expectedResult !== undefined);
+        const { testCaseId, stepId, body, expectedResult } = updateTestCaseStep.parse(rawArgs);
+        if (body === undefined && expectedResult === undefined)
+          throw new Error("Provide \"body\" and/or \"expectedResult\".");
+        return api.updateTestCaseStep(client, testCaseId, stepId, { body, expectedResult });
       },
+      delete_test_case_step: async (rawArgs: unknown) =>
+        api.deleteTestCaseStep(client, deleteTestCaseStep.parse(rawArgs).stepId),
       update_test_case: async (rawArgs: unknown) => {
         const { id, payload } = updateTestCase.parse(rawArgs);
         return api.updateTestCase(client, id, payload);
@@ -493,7 +558,7 @@ export function createTestCaseTools(client: AllureApiClient): ToolBundle {
           const sid = Number(idStr);
           if (wrapperIds.has(sid)) step._wrapper = true; else regularIds.push(sid);
         }
-        return { ...data, _meta: { expectedResultWrapperIds: [...wrapperIds], regularStepIds: regularIds, note: "Steps with IDs in expectedResultWrapperIds are Expected Result container (wrapper) nodes. If a wrapper has NO children yet, set its text via update_test_case_step(wrapperId, { expectedResult }) — this creates the leaf. If a wrapper ALREADY has a child (its `children` array is non-empty), that call silently no-ops (200 OK, lastModifiedDate bumps, text unchanged) — instead call update_test_case_step(leafId, { body: newText }) directly on the child id from `children`, WITHOUT the expectedResult parameter." } };
+        return { ...data, _meta: { expectedResultWrapperIds: [...wrapperIds], regularStepIds: regularIds, note: "IDs in expectedResultWrapperIds are Expected Result containers (step.expectedResultId points to them); their `children` are the expected-result lines. Replace all lines: update_test_case_step({testCaseId, stepId, expectedResult}). Append lines: set_test_case_step_expected_result. Edit one line: update_test_case_step({testCaseId, stepId: lineId, body}). Delete a step or a line: delete_test_case_step." } };
       },
       get_test_case_tags: async (rawArgs) => api.getTestCaseTags(client, getTestCaseTags.parse(rawArgs).id),
       set_test_case_tags: async (rawArgs) => {
@@ -503,7 +568,16 @@ export function createTestCaseTools(client: AllureApiClient): ToolBundle {
       get_test_case_issues: async (rawArgs) => api.getTestCaseIssues(client, getTestCaseIssues.parse(rawArgs).id),
       set_test_case_issues: async (rawArgs) => {
         const { testCaseId, payload } = setTestCaseIssues.parse(rawArgs);
-        return api.setTestCaseIssues(client, testCaseId, payload);
+        payload.forEach((item, index) => {
+          if (typeof item.integrationId !== "number")
+            throw new Error(`"payload[${index}].integrationId" must be a number — issues can only be linked through an issue-tracker integration connected to the project.`);
+          if (typeof item.name !== "string" || item.name.trim().length === 0)
+            throw new Error(`"payload[${index}].name" must be the issue key, e.g. "JIRA-123".`);
+        });
+        const result = await api.setTestCaseIssues(client, testCaseId, payload);
+        if (payload.length > 0 && Array.isArray(result) && result.length === 0)
+          throw new Error("Allure accepted the request but stored no issues — check that the integrationId belongs to an issue-tracker integration connected to this project.");
+        return result;
       },
       restore_test_case: async (rawArgs) => api.restoreTestCase(client, restoreTestCase.parse(rawArgs).id),
       list_custom_field_values: async (rawArgs: unknown) => {

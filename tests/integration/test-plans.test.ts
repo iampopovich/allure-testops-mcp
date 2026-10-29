@@ -1,6 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
-  asArrayContent,
   callSafe,
   callTool,
   getMissingIntegrationEnv,
@@ -45,10 +44,9 @@ describeIntegration("test plan tools integration", () => {
     expect(pickId(plan)).toBe(testPlanId);
   });
 
-  it("list_test_plans", async () => {
-    const list = await callTool("list_test_plans", { projectId, size: 100 });
-    const found = asArrayContent(list).some((item) => pickId(item) === testPlanId);
-    expect(found).toBe(true);
+  it("get_test_plan returns the created plan", async () => {
+    const plan = await callTool<{ id: number }>("get_test_plan", { id: testPlanId as number });
+    expect(pickId(plan)).toBe(testPlanId);
   });
 
   it("update_test_plan then verify by get_test_plan", async () => {

@@ -126,19 +126,23 @@ describe("createReleaseTools", () => {
     await expect(bundle.handlers.add_launch_to_release({ releaseId: 5 })).rejects.toThrow();
   });
 
-  it("get_release_test_case_tree forwards tree filters and rejects a non-numeric path", async () => {
+  it("get_release_test_case_tree forwards tree filters, defaults sort and rejects a non-numeric path", async () => {
     const bundle = createReleaseTools(client as never);
-    vi.mocked(api.getReleaseTestCaseTree).mockResolvedValueOnce({ content: [] });
+    vi.mocked(api.getReleaseTestCaseTree).mockResolvedValue({ content: [] });
 
     await bundle.handlers.get_release_test_case_tree({ id: 5, treeId: 2, path: [1, 2] });
+    // The server's implicit sort ("name") is rejected with 400, so the tool sends id,asc by default.
     expect(api.getReleaseTestCaseTree).toHaveBeenCalledWith(client, 5, {
       treeId: 2,
       path: [1, 2],
       query: undefined,
       page: undefined,
       size: undefined,
-      sort: undefined,
+      sort: ["id,asc"],
     });
+
+    await bundle.handlers.get_release_test_case_tree({ id: 5, sort: ["name,desc"] });
+    expect(api.getReleaseTestCaseTree).toHaveBeenLastCalledWith(client, 5, expect.objectContaining({ sort: ["name,desc"] }));
 
     await expect(
       bundle.handlers.get_release_test_case_tree({ id: 5, path: ["not-a-number"] }),

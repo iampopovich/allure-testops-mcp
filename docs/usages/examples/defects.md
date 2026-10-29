@@ -67,16 +67,27 @@ Find test results in a launch that match a specific defect pattern:
 }
 ```
 
-Link multiple test results to a defect (bulk):
+Or with an explicit regex (no defect needed):
+
+```json
+{
+  "name": "find_similar_failures",
+  "arguments": {
+    "launchId": 55,
+    "messageRegex": ".*Timeout.*login.*"
+  }
+}
+```
+
+Link test results of one launch to a defect (bulk):
 
 ```json
 {
   "name": "link_defect_to_test_results",
   "arguments": {
-    "payload": {
-      "defectId": 12,
-      "testResultIds": [1001, 1002, 1003]
-    }
+    "defectId": 12,
+    "testResultIds": [1001, 1002, 1003],
+    "launchId": 55
   }
 }
 ```
@@ -87,9 +98,7 @@ Close multiple defects after a fix is deployed:
 {
   "name": "bulk_close_defects",
   "arguments": {
-    "payload": {
-      "ids": [10, 11, 14]
-    }
+    "ids": [10, 11, 14]
   }
 }
 ```
@@ -102,7 +111,7 @@ Link an external issue to a defect:
   "arguments": {
     "id": 12,
     "payload": {
-      "url": "https://jira.example.com/browse/PROJ-1234",
+      "integrationId": 3,
       "name": "PROJ-1234"
     }
   }
@@ -125,4 +134,4 @@ Auto-triage a launch using all configured defect matchers:
 - `get_launch_defects` is the fastest entry point for a post-launch failure analysis: call it first, then drill into individual defects with `get_defect_test_results`.
 - `apply_defect_matchers` runs all project-level matcher rules against unresolved results in the launch — useful for automated triage after a nightly run.
 - `find_similar_failures` helps when you suspect multiple unlinked results belong to the same root cause.
-- Always use `link_issue_to_defect` to connect defects to your issue tracker — it makes mute audits and "is this fixed?" checks much faster.
+- `link_issue_to_defect` needs an issue-tracker integration connected to the project (`integrationId`). Always use it to connect defects to your issue tracker — it makes mute audits and "is this fixed?" checks much faster.

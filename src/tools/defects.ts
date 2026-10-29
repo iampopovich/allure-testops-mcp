@@ -2,20 +2,40 @@ import type { AllureApiClient } from "../client.js";
 import * as api from "../api/defects.js";
 import type { ToolBundle } from "./types.js";
 import { z } from "zod";
-import { zodTool, idSchema, paginationSchema , coerceObject} from "./schema.js";
+import { zodTool, idSchema, paginationSchema, coerceObject, coerceInt, coerceArray, projectIdSchema, projectNameSchema } from "./schema.js";
+import { resolveProjectId } from "./utils.js";
+
+type ToolObject = Record<string, unknown>;
+
+/** Accepts the value at the top level or nested in `payload` (older calling convention). */
+function field(args: ToolObject, key: string): unknown {
+  if (args[key] !== undefined) return args[key];
+  const payload = args.payload;
+  return payload && typeof payload === "object" && !Array.isArray(payload) ? (payload as ToolObject)[key] : undefined;
+}
+
+function toIdList(value: unknown, label: string): number[] {
+  const list = Array.isArray(value) ? value : value === undefined ? [] : [value];
+  const ids = list.map((v) => (typeof v === "string" && /^\d+$/.test(v) ? Number(v) : v));
+  if (ids.length === 0 || ids.some((v) => typeof v !== "number" || !Number.isInteger(v)))
+    throw new Error(`"${label}" must be a non-empty array of integer IDs.`);
+  return ids as number[];
+}
 
 const getDefect = zodTool("get_defect",
-  "Get a defect by ID. Returns the defect name, status, description, and matcher configuration.",
+  "Get a defect by ID. Returns the defect name, description and closed flag. Its automation rules (matchers) are separate: use find_similar_failures({launchId, defectId}) to apply them to a launch.",
   z.object({ id: idSchema("Defect") }),
 );
 
 const createDefect = zodTool("create_defect",
-  "Create a new defect record to group a novel failure pattern. payload must include: name (string), projectId (number). Optional: description (string).",
-  z.object({ payload: coerceObject().describe("Required: name, projectId. Optional: description.") }),
+  "Create a defect that groups a failure pattern. payload: name (required), projectId (required), description (markdown), " +
+  "matcher (optional automation rule, the UI's 'Create automation rule'): { name (required), messageRegex, traceRegex } — results whose error message / stack trace match are auto-linked by apply_defect_matchers. " +
+  "linkIssue (optional, needs an issue-tracker integration): { integrationId, name }.",
+  z.object({ payload: coerceObject().describe("Required: name, projectId. Optional: description, matcher {name, messageRegex, traceRegex}, linkIssue {integrationId, name}.") }),
 );
 
 const updateDefect = zodTool("update_defect",
-  "Update defect name, description, or status.",
+  "Partially update a defect: name, description, closed. Close one defect: { closed: true }; reopen: { closed: false } (the same request the UI's Close/Reopen menu sends). For several defects use bulk_close_defects / bulk_reopen_defects.",
   z.object({ id: idSchema("Defect"), payload: coerceObject() }),
 );
 
@@ -40,34 +60,55 @@ const getLaunchDefects = zodTool("get_launch_defects",
 );
 
 const findSimilarFailures = zodTool("find_similar_failures",
-  "Find test results that match a defect pattern within a launch. Use this to detect flaky tests and group failures by root cause: pass launchId to scope the search, optionally pass a defectId to check match against a specific defect. Returns test results that are candidates for linking to the defect.",
+  "Find test results in a launch whose error message and/or stack trace match a regex — the same matching defect automation rules use. " +
+  "launchId is required. Give messageRegex and/or traceRegex directly, or give defectId to reuse that defect's automation rules (its first matcher with a regex is used). " +
+  "Returns matching results (id, name, message, status) — candidates for link_defect_to_test_results.",
   z.object({
-    launchId: idSchema("Launch").optional().describe("Launch ID to scope the search."),
-    defectId: idSchema("Defect").optional().describe("Defect ID to match against."),
+    launchId: idSchema("Launch").describe("Launch ID to search in (required by the API)."),
+    messageRegex: z.string().optional().describe("Java regex matched against the failure message, e.g. \".*Timeout.*\"."),
+    traceRegex: z.string().optional().describe("Java regex matched against the stack trace."),
+    defectId: idSchema("Defect").optional().describe("Take the regex from this defect's automation rule when messageRegex/traceRegex are not given."),
     ...paginationSchema,
   }),
 );
 
 const linkDefectToTestResults = zodTool("link_defect_to_test_results",
-  "Link one or multiple test results to a defect record (bulk API). payload must include: defectId (number) and testResultIds (array of numbers).",
-  z.object({ payload: coerceObject().describe("Required: defectId (number), testResultIds (array of numbers).") }),
+  "Link test results of ONE launch to a defect (UI: Link defect). Arguments: defectId, testResultIds, launchId (the launch the results belong to — required by the API), projectId/projectName (optional). " +
+  "The values may also be nested in `payload` (older calling convention).",
+  z.object({
+    defectId: coerceInt().optional().describe("Defect ID."),
+    testResultIds: coerceArray(coerceInt()).optional().describe("Test result IDs (all from the same launch)."),
+    launchId: coerceInt().optional().describe("Launch ID the test results belong to."),
+    projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(),
+    payload: coerceObject().optional().describe("Legacy: { defectId, testResultIds, launchId }."),
+  }),
 );
 
 const bulkCloseDefects = zodTool("bulk_close_defects",
-  "Close multiple defects at once — mark them as resolved after a fix is confirmed. payload must include: ids (array of defect IDs).",
-  z.object({ payload: coerceObject().describe("Required: ids (array of defect ID numbers).") }),
+  "Close several defects at once (UI: Defects → select → Bulk actions → Close). Arguments: ids (defect IDs), projectId/projectName (optional, defaults to the configured project). " +
+  "For a single defect update_defect({id, payload:{closed:true}}) is equivalent.",
+  z.object({
+    ids: coerceArray(coerceInt()).optional().describe("Defect IDs to close."),
+    projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(),
+    payload: coerceObject().optional().describe("Legacy: { ids }."),
+  }),
 );
 
 const bulkReopenDefects = zodTool("bulk_reopen_defects",
-  "Reopen multiple closed defects — use when a regression is detected after a fix was marked complete. payload must include: ids (array of defect IDs).",
-  z.object({ payload: coerceObject().describe("Required: ids (array of defect ID numbers).") }),
+  "Reopen several closed defects at once (UI: Bulk actions → Reopen). Arguments: ids (defect IDs), projectId/projectName (optional).",
+  z.object({
+    ids: coerceArray(coerceInt()).optional().describe("Defect IDs to reopen."),
+    projectId: projectIdSchema.optional(), projectName: projectNameSchema.optional(),
+    payload: coerceObject().optional().describe("Legacy: { ids }."),
+  }),
 );
 
 const linkIssueToDefect = zodTool("link_issue_to_defect",
-  "Link an external issue (Jira, GitHub, etc.) to a defect record. payload must include: url (string) and name (string). Use this to associate a tracker ticket with a failure pattern.",
+  "Link a tracker issue to a defect. payload: { integrationId (required — an issue-tracker integration connected to the project), name (required — issue key, e.g. \"JIRA-123\") }. " +
+  "Without an integration the API answers 409 'integrationId must not be null'.",
   z.object({
     id: idSchema("Defect"),
-    payload: coerceObject().describe("Required: url (string), name (string). Optional: type (string)."),
+    payload: coerceObject().describe("Required: integrationId (number), name (issue key)."),
   }),
 );
 
@@ -123,15 +164,36 @@ export function createDefectTools(client: AllureApiClient): ToolBundle {
         return api.getLaunchDefects(client, id, { page, size });
       },
       find_similar_failures: async (rawArgs) => {
-        const { launchId, defectId, page, size } = findSimilarFailures.parse(rawArgs);
-        return api.matchDefects(client, { launchId, defectId, page, size });
+        const { launchId, defectId, page, size, ...regex } = findSimilarFailures.parse(rawArgs);
+        let { messageRegex, traceRegex } = regex;
+        if (!messageRegex && !traceRegex && defectId !== undefined) {
+          const matchers = (await api.listDefectMatchers(client, defectId, { size: 100 })).content ?? [];
+          const matcher = matchers.find((m) => m.messageRegex || m.traceRegex);
+          messageRegex = matcher?.messageRegex || undefined;
+          traceRegex = matcher?.traceRegex || undefined;
+        }
+        if (!messageRegex && !traceRegex)
+          throw new Error("Provide messageRegex and/or traceRegex, or a defectId whose automation rule has a regex.");
+        return api.matchDefects(client, { launchId, messageRegex, traceRegex, page, size });
       },
-      link_defect_to_test_results: async (rawArgs) =>
-        api.bulkLinkDefectToResults(client, linkDefectToTestResults.parse(rawArgs).payload),
-      bulk_close_defects: async (rawArgs) =>
-        api.bulkCloseDefects(client, bulkCloseDefects.parse(rawArgs).payload),
-      bulk_reopen_defects: async (rawArgs) =>
-        api.bulkReopenDefects(client, bulkReopenDefects.parse(rawArgs).payload),
+      link_defect_to_test_results: async (rawArgs) => {
+        const args = linkDefectToTestResults.parse(rawArgs) as ToolObject;
+        const defectId = toIdList(field(args, "defectId"), "defectId")[0];
+        const testResultIds = toIdList(field(args, "testResultIds"), "testResultIds");
+        const launchId = toIdList(field(args, "launchId"), "launchId")[0];
+        const projectId = await resolveProjectId(args, client);
+        return api.bulkLinkDefectToResults(client, { projectId, launchId, defectId, testResultIds });
+      },
+      bulk_close_defects: async (rawArgs) => {
+        const args = bulkCloseDefects.parse(rawArgs) as ToolObject;
+        const projectId = await resolveProjectId(args, client);
+        return api.bulkCloseDefects(client, projectId, toIdList(field(args, "ids"), "ids"));
+      },
+      bulk_reopen_defects: async (rawArgs) => {
+        const args = bulkReopenDefects.parse(rawArgs) as ToolObject;
+        const projectId = await resolveProjectId(args, client);
+        return api.bulkReopenDefects(client, projectId, toIdList(field(args, "ids"), "ids"));
+      },
       link_issue_to_defect: async (rawArgs) => {
         const { id, payload } = linkIssueToDefect.parse(rawArgs);
         return api.linkIssueToDefect(client, id, payload);

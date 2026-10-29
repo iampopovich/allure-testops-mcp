@@ -45,19 +45,17 @@ describe("createLaunchTools", () => {
     expectRequiredFields(bundle.tools, "create_launch", ["payload"]);
     expectRequiredFields(bundle.tools, "update_launch", ["id", "payload"]);
     expectRequiredFields(bundle.tools, "add_test_cases_to_launch", ["id", "payload"]);
-    expectSchemaProperty(bundle.tools, "list_launches", "projectId");
-    expectSchemaProperty(bundle.tools, "list_launches", "projectName");
+    expectSchemaProperty(bundle.tools, "search_launches", "projectId");
+    expectSchemaProperty(bundle.tools, "search_launches", "projectName");
   });
 
-  it("list_launches validates and calls api with resolved project", async () => {
+  it("search_launches calls api with resolved project and pagination", async () => {
     const bundle = createLaunchTools(client as never);
-    (api.listLaunches as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(["ok"]);
+    (api.searchLaunches as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(["ok"]);
 
-    const result = await bundle.handlers.list_launches({ page: 2, size: 5, sort: ["name,asc"] });
+    const result = await bundle.handlers.search_launches({ rql: "true", page: 2, size: 5, sort: ["name,asc"] });
 
-    expect(api.listLaunches).toHaveBeenCalledWith(client, defaultProjectId, {
-      search: undefined,
-      filterId: undefined,
+    expect(api.searchLaunches).toHaveBeenCalledWith(client, defaultProjectId, "true", {
       page: 2,
       size: 5,
       sort: ["name,asc"],
@@ -67,14 +65,15 @@ describe("createLaunchTools", () => {
 
   it("search_launches requires rql", async () => {
     const bundle = createLaunchTools(client as never);
-    await expect(bundle.handlers.search_launches({})).rejects.toThrow(
-      '"rql" must be a non-empty string.',
-    );
+    await expect(bundle.handlers.search_launches({})).rejects.toThrow(/rql/);
   });
 
-  it("get_launch requires numeric id", async () => {
+  it("get_launch coerces a numeric string id and rejects a non-numeric one", async () => {
     const bundle = createLaunchTools(client as never);
-    await expect(bundle.handlers.get_launch({ id: "1" })).rejects.toThrow('"id" must be a number.');
+    (api.getLaunch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ id: 1 });
+    await bundle.handlers.get_launch({ id: "1" });
+    expect(api.getLaunch).toHaveBeenCalledWith(client, 1);
+    await expect(bundle.handlers.get_launch({ id: "abc" })).rejects.toThrow(/id/);
   });
 
   it("create_launch injects default projectId into payload", async () => {
@@ -91,9 +90,7 @@ describe("createLaunchTools", () => {
 
   it("update_launch requires payload object", async () => {
     const bundle = createLaunchTools(client as never);
-    await expect(bundle.handlers.update_launch({ id: 1, payload: [] })).rejects.toThrow(
-      '"payload" must be an object.',
-    );
+    await expect(bundle.handlers.update_launch({ id: 1, payload: [] })).rejects.toThrow(/payload/);
   });
 
   it("forwards id-based handlers to API", async () => {
@@ -119,11 +116,7 @@ describe("createLaunchTools", () => {
 
   it("add_test_cases_to_launch and add_test_plan_to_launch require object payload", async () => {
     const bundle = createLaunchTools(client as never);
-    await expect(bundle.handlers.add_test_cases_to_launch({ id: 1, payload: null })).rejects.toThrow(
-      '"payload" must be an object.',
-    );
-    await expect(bundle.handlers.add_test_plan_to_launch({ id: 1, payload: null })).rejects.toThrow(
-      '"payload" must be an object.',
-    );
+    await expect(bundle.handlers.add_test_cases_to_launch({ id: 1, payload: null })).rejects.toThrow(/payload/);
+    await expect(bundle.handlers.add_test_plan_to_launch({ id: 1, payload: null })).rejects.toThrow(/payload/);
   });
 });

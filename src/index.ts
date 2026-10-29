@@ -21,7 +21,7 @@ import { TokenManager } from "./auth.js";
 import { AllureApiClient } from "./client.js";
 import { buildToolRegistry, requiredEnv } from "./server-bootstrap.js";
 import { LruCacheStore } from "./cache.js";
-import { RESOURCES, RESOURCE_TEMPLATES, readResource } from "./resources/index.js";
+import { RESOURCES, RESOURCE_TEMPLATES, readResourceContent } from "./resources/index.js";
 import { logger } from "./logger.js";
 
 function formatToolResult(result: unknown): string {
@@ -82,16 +82,8 @@ async function main(): Promise<void> {
   server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
     const uri = request.params.uri;
     try {
-      const data = await readResource(client, uri);
-      return {
-        contents: [
-          {
-            uri,
-            mimeType: "application/json",
-            text: JSON.stringify(data),
-          },
-        ],
-      };
+      const { mimeType, text } = await readResourceContent(client, uri);
+      return { contents: [{ uri, mimeType, text }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       throw new Error(`Failed to read resource ${uri}: ${message}`);

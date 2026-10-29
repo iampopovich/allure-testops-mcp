@@ -80,32 +80,68 @@ export function matchDefects(
   return client.get("/api/testresult/defect/match", query);
 }
 
+export function listDefectMatchers(
+  client: AllureApiClient,
+  defectId: number,
+  query: QueryParams = {},
+): Promise<PageDto<{ id?: number; name?: string; messageRegex?: string; traceRegex?: string }>> {
+  return client.get(`/api/defect/${defectId}/matcher`, query);
+}
+
+/** DefectBulkDto: `{ projectId, selection: ListSelectionDto }` — the shape the Defects page bulk actions send. */
+function defectBulkBody(projectId: number, defectIds: number[]): Record<string, unknown> {
+  return {
+    projectId,
+    selection: { inverted: false, ids: defectIds, kind: "ListSelectionDto", projectId },
+  };
+}
+
 export function bulkCloseDefects(
   client: AllureApiClient,
-  body: Record<string, unknown>,
+  projectId: number,
+  defectIds: number[],
 ): Promise<unknown> {
-  return client.post("/api/defect/bulk/close", body);
+  return client.post("/api/defect/bulk/close", defectBulkBody(projectId, defectIds));
 }
 
 export function bulkReopenDefects(
   client: AllureApiClient,
-  body: Record<string, unknown>,
+  projectId: number,
+  defectIds: number[],
 ): Promise<unknown> {
-  return client.post("/api/defect/bulk/reopen", body);
+  return client.post("/api/defect/bulk/reopen", defectBulkBody(projectId, defectIds));
 }
 
 export function bulkRemoveDefects(
   client: AllureApiClient,
-  body: Record<string, unknown>,
+  projectId: number,
+  defectIds: number[],
 ): Promise<unknown> {
-  return client.post("/api/defect/bulk/remove", body);
+  return client.post("/api/defect/bulk/remove", defectBulkBody(projectId, defectIds));
 }
 
+/**
+ * TestResultBulkEntityIdsDto: `ids` are the DEFECT ids, the test results are selected through a
+ * launch-scoped tree selection (`leafsInclude` = test result ids).
+ */
 export function bulkLinkDefectToResults(
   client: AllureApiClient,
-  body: Record<string, unknown>,
+  args: { projectId: number; launchId: number; defectId: number; testResultIds: number[] },
 ): Promise<unknown> {
-  return client.post("/api/testresult/bulk/defect/link", body);
+  return client.post("/api/testresult/bulk/defect/link", {
+    ids: [args.defectId],
+    selection: {
+      kind: "TreeSelectionDto",
+      projectId: args.projectId,
+      launchId: args.launchId,
+      inverted: false,
+      leafsInclude: args.testResultIds,
+      leafsExclude: [],
+      groupsInclude: [],
+      groupsExclude: [],
+      path: [],
+    },
+  });
 }
 
 export function linkIssueToDefect(

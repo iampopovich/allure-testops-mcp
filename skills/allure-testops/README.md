@@ -64,6 +64,7 @@ The skill is domain-neutral. Keep project-specific conventions (domain vocabular
 | `SKILL.md` | Main instructions, loaded by the agent when the task matches |
 | `references/aql.md` | AQL operators, fields per entity and common mistakes |
 | `references/test-case-authoring.md` | How to write manual test cases: fields, naming, atomic steps |
+| `references/user-flows.md` | Every Allure TestOps user flow: UI path → MCP tool → API (generated from `docs/usages/user-flows.md`; also MCP resource `allure://guides/user-flows`) |
 
 ## Security
 

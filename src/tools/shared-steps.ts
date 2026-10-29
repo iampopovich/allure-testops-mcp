@@ -20,7 +20,9 @@ const getSharedStepUsage = zodTool("get_shared_step_usage",
 );
 
 const createSharedStep = zodTool("create_shared_step",
-  "Create a new shared step in a project. payload must include at minimum: name (string) and projectId (number). Use this to extract repeated test steps into a reusable library.",
+  "Create a new, EMPTY shared step in a project. payload: name (required), projectId (required). " +
+  "This toolset cannot add steps inside a shared step yet (the UI does it in the shared step editor) — create the content in the UI, then reuse it in test cases with create_test_case_step({testCaseId, sharedStepId}). " +
+  "Read its content with get_shared_step_steps and its usage with get_shared_step_usage.",
   z.object({ payload: coerceObject().describe("Shared step creation data. Required fields: name, projectId.") }),
 );
 

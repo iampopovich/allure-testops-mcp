@@ -45,8 +45,13 @@ const createTestResult = zodTool("create_test_result", "Create a new test result
   z.object({ payload: coerceObject() }),
 );
 
+const TEST_STATUSES = "passed, failed, broken, skipped, unknown";
+
 const updateTestResult = zodTool("update_test_result",
-  "Update an existing test result. payload only needs the fields you want to change (e.g. { status: \"failed\" }) — the current test result is fetched and merged automatically before saving. KNOWN ISSUE: on some Allure TestOps Server versions, changing \"status\" this way does not persist once the test result has left certain workflow states — call get_test_result afterward to confirm.",
+  "Update fields of a test result. payload needs only the fields to change; the current result is fetched and merged before the PATCH (the API requires the full object). " +
+  "Effective PATCH fields: tags, links (verified), members, customFields, testLayerId. name / description / precondition of a result linked to a test case are taken from the test case and are NOT changed by PATCH — edit the test case (update_test_case) instead. " +
+  "status / message / trace / categoryId are NOT part of the PATCH contract — when present they are applied through resolve (same as resolve_test_result, run steps preserved). " +
+  "A result that is already resolved cannot get a new status: rerun it in the UI (Rerun manually) to get a fresh in-progress result.",
   z.object({ id: idSchema("Test result"), payload: coerceObject() }),
 );
 
@@ -60,7 +65,12 @@ const assignTestResult = zodTool("assign_test_result",
 );
 
 const resolveTestResult = zodTool("resolve_test_result",
-  "Resolve a test result. payload must include status. KNOWN ISSUE: on some Allure TestOps Server versions, status changes via this endpoint (and via update_test_result) do not persist once a test result has left certain workflow states — call get_test_result afterward to confirm the status actually changed.",
+  "Finish a manual test result — the UI's Passed / Failed buttons. payload: status (required: " + TEST_STATUSES + "), message (failure reason), trace, categoryId, start/stop/duration (ms), execution.\n\n" +
+  "Run steps: if payload.execution is omitted, the current execution (steps of the run) is read and sent back unchanged, so nothing is lost. " +
+  "To record per-step statuses, read the execution yourself (the steps array returned by the API for this result), set steps[i].status (and nested steps / expectedResultSteps), and pass payload.execution = {status, steps}.\n\n" +
+  "Only results that are still in progress can be resolved. For an already resolved result the API answers 202 but keeps the old status — rerun the test (UI: Rerun manually) and resolve the new result. " +
+  "Typical manual run: create_launch → add_test_cases_to_launch → list_test_results → assign_test_result → resolve_test_result → close_launch. " +
+  "See MCP resource allure://guides/user-flows.",
   z.object({ id: idSchema("Test result"), payload: coerceObject() }),
 );
 

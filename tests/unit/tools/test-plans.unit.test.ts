@@ -40,28 +40,12 @@ describe("createTestPlanTools", () => {
     expectRequiredFields(bundle.tools, "update_test_plan", ["id", "payload"]);
     expectRequiredFields(bundle.tools, "delete_test_plan", ["id"]);
     expectRequiredFields(bundle.tools, "run_test_plan", ["id"]);
-    expectSchemaProperty(bundle.tools, "list_test_plans", "projectId");
-    expectSchemaProperty(bundle.tools, "list_test_plans", "projectName");
-  });
-
-  it("list_test_plans forwards pagination and default projectId", async () => {
-    const bundle = createTestPlanTools(client as never);
-    vi.mocked(api.listTestPlans).mockResolvedValueOnce([{ id: 1 }]);
-
-    const result = await bundle.handlers.list_test_plans({ search: "smoke", page: 1, size: 20 });
-
-    expect(api.listTestPlans).toHaveBeenCalledWith(client, defaultProjectId, {
-      search: "smoke",
-      page: 1,
-      size: 20,
-      sort: undefined,
-    });
-    expect(result).toEqual([{ id: 1 }]);
+    expectSchemaProperty(bundle.tools, "create_test_plan", "payload");
   });
 
   it("get_test_plan validates id", async () => {
     const bundle = createTestPlanTools(client as never);
-    await expect(bundle.handlers.get_test_plan({})).rejects.toThrow('"id" must be a number.');
+    await expect(bundle.handlers.get_test_plan({})).rejects.toThrow(/id/);
   });
 
   it("create_test_plan injects default projectId", async () => {
@@ -78,9 +62,7 @@ describe("createTestPlanTools", () => {
 
   it("update_test_plan requires payload object", async () => {
     const bundle = createTestPlanTools(client as never);
-    await expect(bundle.handlers.update_test_plan({ id: 4, payload: "bad" })).rejects.toThrow(
-      '"payload" must be an object.',
-    );
+    await expect(bundle.handlers.update_test_plan({ id: 4, payload: "bad" })).rejects.toThrow(/object/);
   });
 
   it("delete_test_plan forwards id", async () => {
@@ -99,8 +81,6 @@ describe("createTestPlanTools", () => {
     await bundle.handlers.run_test_plan({ id: 10 });
     expect(api.runTestPlan).toHaveBeenCalledWith(client, 10, undefined);
 
-    await expect(bundle.handlers.run_test_plan({ id: 10, payload: [] })).rejects.toThrow(
-      '"payload" must be an object when provided.',
-    );
+    await expect(bundle.handlers.run_test_plan({ id: 10, payload: [] })).rejects.toThrow(/object/);
   });
 });

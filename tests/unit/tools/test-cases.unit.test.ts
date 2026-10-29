@@ -61,29 +61,20 @@ describe("createTestCaseTools", () => {
     expectRequiredFields(bundle.tools, "add_test_case_tags_bulk", []);
     expectRequiredFields(bundle.tools, "remove_test_case_tags_bulk", []);
     expectRequiredFields(bundle.tools, "add_test_case_external_links_bulk", []);
-    expectSchemaProperty(bundle.tools, "list_test_cases", "projectId");
-    expectSchemaProperty(bundle.tools, "list_test_cases", "projectName");
+    expectSchemaProperty(bundle.tools, "search_test_cases", "projectId");
+    expectSchemaProperty(bundle.tools, "search_test_cases", "projectName");
     expectSchemaProperty(bundle.tools, "list_custom_field_values", "customFieldId");
     expectSchemaProperty(bundle.tools, "add_test_case_tags_bulk", "testCaseIds");
     expectSchemaProperty(bundle.tools, "remove_test_case_tags_bulk", "tagIds");
     expectSchemaProperty(bundle.tools, "add_test_case_external_links_bulk", "links");
   });
 
-  it("list and search handlers resolve project id and forward pagination", async () => {
+  it("search handler resolves project id and forwards pagination", async () => {
     const bundle = createTestCaseTools(client as never);
-    vi.mocked(api.listTestCases).mockResolvedValueOnce([{ id: 1 }]);
     vi.mocked(api.searchTestCases).mockResolvedValueOnce([{ id: 2 }]);
 
-    await bundle.handlers.list_test_cases({ search: "auth", page: 1, size: 50, sort: ["id,desc"] });
     await bundle.handlers.search_test_cases({ rql: "name = \"Auth\"", page: 2 });
 
-    expect(api.listTestCases).toHaveBeenCalledWith(client, defaultProjectId, {
-      search: "auth",
-      filterId: undefined,
-      page: 1,
-      size: 50,
-      sort: ["id,desc"],
-    });
     expect(api.searchTestCases).toHaveBeenCalledWith(client, defaultProjectId, 'name = "Auth"', {
       page: 2,
       size: undefined,
@@ -93,19 +84,13 @@ describe("createTestCaseTools", () => {
 
   it("search_test_cases validates rql", async () => {
     const bundle = createTestCaseTools(client as never);
-    await expect(bundle.handlers.search_test_cases({})).rejects.toThrow(
-      '"rql" must be a non-empty string.',
-    );
+    await expect(bundle.handlers.search_test_cases({})).rejects.toThrow(/rql/);
   });
 
   it("create and update handlers validate payload object", async () => {
     const bundle = createTestCaseTools(client as never);
-    await expect(bundle.handlers.create_test_case({ payload: [] })).rejects.toThrow(
-      '"payload" must be an object.',
-    );
-    await expect(bundle.handlers.update_test_case({ id: 4, payload: [] })).rejects.toThrow(
-      '"payload" must be an object.',
-    );
+    await expect(bundle.handlers.create_test_case({ payload: [] })).rejects.toThrow(/payload/);
+    await expect(bundle.handlers.update_test_case({ id: 4, payload: [] })).rejects.toThrow(/payload/);
   });
 
   it("create_test_case injects default project id into payload", async () => {
@@ -231,25 +216,15 @@ describe("createTestCaseTools", () => {
 
   it("custom-field handlers resolve project id and validate required customFieldId", async () => {
     const bundle = createTestCaseTools(client as never);
-    vi.mocked(api.listProjectCustomFields).mockResolvedValueOnce([]);
     vi.mocked(api.listCustomFieldValues).mockResolvedValueOnce([]);
     vi.mocked(api.getTestCaseCustomFields).mockResolvedValueOnce([]);
     vi.mocked(api.setTestCaseCustomFields).mockResolvedValueOnce({});
 
-    await bundle.handlers.list_project_custom_fields({ query: "severity" });
-    await expect(bundle.handlers.list_custom_field_values({})).rejects.toThrow(
-      '"customFieldId" must be a number.',
-    );
+    await expect(bundle.handlers.list_custom_field_values({})).rejects.toThrow(/customFieldId/);
     await bundle.handlers.list_custom_field_values({ customFieldId: 5 });
     await bundle.handlers.get_test_case_custom_fields({ id: 9 });
     await bundle.handlers.set_test_case_custom_fields({ testCaseId: 9, payload: [] });
 
-    expect(api.listProjectCustomFields).toHaveBeenCalledWith(client, defaultProjectId, {
-      query: "severity",
-      page: undefined,
-      size: undefined,
-      sort: undefined,
-    });
     expect(api.listCustomFieldValues).toHaveBeenCalledWith(client, defaultProjectId, 5, {
       query: undefined,
       global: undefined,

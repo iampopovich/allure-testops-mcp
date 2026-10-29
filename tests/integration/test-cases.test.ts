@@ -106,12 +106,6 @@ describeIntegration("test case tools integration", () => {
     expect(pickId(testCase)).toBe(testCaseId);
   });
 
-  it("list_test_cases", async () => {
-    const list = await callTool("list_test_cases", { projectId, size: 100 });
-    const found = asArrayContent(list).some((item) => pickId(item) === testCaseId);
-    expect(found).toBe(true);
-  });
-
   it("search_test_cases", async () => {
     const result = await callTool("search_test_cases", {
       projectId,
@@ -233,13 +227,13 @@ describeIntegration("test case tools integration", () => {
     expect(issues).toBeDefined();
   });
 
-  it("list_project_custom_fields", async () => {
-    const response = await callTool("list_project_custom_fields", {
+  it("get_test_case_custom_fields", async () => {
+    const response = await callTool("get_test_case_custom_fields", {
+      id: testCaseId as number,
       projectId,
-      size: 100,
     });
-    const first = asArrayContent(response)[0];
-    customFieldId = pickId(first);
+    const first = asArrayContent(response)[0] as { customField?: unknown } | undefined;
+    customFieldId = pickId(first?.customField ?? first);
     expect(response).toBeTruthy();
   });
 

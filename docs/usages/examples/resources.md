@@ -22,6 +22,15 @@ For filtering, pagination beyond page 0, or sorting — use the corresponding to
 
 Replace `{projectId}` with a numeric project ID (e.g. `37`).
 
+### Guides (static markdown, no API call)
+
+| URI | Content |
+|-----|---------|
+| `allure://guides/user-flows` | Every Allure TestOps user flow as the UI performs it: UI path → MCP tool → API, scenario / expected-result model, reference ids, known traps. Source: [../user-flows.md](../user-flows.md) |
+| `allure://guides/aql` | AQL syntax used by `search_*` tools and test plan `baseRql` |
+
+Agents should read `allure://guides/user-flows` before multi-step work (building scenarios, manual runs, test plans, defect triage).
+
 > **Note:** test results are not exposed as a resource — the unfiltered payload per launch can exceed 100 KB. Use `list_test_results` (with `page`/`size`/`search`) or `search_test_results` (RQL) instead.
 
 ## Example: List Projects

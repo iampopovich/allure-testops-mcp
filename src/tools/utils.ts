@@ -1,5 +1,5 @@
 import type { AllureApiClient } from "../client.js";
-import type { ProjectSuggestDto, ProjectSuggestResponse } from "../types/entities.js";
+import type { ProjectSuggestResponse } from "../types/entities.js";
 export type ToolArgs = Record<string, unknown>;
 
 /**

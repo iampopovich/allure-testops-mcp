@@ -18,7 +18,8 @@
     "dev": "tsx src/index.ts",
     "dev:ui": "tsx scripts/dev-ui.ts",
     "test": "vitest run",
-    "test:integration": "vitest run"
+    "test:integration": "vitest run",
+    "docs:user-flows": "tsx scripts/generate-user-flows.ts"
   },
   "keywords": [
     "mcp",
