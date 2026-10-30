@@ -6,6 +6,8 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-10-30
+
 ### Added
 
 - **Backup / restore CLI `allure-testops-backup`** (`docs/usages/backup.md`):
