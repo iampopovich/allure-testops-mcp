@@ -35,6 +35,7 @@ User-focused runtime and integration docs are in [`docs/usages/`](./docs/usages/
 - [`docs/usages/npx.md`](./docs/usages/npx.md)
 - [`docs/usages/running-locally.md`](./docs/usages/running-locally.md)
 - [`docs/usages/integrations.md`](./docs/usages/integrations.md)
+- [`docs/usages/backup.md`](./docs/usages/backup.md) — backup / restore CLI (`allure-testops-backup`) and CSV export
 - [`docs/usages/examples/README.md`](./docs/usages/examples/README.md)
 - [`docs/usages/examples/test-cases.md`](./docs/usages/examples/test-cases.md)
 - [`docs/usages/examples/launches.md`](./docs/usages/examples/launches.md)

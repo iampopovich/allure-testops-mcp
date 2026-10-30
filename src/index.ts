@@ -17,10 +17,7 @@ import {
   ListResourceTemplatesRequestSchema,
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { TokenManager } from "./auth.js";
-import { AllureApiClient } from "./client.js";
-import { buildToolRegistry, requiredEnv } from "./server-bootstrap.js";
-import { LruCacheStore } from "./cache.js";
+import { buildToolRegistry, createClientFromEnv } from "./server-bootstrap.js";
 import { RESOURCES, RESOURCE_TEMPLATES, readResourceContent } from "./resources/index.js";
 import { logger } from "./logger.js";
 
@@ -35,37 +32,8 @@ function formatToolResult(result: unknown): string {
   return JSON.stringify(result);
 }
 
-function parseOptionalProjectId(value: string | undefined): number | undefined {
-  if (!value) {
-    return undefined;
-  }
-  const parsed = Number(value);
-  if (Number.isNaN(parsed)) {
-    throw new Error("ALLURE_PROJECT_ID must be a number when provided.");
-  }
-  return parsed;
-}
-
-function parseMaxConcurrent(value: string | undefined): number {
-  if (!value) {
-    return 1; // default: limit to 1 concurrent requests
-  }
-  const parsed = Number(value);
-  if (Number.isNaN(parsed) || parsed < 0 || !Number.isInteger(parsed)) {
-    throw new Error("ALLURE_MAX_CONCURRENT must be a non-negative integer.");
-  }
-  return parsed;
-}
-
 async function main(): Promise<void> {
-  const baseUrl = requiredEnv("ALLURE_TESTOPS_URL");
-  const apiToken = requiredEnv("ALLURE_TOKEN");
-  const defaultProjectId = parseOptionalProjectId(process.env.ALLURE_PROJECT_ID);
-
-  const tokenManager = new TokenManager({ baseUrl, apiToken });
-  const cache = process.env.ALLURE_CACHE_DISABLED === "1" ? undefined : new LruCacheStore();
-  const maxConcurrent = parseMaxConcurrent(process.env.ALLURE_MAX_CONCURRENT);
-  const client = new AllureApiClient({ baseUrl, tokenManager, defaultProjectId, cache, maxConcurrent });
+  const client = createClientFromEnv();
   const { tools, handlers } = buildToolRegistry(client);
 
   const server = new Server(

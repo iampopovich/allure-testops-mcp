@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-29T03:36:17.924Z",
-  "totalTools": 115,
+  "generatedAt": "2026-10-30T04:51:48.214Z",
+  "totalTools": 117,
   "categories": [
     {
       "name": "Test Cases",
@@ -4323,6 +4323,94 @@
           },
           "annotations": {
             "readOnlyHint": true,
+            "openWorldHint": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "Exports",
+      "tools": [
+        {
+          "name": "export_test_cases_csv",
+          "description": "Export test cases with Allure's native CSV export (UI: select test cases → Export → CSV, every column). The export is asynchronous: POST /api/v2/test-case/bulk/export/csv → poll GET /api/export/{id} until ready → download. Columns: allure_id, name, full_name, automated, description, precondition, expected_result, status, scenario (indented step tree with expected results and shared steps), tag, link, parameter, one column per custom field and per role. Issues are not exported (they need an integration id).\nSelection: testCaseIds, or rql (resolved to ids first), or neither = every test case of the project. The CSV can be imported back in the UI (Test cases → Import → CSV). For a full project backup (JSON with scenarios, attachments, shared steps, test plans) and restore, use the CLI `allure-testops-backup dump|restore` instead of calling tools in a loop. See MCP resource allure://guides/user-flows.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Project ID. Must be a number (integer), not a string."
+              },
+              "projectName": {
+                "type": "string",
+                "description": "Project name (alternative to projectId)."
+              },
+              "testCaseIds": {
+                "description": "Test case IDs to export.",
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "rql": {
+                "description": "AQL filter for the test cases to export, e.g. tag = \"smoke\".",
+                "type": "string"
+              },
+              "savePath": {
+                "description": "Local file path to write the CSV to (directories are created). Without it the CSV text is returned inline and truncated after 50000 characters.",
+                "type": "string"
+              },
+              "columnSeparator": {
+                "description": "CSV column separator. Default \";\" (as in the UI).",
+                "type": "string"
+              }
+            }
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "openWorldHint": true
+          }
+        },
+        {
+          "name": "export_launch_csv",
+          "description": "Export every test result of a launch with Allure's native CSV export (UI: launch ⋯ → Export → CSV). Asynchronous: POST /api/export/testresult/csv → poll GET /api/export/{id} → download. Columns include status, start/stop/duration, message, test_case_id, layer, scenario, tags, links, custom fields and roles.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "launchId": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Launch ID. Must be a number (integer), not a string."
+              },
+              "savePath": {
+                "description": "Local file path to write the CSV to (directories are created). Without it the CSV text is returned inline and truncated after 50000 characters.",
+                "type": "string"
+              },
+              "columnSeparator": {
+                "description": "CSV column separator. Default \";\" (as in the UI).",
+                "type": "string"
+              }
+            },
+            "required": [
+              "launchId"
+            ]
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
             "openWorldHint": true
           }
         }

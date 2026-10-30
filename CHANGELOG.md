@@ -6,6 +6,19 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+### Added
+
+- **Backup / restore CLI `allure-testops-backup`** (`docs/usages/backup.md`):
+  - `dump` saves a project as diffable JSON: test cases with scenarios, expected results, shared-step references, attachments, tags, custom field values, members, relations and parameters, plus shared steps, test plans, dictionaries and Allure's native CSV.
+  - `restore` recreates it in an empty project. Dictionaries and custom fields are matched by name; shared-step, attachment and relation references and test plan selections are remapped. It supports `--dry-run`.
+  - `allure-testops-backup compare <a> <b>` (`npm run backup:compare`) diffs two dumps without ids, dates or authors.
+- **`export_test_cases_csv`** and **`export_launch_csv`**: Allure's native asynchronous CSV export (export → poll → download), with an optional `savePath`.
+- User-flow guide: section 13 «Backup and export».
+
+### Changed
+
+- The client setup from env moved to `createClientFromEnv` in `src/server-bootstrap.ts`, shared by the server and the CLI.
+
 ## [1.8.0] - 2026-10-29
 
 Tools now send exactly what the Allure UI sends, based on a recorded UI-flow study and the OpenAPI schema 26.3.1.2 (`docs/research/ui-flows-network-journal.md`).

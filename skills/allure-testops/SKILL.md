@@ -140,6 +140,11 @@ Failure triage:
 - Group similar failures: `find_similar_failures({ launchId, messageRegex | defectId })`, then `create_defect` (optionally with `matcher`) + `link_defect_to_test_results({ defectId, testResultIds, launchId })`, or `apply_defect_matchers({ id: launchId })`.
 - Close the loop: `resolve_test_result`, `assign_test_result`.
 
+## Export and backup
+
+- A CSV of test cases or of a launch: `export_test_cases_csv({ testCaseIds | rql, savePath? })`, `export_launch_csv({ launchId, savePath? })`. These run Allure's native export, which is asynchronous; pass `savePath` for large exports.
+- **Never back up a project by looping over `get_*` tools.** Point the user to the CLI instead: `allure-testops-backup dump --project <id>` and `restore <dir> --project <id> [--dry-run]` (`docs/usages/backup.md`). It saves scenarios, attachments, shared steps and test plans and restores them into an empty project.
+
 ## Automation-related facts
 
 - The `automated` flag and the link between a manual case and its automated test are set by TestOps itself (CI runs and project policies). Do not flip the flag or link automation manually, and do not report `automated: false` on a not-yet-merged test as a defect.

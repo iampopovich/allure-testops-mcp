@@ -1,5 +1,5 @@
 import type { AllureApiClient } from "../client.js";
-import type { PageDto, TestCaseStepsResponse } from "../types/entities.js";
+import type { AttachmentContentDto, PageDto, TestCaseStepsResponse } from "../types/entities.js";
 
 type QueryParams = Record<string, string | number | boolean | Array<string | number | boolean> | undefined>;
 
@@ -67,4 +67,43 @@ export function unarchiveSharedStep(
   id: number,
 ): Promise<unknown> {
   return client.post(`/api/sharedstep/${id}/unarchive`);
+}
+
+/**
+ * Adds a step to a shared step the way the UI does (`POST /api/sharedstep/step`).
+ * With `withExpectedResult` the API also creates an empty expected-result container; its id is
+ * `scenario.sharedStepScenarioSteps[createdStepId].expectedResultId`. ER lines are then added as
+ * children of that container (`parentId`).
+ */
+export function createSharedStepStep(
+  client: AllureApiClient,
+  payload: { sharedStepId: number; body?: string; bodyJson?: unknown; parentId?: number; attachmentId?: number },
+  options: { afterId?: number; withExpectedResult?: boolean } = {},
+): Promise<{ createdStepId?: number; scenario?: { sharedStepScenarioSteps?: Record<string, { expectedResultId?: number }> } }> {
+  const query: QueryParams = { withExpectedResult: options.withExpectedResult ?? false };
+  if (options.afterId !== undefined) query.afterId = options.afterId;
+  return client.post("/api/sharedstep/step", payload, query);
+}
+
+export function listSharedStepAttachments(
+  client: AllureApiClient,
+  sharedStepId: number,
+): Promise<PageDto<{ id?: number; name?: string; contentType?: string; contentLength?: number }>> {
+  return client.get("/api/sharedstep/attachment", { sharedStepId, size: 1000 });
+}
+
+export function getSharedStepAttachmentContent(client: AllureApiClient, attachmentId: number): Promise<AttachmentContentDto> {
+  return client.getRaw(`/api/sharedstep/attachment/${attachmentId}/content`);
+}
+
+export function uploadSharedStepAttachment(
+  client: AllureApiClient,
+  sharedStepId: number,
+  filename: string,
+  contentType: string,
+  contentBase64: string,
+): Promise<Array<{ id?: number }>> {
+  const formData = new FormData();
+  formData.append("file", new Blob([Buffer.from(contentBase64, "base64")], { type: contentType }), filename);
+  return client.postMultipart("/api/sharedstep/attachment", formData, { sharedStepId });
 }

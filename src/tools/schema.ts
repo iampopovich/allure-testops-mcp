@@ -3,7 +3,7 @@ import type { McpToolAnnotations, McpToolDefinition } from "./types.js";
 
 const READ_ONLY_PREFIXES = ["get_", "list_", "search_", "find_", "suggest_"];
 const DESTRUCTIVE_PREFIXES = ["delete_", "remove_", "unlink_"];
-const ADDITIVE_PREFIXES = ["create_", "add_", "link_", "copy_", "upload_", "restore_"];
+const ADDITIVE_PREFIXES = ["create_", "add_", "link_", "copy_", "upload_", "restore_", "export_"];
 
 /**
  * Behaviour hints derived from the tool-name verb. Tools whose verb is not listed

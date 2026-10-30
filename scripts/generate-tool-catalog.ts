@@ -6,6 +6,7 @@ import { createAnalyticTools } from "../src/tools/analytic.js";
 import { createDashboardTools } from "../src/tools/dashboards.js";
 import { createDefectTools } from "../src/tools/defects.js";
 import { createEnvironmentTools } from "../src/tools/environments.js";
+import { createExportTools } from "../src/tools/exports.js";
 import { createLaunchTools } from "../src/tools/launches.js";
 import { createReleaseTools } from "../src/tools/releases.js";
 import { createSharedStepTools } from "../src/tools/shared-steps.js";
@@ -46,6 +47,7 @@ function buildCatalog(): ToolCatalog {
     { name: "Defects", tools: createDefectTools(noopClient as never).tools },
     { name: "Shared Steps", tools: createSharedStepTools(noopClient as never).tools },
     { name: "Environments", tools: createEnvironmentTools(noopClient as never).tools },
+    { name: "Exports", tools: createExportTools(noopClient as never).tools },
   ];
 
   const totalTools = categories.reduce((acc, category) => acc + category.tools.length, 0);

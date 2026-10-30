@@ -6,7 +6,8 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "allure-testops-mcp": "./dist/index.js"
+    "allure-testops-mcp": "./dist/index.js",
+    "allure-testops-backup": "./dist/cli/backup.js"
   },
   "scripts": {
     "build": "tsc",
@@ -19,7 +20,10 @@
     "dev:ui": "tsx scripts/dev-ui.ts",
     "test": "vitest run",
     "test:integration": "vitest run",
-    "docs:user-flows": "tsx scripts/generate-user-flows.ts"
+    "docs:user-flows": "tsx scripts/generate-user-flows.ts",
+    "backup": "tsx src/cli/backup.ts dump",
+    "restore": "tsx src/cli/backup.ts restore",
+    "backup:compare": "tsx src/cli/backup.ts compare"
   },
   "keywords": [
     "mcp",

@@ -535,3 +535,53 @@ export function addExternalLinksToTestCases(
     links,
   });
 }
+
+export type TestCaseMember = { name: string; role: { id: number; name?: string } };
+export type TestCaseRelation = { type: string; target: { id: number; name?: string } };
+export type TestCaseParameter = { name: string; value: string };
+
+export function getTestCaseMembers(client: AllureApiClient, testCaseId: number): Promise<TestCaseMember[]> {
+  return client.get(`/api/testcase/${testCaseId}/members`);
+}
+
+/** Full replace of the member list (UI: Members ✎). Roles: -1 Owner, -2 Lead (`GET /api/role`). */
+export function setTestCaseMembers(
+  client: AllureApiClient,
+  testCaseId: number,
+  members: TestCaseMember[],
+): Promise<TestCaseMember[]> {
+  return client.post(`/api/testcase/${testCaseId}/members`, members);
+}
+
+export function getTestCaseRelations(client: AllureApiClient, testCaseId: number): Promise<TestCaseRelation[]> {
+  return client.get(`/api/testcase/${testCaseId}/relation`);
+}
+
+/** Full replace of the relation list (UI: Relations ✎). Types: "related to", "clones" / "is cloned by", … */
+export function setTestCaseRelations(
+  client: AllureApiClient,
+  testCaseId: number,
+  relations: TestCaseRelation[],
+): Promise<TestCaseRelation[]> {
+  return client.post(`/api/testcase/${testCaseId}/relation`, relations);
+}
+
+export function getTestCaseExamples(
+  client: AllureApiClient,
+  testCaseId: number,
+): Promise<PageDto<{ id?: number; parameters?: TestCaseParameter[] }>> {
+  return client.get(`/api/testcase/${testCaseId}/example`, { size: 1000 });
+}
+
+/** Full replace of parameter combinations (UI: Edit parameters → Combine → Submit). */
+export function setTestCaseExamples(
+  client: AllureApiClient,
+  testCaseId: number,
+  examples: TestCaseParameter[][],
+): Promise<unknown> {
+  return client.post(`/api/testcase/${testCaseId}/example`, examples);
+}
+
+export function listRoles(client: AllureApiClient): Promise<Array<{ id: number; name: string }>> {
+  return client.get("/api/role");
+}

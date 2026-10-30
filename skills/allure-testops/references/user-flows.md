@@ -117,7 +117,7 @@ UI: tick checkboxes → `Selected: N` → ⋯. All use `/api/v2/test-case/bulk/*
 | Mute | *no tool* | `…/mute/add {mute:{name, reason}}` |
 | Clone / Move to project | *no tool* | `…/clone {nameSuffix, strategy, ignore*}`, `…/move {toProjectId}` |
 | Move to trash / Delete permanently | *no tool* | `…/remove` (`deleted:true` in the trash = permanent) |
-| Export CSV | *no tool* | `…/export/csv {mapping}` → `GET /api/export/{id}` → `GET /api/export/download/{id}` |
+| Export CSV | `export_test_cases_csv` (`testCaseIds` / `rql` / whole project, `savePath`) | `POST /api/v2/test-case/bulk/export/csv {selection, mapping, columnSeparator}` → `GET /api/export/{id}` until `ready` → `GET /api/export/download/{id}` |
 | Release from selection | `create_release_from_test_cases` | `POST /api/test-case/bulk/release/create` |
 
 ## 6. Shared steps
@@ -152,7 +152,7 @@ Other launch actions:
 - Edit: `update_launch`, a partial PATCH.
 - Delete: `delete_launch`.
 - Copy / Merge: *no tool* (`POST /api/launch/{id}/copy {launchName}`, `POST /api/launch/merge {from, to}` — the source launch disappears).
-- Export: *no tool*.
+- Export: `export_launch_csv({launchId, savePath?})` (`POST /api/export/testresult/csv` → poll → download).
 - Result mute / unmute: *no tool* (`POST /api/testresult/{id}/mute {name, reason}`, `…/unmute`).
 - `update_test_result` changes name, description and the like. Status, message and trace go through resolve.
 
@@ -214,3 +214,17 @@ Other launch actions:
 6. Precondition and the test case expected result are hidden in the UI until the project enables them (Settings → Test case sections). The API stores them regardless.
 7. Folders in the Features / Suites tree are custom field values. Renaming a folder re-assigns a new value to all its cases.
 8. Bulk and launch writes (add test cases, apply matchers, release selection) are asynchronous — read back after a moment.
+
+## 13. Backup and export
+
+Backups are not an agent task: thousands of `get_*` calls through an LLM are slow and can miss data. Use the CLI that ships with this package (same `ALLURE_TESTOPS_URL` / `ALLURE_TOKEN`); see `docs/usages/backup.md`.
+
+| Goal | How | API |
+|---|---|---|
+| Full project backup | `allure-testops-backup dump --project <id> [--include-deleted]` | per test case: `GET /api/testcase/{id}`, `/step`, `/tag`, `/issue`, `/cfv`, `/members`, `/relation`, `/example`, attachments; `GET /api/sharedstep` (+ `/step`, attachments); `GET /api/testplan`; native CSV |
+| Restore into an empty project | `allure-testops-backup restore <dir> --project <id> [--dry-run]` | `POST /api/sharedstep` + `/api/sharedstep/step`; `POST /api/testcase` (no `scenario`) → tags, `…/bulk/cfv/add`, members, examples, attachments → `POST /api/testcase/step` one by one; relations; `POST /api/testplan` |
+| Check a restore | `allure-testops-backup compare <dump-a> <dump-b>` | compares two dumps without ids, dates and authors |
+| Spreadsheet / UI re-import | `export_test_cases_csv` | CSV loses attachments, shared-step links and relations; import back via Test cases → Import → CSV |
+| Launch results | `export_launch_csv` | |
+
+Restore matches statuses, workflows, test layers, roles and custom fields **by name**; all ids change (the old → new map is saved as `restore-<target>-<time>.json`). Not restored: run history and results, launches, test case versions, comments, authors and dates. Issues need the same integration in the target. Test cases without a status/workflow (created by result import) get the target's defaults.
