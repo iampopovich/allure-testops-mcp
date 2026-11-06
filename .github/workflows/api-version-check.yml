@@ -1,0 +1,110 @@
+name: Allure TestOps API version check
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # every Monday 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compare release notes with supportedApiVersion
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const RELEASE_NOTES_URL = "https://docs.qameta.io/reference/release-notes/";
+            const LABEL = "api-update";
+
+            const pkg = JSON.parse(fs.readFileSync("package.json", "utf-8"));
+            const supported = pkg.supportedApiVersion;
+            if (!supported) {
+              core.setFailed("package.json has no supportedApiVersion");
+              return;
+            }
+
+            const res = await fetch(RELEASE_NOTES_URL);
+            if (!res.ok) {
+              core.setFailed(`Failed to fetch ${RELEASE_NOTES_URL}: HTTP ${res.status}`);
+              return;
+            }
+            const html = await res.text();
+
+            // Release headings look like: <h2 id="...">26.3.1.1 - 7 September 2026</h2>
+            const versions = [...html.matchAll(/<h2[^>]*>\s*(\d{2}\.\d+\.\d+(?:\.\d+)?)/g)].map((m) => m[1]);
+            if (versions.length === 0) {
+              core.setFailed("No versions found on the release notes page — the page layout may have changed");
+              return;
+            }
+
+            const parse = (v) => v.split(".").map(Number);
+            const compare = (a, b) => {
+              const pa = parse(a);
+              const pb = parse(b);
+              for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+                const d = (pa[i] ?? 0) - (pb[i] ?? 0);
+                if (d !== 0) return d;
+              }
+              return 0;
+            };
+
+            const latest = versions.reduce((max, v) => (compare(v, max) > 0 ? v : max));
+            core.info(`Latest in release notes: ${latest}; supportedApiVersion: ${supported}`);
+
+            if (compare(latest, supported) <= 0) {
+              core.info("supportedApiVersion is up to date — nothing to do");
+              return;
+            }
+
+            const title = `Update supportedApiVersion to Allure TestOps ${latest}`;
+            const { owner, repo } = context.repo;
+
+            const open = await github.paginate(github.rest.issues.listForRepo, {
+              owner,
+              repo,
+              state: "open",
+              per_page: 100,
+            });
+            if (open.some((i) => !i.pull_request && i.title === title)) {
+              core.info(`Issue "${title}" already open — skipping`);
+              return;
+            }
+
+            try {
+              await github.rest.issues.getLabel({ owner, repo, name: LABEL });
+            } catch (e) {
+              if (e.status !== 404) throw e;
+              await github.rest.issues.createLabel({
+                owner,
+                repo,
+                name: LABEL,
+                color: "1d76db",
+                description: "New Allure TestOps API version to support",
+              });
+            }
+
+            const body = [
+              `A newer Allure TestOps release was published: **${latest}**.`,
+              `Currently \`supportedApiVersion\` in \`package.json\` is **${supported}**.`,
+              "",
+              `Release notes: ${RELEASE_NOTES_URL}`,
+              "",
+              "### Checklist",
+              "- [ ] Review the release notes for API changes",
+              "- [ ] Update the tracked spec in `docs/versions/allure_api_docs.json` and diff endpoints/schemas",
+              "- [ ] Adjust tools for removed or changed endpoints",
+              `- [ ] Bump \`supportedApiVersion\` in \`package.json\` to \`${latest}\` (or the exact build verified)`,
+              "- [ ] Add a CHANGELOG entry",
+              "",
+              "_Opened automatically by the `api-version-check` workflow._",
+            ].join("\n");
+
+            const { data: issue } = await github.rest.issues.create({ owner, repo, title, body, labels: [LABEL] });
+            core.info(`Opened issue #${issue.number}: ${issue.html_url}`);
