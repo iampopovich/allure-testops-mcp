@@ -1,11 +1,13 @@
 # Docker Deployment Guide for Allure TestOps MCP Server
 
-This guide explains how to build, publish, and use the Allure TestOps MCP server as a Docker container.
+This guide explains how to build and run the Allure TestOps MCP server as a Docker container.
+
+No prebuilt image is published to a registry. Build the image locally from this repository; every command below uses the local image name `allure-testops-mcp`.
 
 ## Prerequisites
 
 - Docker installed (Docker Desktop or Docker Engine)
-- Docker Hub account (for publishing)
+- A checkout of this repository
 - Allure TestOps instance with API access
 - API token from Allure TestOps
 
@@ -18,75 +20,13 @@ The Dockerfile uses a multi-stage build process to create an optimized productio
 ### Build Locally
 
 ```bash
-docker build -t allure-testops-mcp:latest .
+docker build -t allure-testops-mcp .
 ```
 
 ### Build with Version Tag
 
 ```bash
-docker build -t allure-testops-mcp:1.0.0 -t allure-testops-mcp:latest .
-```
-
-## Publishing to Docker Hub
-
-### 1. Log in to Docker Hub
-
-```bash
-docker login
-```
-
-Enter your Docker Hub username and password when prompted.
-
-### 2. Tag the Image
-
-Replace `YOUR_DOCKERHUB_USERNAME` with your actual Docker Hub username:
-
-```bash
-docker tag allure-testops-mcp:latest YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:latest
-docker tag allure-testops-mcp:latest YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:1.0.0
-```
-
-### 3. Push to Docker Hub
-
-```bash
-docker push YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:latest
-docker push YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:1.0.0
-```
-
-### Complete Build and Push Script
-
-Create a `build-and-push.sh` script:
-
-```bash
-#!/bin/bash
-
-# Configuration
-DOCKERHUB_USERNAME="YOUR_DOCKERHUB_USERNAME"
-IMAGE_NAME="allure-testops-mcp"
-VERSION="1.0.0"
-
-# Build the image
-echo "Building Docker image..."
-docker build -t ${IMAGE_NAME}:${VERSION} -t ${IMAGE_NAME}:latest .
-
-# Tag for Docker Hub
-echo "Tagging image for Docker Hub..."
-docker tag ${IMAGE_NAME}:${VERSION} ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${VERSION}
-docker tag ${IMAGE_NAME}:latest ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
-
-# Push to Docker Hub
-echo "Pushing to Docker Hub..."
-docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${VERSION}
-docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
-
-echo "Done! Image available at: ${DOCKERHUB_USERNAME}/${IMAGE_NAME}"
-```
-
-Make it executable and run:
-
-```bash
-chmod +x build-and-push.sh
-./build-and-push.sh
+docker build -t allure-testops-mcp:1.9.0 -t allure-testops-mcp .
 ```
 
 ## Running the Container
@@ -96,69 +36,67 @@ chmod +x build-and-push.sh
 #### Basic Usage
 
 ```bash
-docker run -i \
-  -e ALLURE_TESTOPS_URL=https://your-allure-instance.com \
+docker run -i --rm \
+  -e ALLURE_TESTOPS_URL=https://your-allure-instance \
   -e ALLURE_TOKEN=your-api-token \
   -e ALLURE_PROJECT_ID=1 \
-  YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:latest
+  allure-testops-mcp
 ```
 
 #### With Cache Disabled
 
 ```bash
-docker run -i \
-  -e ALLURE_TESTOPS_URL=https://your-allure-instance.com \
+docker run -i --rm \
+  -e ALLURE_TESTOPS_URL=https://your-allure-instance \
   -e ALLURE_TOKEN=your-api-token \
   -e ALLURE_PROJECT_ID=1 \
   -e ALLURE_CACHE_DISABLED=1 \
-  YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:latest
+  allure-testops-mcp
 ```
 
 #### Run in Background
 
 ```bash
 docker run -d --name allure-mcp -i \
-  -e ALLURE_TESTOPS_URL=https://your-allure-instance.com \
+  -e ALLURE_TESTOPS_URL=https://your-allure-instance \
   -e ALLURE_TOKEN=your-api-token \
-  -e PROJECT_ID=1 \
+  -e ALLURE_PROJECT_ID=1 \
   --restart unless-stopped \
-  YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:latest
+  allure-testops-mcp
 ```
 
 ### Using Docker Compose
 
-Update the `docker-compose.yml` file to use your published image:
+The `docker-compose.yml` in the repository builds the image from the local Dockerfile (`build: .`). A minimal service definition looks like this:
 
 ```yaml
-version: '3.8'
-
 services:
   allure-testops-mcp:
-    image: YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:latest
+    build: .
+    image: allure-testops-mcp
     container_name: allure-testops-mcp
     environment:
-      - ALLURE_TESTOPS_URL=${ALLURE_TESTOPS_URL:-https://allure-testops.labs.jb.gg}
+      - ALLURE_TESTOPS_URL=${ALLURE_TESTOPS_URL:?set ALLURE_TESTOPS_URL in .env}
       - ALLURE_TOKEN=${ALLURE_TOKEN}
-      - ALLURE_PROJECT_ID=${ALLURE_PROJECT_ID}
+      - ALLURE_PROJECT_ID=${ALLURE_PROJECT_ID:-}
       # - ALLURE_CACHE_DISABLED=1   # uncomment to disable in-memory LRU cache
     restart: unless-stopped
     stdin_open: true
-    tty: true
 ```
 
 Create a `.env` file in the same directory:
 
 ```bash
-ALLURE_TESTOPS_URL=https://your-allure-instance.com
+ALLURE_TESTOPS_URL=https://your-allure-instance
 ALLURE_TOKEN=your-api-token-here
 ALLURE_PROJECT_ID=1
 # ALLURE_CACHE_DISABLED=1
 ```
 
-Run with Docker Compose:
+Build and run with Docker Compose:
 
 ```bash
-docker-compose up -d
+docker compose up -d --build
 ```
 
 ## Configuring MCP Clients
@@ -177,12 +115,12 @@ Add to your MCP client configuration (`~/Library/Application Support/Claude/clau
         "-i",
         "--rm",
         "-e",
-        "ALLURE_TESTOPS_URL=https://your-allure-instance.com",
+        "ALLURE_TESTOPS_URL=https://your-allure-instance",
         "-e",
         "ALLURE_TOKEN=your-api-token",
         "-e",
-        "PROJECT_ID=1",
-        "YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:latest"
+        "ALLURE_PROJECT_ID=1",
+        "allure-testops-mcp"
       ]
     }
   }
@@ -204,7 +142,7 @@ If you prefer to keep credentials in a `.env` file on the host:
         "--rm",
         "--env-file",
         "/path/to/your/.env",
-        "YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:latest"
+        "allure-testops-mcp"
       ]
     }
   }
@@ -214,9 +152,9 @@ If you prefer to keep credentials in a `.env` file on the host:
 Create `.env` file with:
 
 ```bash
-ALLURE_TESTOPS_URL=https://your-allure-instance.com
+ALLURE_TESTOPS_URL=https://your-allure-instance
 ALLURE_TOKEN=your-api-token-here
-PROJECT_ID=1
+ALLURE_PROJECT_ID=1
 ```
 
 ### Using Docker Compose Service
@@ -248,28 +186,25 @@ Note: The container must be running before starting the MCP client.
 
 ```bash
 # Run interactively
-docker run -i \
-  -e ALLURE_TESTOPS_URL=https://your-instance.com \
+docker run -i --rm \
+  -e ALLURE_TESTOPS_URL=https://your-allure-instance \
   -e ALLURE_TOKEN=your-token \
-  -e PROJECT_ID=1 \
-  YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:latest
+  -e ALLURE_PROJECT_ID=1 \
+  allure-testops-mcp
 ```
 
-You should see:
-```
-Allure TestOps MCP Server running on stdio
-```
+You should see a JSON log line with `"msg":"server started"` on stderr (stdout is reserved for MCP traffic; set `ALLURE_LOG_LEVEL=debug` for more detail).
 
 ### Check Image Size
 
 ```bash
-docker images YOUR_DOCKERHUB_USERNAME/allure-testops-mcp
+docker images allure-testops-mcp
 ```
 
 ### Inspect Image Layers
 
 ```bash
-docker history YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:latest
+docker history allure-testops-mcp
 ```
 
 ## Troubleshooting
@@ -278,15 +213,19 @@ docker history YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:latest
 
 Make sure to use the `-i` flag (interactive mode) as the MCP server uses stdio for communication.
 
+### `Unable to find image 'allure-testops-mcp:latest' locally`
+
+The image is not on any registry. Run `docker build -t allure-testops-mcp .` in the repository first.
+
 ### Authentication Errors
 
 Verify your environment variables:
 ```bash
 docker run --rm \
-  -e ALLURE_TESTOPS_URL=https://your-instance.com \
+  -e ALLURE_TESTOPS_URL=https://your-allure-instance \
   -e ALLURE_TOKEN=your-token \
-  -e PROJECT_ID=1 \
-  YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:latest \
+  -e ALLURE_PROJECT_ID=1 \
+  allure-testops-mcp \
   node -e "console.log(process.env.ALLURE_TESTOPS_URL)"
 ```
 
@@ -300,10 +239,10 @@ docker logs allure-testops-mcp
 
 ```bash
 docker run -it --rm \
-  -e ALLURE_TESTOPS_URL=https://your-instance.com \
+  -e ALLURE_TESTOPS_URL=https://your-allure-instance \
   -e ALLURE_TOKEN=your-token \
-  -e PROJECT_ID=1 \
-  YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:latest \
+  -e ALLURE_PROJECT_ID=1 \
+  allure-testops-mcp \
   sh
 ```
 
@@ -313,87 +252,43 @@ docker run -it --rm \
 2. **Use secrets management**: For production, use Docker secrets or vault solutions
 3. **Scan images**: Regularly scan for vulnerabilities
    ```bash
-   docker scan YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:latest
+   docker scout cves allure-testops-mcp
    ```
-4. **Keep images updated**: Rebuild regularly to get security updates
-5. **Use specific tags**: Avoid relying on `:latest` in production
+4. **Keep images updated**: Rebuild regularly to get security updates of the base image
+5. **Use specific tags**: Tag builds with the version (`allure-testops-mcp:1.9.0`) instead of relying on `:latest`
 
 ## Updating the Image
 
-When you make changes to the code:
+When you pull new code or make changes:
 
 ```bash
-# Rebuild
-docker build -t YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:1.1.0 .
-
-# Tag as latest
-docker tag YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:1.1.0 \
-           YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:latest
-
-# Push both tags
-docker push YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:1.1.0
-docker push YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:latest
+git pull
+docker build -t allure-testops-mcp:1.9.1 -t allure-testops-mcp .
 ```
 
-## Multi-Architecture Builds (Optional)
+## Building for Another Architecture (Optional)
 
-To support multiple platforms (amd64, arm64):
+To build for a different platform (for example arm64 on an amd64 host) and load it into the local image store:
 
 ```bash
-# Create builder
-docker buildx create --name multiarch --use
-
-# Build and push for multiple platforms
-docker buildx build --platform linux/amd64,linux/arm64 \
-  -t YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:latest \
-  -t YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:1.0.0 \
-  --push .
+docker buildx build --platform linux/arm64 -t allure-testops-mcp --load .
 ```
 
-## Client Deployment Examples
+## Using the Image on Several Machines
 
-### Deploy on Multiple Machines
-
-1. Push image to Docker Hub (once)
-2. On each client machine:
+There is no registry image to pull, so either build on each machine or move the image:
 
 ```bash
-# Pull the image
-docker pull YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:latest
+# On the build machine
+docker save allure-testops-mcp | gzip > allure-testops-mcp.tar.gz
 
-# Create .env file with credentials
-cat > .env << EOF
-ALLURE_TESTOPS_URL=https://your-instance.com
-ALLURE_TOKEN=your-token
-PROJECT_ID=1
-EOF
-
-# Configure MCP client (Claude Desktop, etc.)
-# Use the docker command with --env-file flag
+# On the target machine
+docker load < allure-testops-mcp.tar.gz
 ```
 
-### Automated Deployment Script
+Then create a `.env` file with `ALLURE_TESTOPS_URL`, `ALLURE_TOKEN` and optionally `ALLURE_PROJECT_ID`, and configure the MCP client with the `--env-file` command shown above.
 
-Create `deploy-client.sh`:
-
-```bash
-#!/bin/bash
-
-# Pull latest image
-docker pull YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:latest
-
-# Stop and remove old container if exists
-docker stop allure-mcp 2>/dev/null || true
-docker rm allure-mcp 2>/dev/null || true
-
-# Run new container
-docker run -d --name allure-mcp -i \
-  --env-file .env \
-  --restart unless-stopped \
-  YOUR_DOCKERHUB_USERNAME/allure-testops-mcp:latest
-
-echo "Allure TestOps MCP server deployed successfully"
-```
+If you push the image to your own private registry, replace `allure-testops-mcp` in the commands above with your registry path.
 
 ## Support
 

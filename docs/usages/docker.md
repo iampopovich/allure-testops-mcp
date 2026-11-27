@@ -2,14 +2,22 @@
 
 Use this option when you want an isolated runtime and no local Node.js dependency for execution.
 
+No prebuilt image is published. Build it from a checkout of this repository first:
+
+```bash
+git clone https://github.com/iampopovich/allure-testops-mcp.git
+cd allure-testops-mcp
+docker build -t allure-testops-mcp .
+```
+
 ## Run the Image with MCP stdio
 
 ```bash
 docker run -i --rm \
-  -e ALLURE_TESTOPS_URL=https://your-allure-instance.com \
+  -e ALLURE_TESTOPS_URL=https://your-allure-instance \
   -e ALLURE_TOKEN=your-api-token \
   -e ALLURE_PROJECT_ID=37 \
-  iampopovich/allure-testops-mcp:latest
+  allure-testops-mcp
 ```
 
 ## MCP Server Command (Docker)
@@ -22,12 +30,12 @@ docker run -i --rm \
     "-i",
     "--rm",
     "-e",
-    "ALLURE_TESTOPS_URL=https://your-allure-instance.com",
+    "ALLURE_TESTOPS_URL=https://your-allure-instance",
     "-e",
     "ALLURE_TOKEN=your-api-token",
     "-e",
     "ALLURE_PROJECT_ID=37",
-    "iampopovich/allure-testops-mcp:latest"
+    "allure-testops-mcp"
   ]
 }
 ```
@@ -36,4 +44,4 @@ docker run -i --rm \
 
 - Keep the `-i` flag; MCP stdio requires interactive stdin.
 - If you do not set `ALLURE_PROJECT_ID`, pass `projectId` or `projectName` to project-scoped tools.
-- For advanced Docker operations (build/publish/troubleshooting), see [`DOCKER.md`](../../DOCKER.md).
+- For advanced Docker operations (compose, troubleshooting), see [`DOCKER.md`](../../DOCKER.md).

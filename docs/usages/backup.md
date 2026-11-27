@@ -39,9 +39,10 @@ npm run restore -- ./backup/37-20261030-101500 --project 52
 npm run backup:compare -- ./backup/37-20261030-101500 ./backup/52-20261030-103000
 # or, from npm: allure-testops-backup compare <backup-a> <backup-b>
 
-# from the Docker image
+# from a locally built Docker image (no image is published; build it once in a checkout)
+docker build -t allure-testops-mcp .
 docker run --rm -e ALLURE_TESTOPS_URL -e ALLURE_TOKEN -v "$PWD/backup:/backup" \
-  iampopovich/allure-testops-mcp:latest node dist/cli/backup.js dump --project 37 --out /backup
+  allure-testops-mcp node dist/cli/backup.js dump --project 37 --out /backup
 ```
 
 ### `dump` options
