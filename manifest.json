@@ -1,0 +1,79 @@
+{
+  "manifest_version": "0.3",
+  "name": "allure-testops-mcp",
+  "display_name": "Allure TestOps MCP",
+  "version": "1.9.0",
+  "description": "Allure TestOps for AI assistants: test cases, launches, results, defects and test plans.",
+  "long_description": "Connects Claude, Cursor and other MCP clients to an Allure TestOps instance through its API. The assistant can find and edit test cases, triage launches and failed results, manage defects, test plans, releases and dashboards. Ships a backup/restore CLI as well.",
+  "author": {
+    "name": "Aleksandr Popov",
+    "url": "https://github.com/iampopovich"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iampopovich/allure-testops-mcp.git"
+  },
+  "homepage": "https://github.com/iampopovich/allure-testops-mcp#readme",
+  "support": "https://github.com/iampopovich/allure-testops-mcp/issues",
+  "server": {
+    "type": "node",
+    "entry_point": "dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/dist/index.js"
+      ],
+      "env": {
+        "ALLURE_TESTOPS_URL": "${user_config.allure_url}",
+        "ALLURE_TOKEN": "${user_config.allure_token}",
+        "ALLURE_PROJECT_ID": "${user_config.project_id}"
+      }
+    }
+  },
+  "tools_generated": true,
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "allure",
+    "allure-testops",
+    "test-management",
+    "test-case-management",
+    "qa",
+    "quality-assurance",
+    "test-automation"
+  ],
+  "license": "MIT",
+  "compatibility": {
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  },
+  "user_config": {
+    "allure_url": {
+      "type": "string",
+      "title": "Allure TestOps URL",
+      "description": "Base URL of your Allure TestOps instance, e.g. https://allure.example.com",
+      "required": true
+    },
+    "allure_token": {
+      "type": "string",
+      "title": "API token",
+      "description": "User API token from your Allure TestOps profile",
+      "sensitive": true,
+      "required": true
+    },
+    "project_id": {
+      "type": "string",
+      "title": "Default project id",
+      "description": "Optional numeric id used when a request does not name a project",
+      "required": false,
+      "default": ""
+    }
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.iampopovich/allure-testops-mcp",
+  "title": "Allure TestOps",
+  "description": "Allure TestOps for AI assistants: test cases, launches, results, defects and test plans.",
+  "repository": {
+    "url": "https://github.com/iampopovich/allure-testops-mcp",
+    "source": "github"
+  },
+  "websiteUrl": "https://github.com/iampopovich/allure-testops-mcp#readme",
+  "version": "1.9.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "allure-testops-mcp",
+      "version": "1.9.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "ALLURE_TESTOPS_URL",
+          "description": "Base URL of your Allure TestOps instance, e.g. https://allure.example.com",
+          "isRequired": true,
+          "isSecret": false,
+          "format": "string"
+        },
+        {
+          "name": "ALLURE_TOKEN",
+          "description": "Allure TestOps user API token",
+          "isRequired": true,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "ALLURE_PROJECT_ID",
+          "description": "Optional default numeric project id",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        },
+        {
+          "name": "ALLURE_LOG_LEVEL",
+          "description": "Log level: trace, debug, info, warn, error, fatal (default: info)",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        },
+        {
+          "name": "ALLURE_MAX_CONCURRENT",
+          "description": "Max concurrent API requests (default: 1)",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        },
+        {
+          "name": "ALLURE_CACHE_DISABLED",
+          "description": "Set to 1 to disable the in-memory response cache",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}

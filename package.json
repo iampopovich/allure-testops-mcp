@@ -1,8 +1,9 @@
 {
   "name": "allure-testops-mcp",
   "version": "1.9.0",
+  "mcpName": "io.github.iampopovich/allure-testops-mcp",
   "supportedApiVersion": "26.3.1.2",
-  "description": "MCP server for Allure TestOps test cases and launches",
+  "description": "Allure TestOps for AI assistants: test cases, launches, results, defects and test plans.",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -27,15 +28,22 @@
   },
   "keywords": [
     "mcp",
+    "mcp-server",
     "model-context-protocol",
     "allure",
     "allure-testops",
+    "test-management",
+    "test-case-management",
+    "qa",
     "quality-assurance",
     "test-automation",
-    "test-management",
+    "testing",
+    "ai-tools",
+    "llm",
+    "claude",
+    "cursor",
     "typescript",
     "test-automation-tools",
-    "test-case-management",
     "test-execution",
     "test-reporting",
     "llm-integration",
@@ -67,5 +75,8 @@
     "tsx": "^4.21.0",
     "typescript": "^5.7.2",
     "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
